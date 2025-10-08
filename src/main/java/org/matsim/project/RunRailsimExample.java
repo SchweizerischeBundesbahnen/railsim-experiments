@@ -1,9 +1,9 @@
 /* *********************************************************************** *
- * project: org.matsim.*												   *
+ * project: org.matsim.*
  *                                                                         *
  * *********************************************************************** *
  *                                                                         *
- * copyright       : (C) 2008 by the members listed in the COPYING,        *
+ * copyright       : (C) 2023 by the members listed in the COPYING,        *
  *                   LICENSE and WARRANTY file.                            *
  * email           : info at matsim dot org                                *
  *                                                                         *
@@ -16,60 +16,50 @@
  *   See also COPYING, LICENSE and WARRANTY file                           *
  *                                                                         *
  * *********************************************************************** */
+
 package org.matsim.project;
 
-import org.apache.logging.log4j.core.tools.picocli.CommandLine;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.application.MATSimApplication;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.OutputDirectoryHierarchy.OverwriteFileSetting;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.scenario.ScenarioUtils;
+
+import ch.sbb.matsim.contrib.railsim.RailsimModule;
+import ch.sbb.matsim.contrib.railsim.qsimengine.RailsimQSimModule;
 
 /**
- * @author nagel
- *
+ * Example script that shows how to use railsim included in this contrib.
  */
-@CommandLine.Command( header = ":: MyScenario ::", version = "1.0")
-public class RunMatsimApplication extends MATSimApplication {
+public final class RunRailsimExample {
 
-	public RunMatsimApplication() {
-		super("scenarios/equil/config.xml");
+	private RunRailsimExample() {
 	}
 
 	public static void main(String[] args) {
-		MATSimApplication.run(RunMatsimApplication.class, args);
+
+		String configFilename;
+		if (args.length != 0) {
+			configFilename = args[0];
+		} else {
+			configFilename = "C:/devsbb/tmp/railsim/config.xml";
+		}
+
+		Config config = ConfigUtils.loadConfig(configFilename);
+		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+		config.controller().setOutputDirectory("C:/devsbb/tmp/railsim/output");
+		config.controller().setLastIteration(0);
+		
+		Scenario scenario = ScenarioUtils.loadScenario(config);
+		Controler controler = new Controler(scenario);
+
+		controler.addOverridingModule(new RailsimModule());
+
+		// if you have other extensions that provide QSim components, call their configure-method here
+		controler.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
+
+		controler.run();
 	}
 
-	@Override
-	protected Config prepareConfig(Config config) {
-
-		config.controller().setOverwriteFileSetting( OverwriteFileSetting.deleteDirectoryIfExists );
-
-		// possibly modify config here
-
-		// ---
-
-		return config;
-	}
-
-	@Override
-	protected void prepareScenario(Scenario scenario) {
-
-		// possibly modify scenario here
-
-		// ---
-
-	}
-
-	@Override
-	protected void prepareControler(Controler controler) {
-
-		// possibly modify controler here
-
-//		controler.addOverridingModule( new OTFVisLiveModule() ) ;
-//		controler.addOverridingModule( new SimWrapperModule() ) ;
-
-
-		// ---
-	}
 }

@@ -4,18 +4,15 @@
 	<parent>
 		<groupId>org.matsim</groupId>
 		<artifactId>matsim-all</artifactId>
-
-		<!-- Options: stable build based on pull requests (e.g. 16.0-PR2778), weekly (e.g. 15.0-2023w01) or official (e.g. 14.0) releases -->
-		<!--		<version>16.0-PR2509</version>-->
-		<version>2025.0</version>
+		<version>2026.0-PR3991</version>
 	</parent>
 
 	<modelVersion>4.0.0</modelVersion>
-	<artifactId>matsim-example-project</artifactId>
+	<artifactId>railsim-experiments</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
-	<name>MATSim example project</name>
-	<description>MATSim example project</description>
+	<name>Railsim Experiments</name>
+	<description>Railsim Experiments</description>
 
 	<properties>
 
@@ -77,86 +74,11 @@
 			<scope>test</scope>
 		</dependency>
 
-		<!--dependencies from here to where stated below are added as a service; they can be removed if you don't need them-->
-		<!--to get ExamplesUtils: -->
 		<dependency>
-			<groupId>org.matsim</groupId>
-			<artifactId>matsim-examples</artifactId>
+    		<groupId>ch.sbb.matsim.contrib</groupId>
+    		<artifactId>railsim</artifactId>
 			<version>${matsim.version}</version>
-<!--			<scope>test</scope>-->
-<!--			I think that having it in the "main" scope is acceptable for a "leaf" project, and makes life easier.  move the-->
-<!--			matsim-examples dependency into "test" scope if you want to make other projects dependent on your this project here. kai,-->
-<!--			jan'21-->
-		</dependency>
-
-		<!--some contribs:-->
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>minibus</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>otfvis</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>noise</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>roadpricing</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>taxi</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>av</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>freight</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>bicycle</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>emissions</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>application</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>simwrapper</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-		<dependency>
-			<groupId>org.matsim.contrib</groupId>
-			<artifactId>vsp</artifactId>
-			<version>${matsim.version}</version>
-		</dependency>
-<!--		<dependency>-->
-<!--			<groupId>org.matsim.contrib</groupId>-->
-<!--			<artifactId>simwrapper</artifactId>-->
-<!--			<version>${matsim.version}</version>-->
-<!--		</dependency>-->
-
-		<!--Dependencies from where stated above to here are added as a service; they can be removed if you don't need them-->
+		</dependency>		
 
 	</dependencies>
 
