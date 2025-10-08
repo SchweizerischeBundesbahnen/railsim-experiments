@@ -43,7 +43,7 @@ public final class RunRailsimExample {
 		if (args.length != 0) {
 			configFilename = args[0];
 		} else {
-			configFilename = "C:/devsbb/tmp/railsim/config.xml";
+			configFilename = "/scenarios/use_case_1/config.xml";
 		}
 
 		Config config = ConfigUtils.loadConfig(configFilename);
