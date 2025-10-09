@@ -48,7 +48,7 @@ public final class RunRailsimExample {
 
 		Config config = ConfigUtils.loadConfig(configFilename);
 		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controller().setOutputDirectory("C:/devsbb/tmp/railsim-experiments/use_case_1/output/r1/");
+		config.controller().setOutputDirectory("C:/devsbb/tmp/railsim-experiments/use_case_1/output/case1_run1/");
 		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Controler controler = new Controler(scenario);
