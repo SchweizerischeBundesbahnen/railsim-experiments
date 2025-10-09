@@ -30,12 +30,12 @@ import ch.sbb.matsim.contrib.railsim.RailsimModule;
 import ch.sbb.matsim.contrib.railsim.qsimengine.RailsimQSimModule;
 
 /**
- * Example script that shows how to use railsim included in this contrib.
+ * Example script to run a railsim simulation.
+ * 
+ * TODO: Haltestellenbereiche sind noch nicht im Fahrplan definiert.
+ * TODO: Mindesthaltezeiten sind auch noch nicht im Fahrplan definiert.
  */
 public final class RunRailsimExample {
-
-	private RunRailsimExample() {
-	}
 
 	public static void main(String[] args) {
 
@@ -43,6 +43,8 @@ public final class RunRailsimExample {
 		if (args.length != 0) {
 			configFilename = args[0];
 		} else {
+//			configFilename = "scenarios/use_case_1/building_block_2/input/config.xml";
+//			configFilename = "scenarios/use_case_1/building_block_3/input/config.xml";
 			configFilename = "scenarios/use_case_1/building_block_4/input/config.xml";
 		}
 
