@@ -44,14 +44,14 @@
 
 	<module name="transit">
 		<param name="routingAlgorithmType" value="SwissRailRaptor"/>
-		<param name="transitScheduleFile" value="schedule.xml.gz"/>
+		<param name="transitScheduleFile" value="schedule.xml"/>
 		<param name="useTransit" value="true"/>
 		<param name="usingTransitInMobsim" value="true"/>
-		<param name="vehiclesFile" value="vehicles.xml.gz"/>
+		<param name="vehiclesFile" value="vehicles.xml"/>
 	</module>
 
 	<module name="network">
-		<param name="inputNetworkFile" value="network.xml.gz"/>
+		<param name="inputNetworkFile" value="network.xml"/>
 	</module>
 
 </config>

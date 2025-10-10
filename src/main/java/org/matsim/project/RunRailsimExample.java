@@ -32,8 +32,6 @@ import ch.sbb.matsim.contrib.railsim.qsimengine.RailsimQSimModule;
 /**
  * Example script to run a railsim simulation.
  * 
- * TODO: Haltestellenbereiche sind noch nicht im Fahrplan definiert.
- * TODO: Mindesthaltezeiten sind auch noch nicht im Fahrplan definiert.
  */
 public final class RunRailsimExample {
 
@@ -43,15 +41,14 @@ public final class RunRailsimExample {
 		if (args.length != 0) {
 			configFilename = args[0];
 		} else {
-//			configFilename = "scenarios/use_case_1/building_block_2/input/config.xml";
+			configFilename = "scenarios/use_case_1/building_block_2/input/config.xml";
 //			configFilename = "scenarios/use_case_1/building_block_3/input/config.xml";
-			configFilename = "scenarios/use_case_1/building_block_4/input/config.xml";
+//			configFilename = "scenarios/use_case_1/building_block_4/input/config.xml";
 		}
 
 		Config config = ConfigUtils.loadConfig(configFilename);
 		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controller().setOutputDirectory("C:/devsbb/tmp/railsim-experiments/use_case_1/output/");
-		
+		config.controller().setOutputDirectory("C:/devsbb/tmp/railsim-experiments/output_" + config.controller().getRunId() + "/");		
 		Scenario scenario = ScenarioUtils.loadScenario(config);
 		Controler controler = new Controler(scenario);
 
