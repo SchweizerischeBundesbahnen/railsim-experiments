@@ -19,14 +19,7 @@
 
 package org.matsim.project;
 
-import ch.sbb.matsim.contrib.railsim.RailsimModule;
-import ch.sbb.matsim.contrib.railsim.qsimengine.RailsimQSimModule;
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.project.trainrun.TrainRunCalculator;
 
 /**
  * Example script to run a railsim simulation.
@@ -34,8 +27,7 @@ import org.matsim.core.scenario.ScenarioUtils;
  */
 public final class RunRailsimScenario {
 
-    // "C:/devsbb/tmp/railsim-experiments/output_"
-    private static final String OUTPUT_DIRECTORY = "results/output_";
+    private static final String OUTPUT_DIRECTORY = "results";
 
     public static void main(String[] args) {
 
@@ -48,6 +40,9 @@ public final class RunRailsimScenario {
 //			configFilename = "scenarios/use_case_1/building_block_4/input/config.xml";
         }
 
+        new TrainRunCalculator(configFilename, OUTPUT_DIRECTORY).run();
+
+        /*
         Config config = ConfigUtils.loadConfig(configFilename);
         config.controller()
                 .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
@@ -59,6 +54,8 @@ public final class RunRailsimScenario {
         controler.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
 
         controler.run();
+
+         */
     }
 
 }
