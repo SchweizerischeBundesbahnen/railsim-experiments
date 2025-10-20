@@ -19,6 +19,8 @@
 
 package org.matsim.project;
 
+import ch.sbb.matsim.contrib.railsim.RailsimModule;
+import ch.sbb.matsim.contrib.railsim.qsimengine.RailsimQSimModule;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -26,38 +28,37 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.scenario.ScenarioUtils;
 
-import ch.sbb.matsim.contrib.railsim.RailsimModule;
-import ch.sbb.matsim.contrib.railsim.qsimengine.RailsimQSimModule;
-
 /**
  * Example script to run a railsim simulation.
- * 
+ *
  */
-public final class RunRailsimExample {
+public final class RunRailsimScenario {
 
-	public static void main(String[] args) {
+    // "C:/devsbb/tmp/railsim-experiments/output_"
+    private static final String OUTPUT_DIRECTORY = "results/output_";
 
-		String configFilename;
-		if (args.length != 0) {
-			configFilename = args[0];
-		} else {
-			configFilename = "scenarios/use_case_1/building_block_2/input/config.xml";
+    public static void main(String[] args) {
+
+        String configFilename;
+        if (args.length != 0) {
+            configFilename = args[0];
+        } else {
+            configFilename = "scenarios/use_case_1/building_block_2/input/config.xml";
 //			configFilename = "scenarios/use_case_1/building_block_3/input/config.xml";
 //			configFilename = "scenarios/use_case_1/building_block_4/input/config.xml";
-		}
+        }
 
-		Config config = ConfigUtils.loadConfig(configFilename);
-		config.controller().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-		config.controller().setOutputDirectory("C:/devsbb/tmp/railsim-experiments/output_" + config.controller().getRunId() + "/");		
-		Scenario scenario = ScenarioUtils.loadScenario(config);
-		Controler controler = new Controler(scenario);
+        Config config = ConfigUtils.loadConfig(configFilename);
+        config.controller()
+                .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+        config.controller().setOutputDirectory(OUTPUT_DIRECTORY + config.controller().getRunId() + "/");
+        Scenario scenario = ScenarioUtils.loadScenario(config);
+        Controler controler = new Controler(scenario);
 
-		controler.addOverridingModule(new RailsimModule());
+        controler.addOverridingModule(new RailsimModule());
+        controler.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
 
-		// if you have other extensions that provide QSim components, call their configure-method here
-		controler.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
-
-		controler.run();
-	}
+        controler.run();
+    }
 
 }
