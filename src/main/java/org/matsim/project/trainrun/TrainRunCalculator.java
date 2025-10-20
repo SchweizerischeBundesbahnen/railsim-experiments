@@ -25,6 +25,7 @@ import org.matsim.pt.transitSchedule.api.TransitRouteStop;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitScheduleFactory;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
@@ -33,6 +34,7 @@ import org.matsim.vehicles.Vehicles;
 import java.util.ArrayList;
 import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -50,48 +52,7 @@ public final class TrainRunCalculator {
         new TrainRunCalculator(args[0], args[1]).run();
     }
 
-    public void run() {
-        log.info("Starting train run calculation for: {}", configPath);
-        TransitSchedule schedule = calculate();
-
-        log.info("Writing updated schedule to: {}", outputPath);
-        new TransitScheduleWriter(schedule).writeFile(outputPath + "/schedule_recalculated.xml");
-
-        log.info("Calculation complete.");
-    }
-
-    public TransitSchedule calculate() {
-        Config config = createTrainRunCalculationConfig();
-
-        log.info("Modify scenario for train run calculation");
-        Scenario scenario = ScenarioUtils.loadScenario(config);
-        setUnlimitedRailsimCapacity(scenario);
-        setZeroTravelTimes(scenario);
-
-        log.info("Running railsim simulation...");
-        Controller controller = ControllerUtils.createController(scenario);
-        controller.addOverridingModule(new RailsimModule());
-        controller.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
-        controller.run();
-        log.info("Simulation finished");
-
-        log.info("Processing events to calculate travel times...");
-        String eventsFile = config.controller().getOutputDirectory() + "/" + config.controller()
-                .getRunId() + ".output_events.xml.gz";
-        TrainRunEventHandler eventHandler = new TrainRunEventHandler();
-        EventsManager eventsManager = EventsUtils.createEventsManager();
-        eventsManager.addHandler(eventHandler);
-        new MatsimEventsReader(eventsManager).readFile(eventsFile);
-        // Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes = eventHandler.getArrivalTimesPerDeparture();
-        log.info("Event processing complete.");
-
-        // Update schedule in-place
-        log.info("Updating transit schedule with calculated travel times...");
-
-        return null;
-    }
-
-    private void setUnlimitedRailsimCapacity(Scenario scenario) {
+    private static void setUnlimitedRailsimCapacity(Scenario scenario) {
         for (Link link : scenario.getNetwork().getLinks().values()) {
             if (link.getAllowedModes().contains("rail")) {
                 link.getAttributes().putAttribute("railsimTrainCapacity", 9999);
@@ -99,7 +60,7 @@ public final class TrainRunCalculator {
         }
     }
 
-    private void setZeroTravelTimes(Scenario scenario) {
+    private static void setZeroTravelTimes(Scenario scenario) {
         TransitSchedule schedule = scenario.getTransitSchedule();
         Vehicles vehicles = scenario.getTransitVehicles();
         TransitScheduleFactory factory = schedule.getFactory();
@@ -109,6 +70,11 @@ public final class TrainRunCalculator {
 
             for (TransitRoute originalRoute : originalRoutes) {
                 transitLine.removeRoute(originalRoute);
+
+                if (originalRoute.getDepartures().isEmpty()) {
+                    log.warn("No departures found for route {}, deleting from schedule...", originalRoute.getId());
+                    continue;
+                }
 
                 // define route vehicle type
                 Set<Id<VehicleType>> vehicleTypeIds = originalRoute.getDepartures()
@@ -139,7 +105,7 @@ public final class TrainRunCalculator {
                             .isDefined() ? originalStop.getDepartureOffset().seconds() : arrivalOffset;
                     double dwellTime = Math.max(0, departureOffset - arrivalOffset);
 
-                    // check minimumStopDuration consistency
+                    // check minimum stop duration consistency
                     if (originalStop.getMinimumStopDuration() > 0) {
                         double minDuration = originalStop.getMinimumStopDuration();
                         if (Math.abs(minDuration - dwellTime) > 1e-6) {
@@ -186,6 +152,7 @@ public final class TrainRunCalculator {
                     cumulativeTime = newDepartureTime;
                 }
 
+                // create new transit route for replacing original
                 TransitRoute updatedRoute = factory.createTransitRoute(originalRoute.getId(), originalRoute.getRoute(),
                         newStops, originalRoute.getTransportMode());
 
@@ -208,6 +175,113 @@ public final class TrainRunCalculator {
                 transitLine.addRoute(updatedRoute);
             }
         }
+    }
+
+    private static void setCalculatedTravelTimes(Scenario scenario, Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes) {
+        TransitScheduleFactory factory = scenario.getTransitSchedule().getFactory();
+        for (TransitLine transitLine : scenario.getTransitSchedule().getTransitLines().values()) {
+            List<TransitRoute> routesToUpdate = new ArrayList<>(transitLine.getRoutes().values());
+
+            for (TransitRoute originalRoute : routesToUpdate) {
+                Id<Departure> simDepartureId = Id.create("dep_" + originalRoute.getId(), Departure.class);
+                Map<Id<TransitStopFacility>, Double> stopArrivalTimes = arrivalTimes.get(simDepartureId);
+
+                if (stopArrivalTimes == null) {
+                    log.warn("No simulation events found for route {}. Skipping update.", originalRoute.getId());
+                    continue;
+                }
+
+                List<TransitRouteStop> newStops = new ArrayList<>();
+                List<TransitRouteStop> originalStops = originalRoute.getStops();
+
+                for (int i = 0; i < originalStops.size(); i++) {
+                    TransitRouteStop originalStop = originalStops.get(i);
+                    Id<TransitStopFacility> stopFacilityId = originalStop.getStopFacility().getId();
+
+                    // calculate original dwell time
+                    double originalArrivalOffset = originalStop.getArrivalOffset()
+                            .isDefined() ? originalStop.getArrivalOffset().seconds() : 0.0;
+                    double originalDepartureOffset = originalStop.getDepartureOffset()
+                            .isDefined() ? originalStop.getDepartureOffset().seconds() : originalArrivalOffset;
+                    double dwellTime = originalDepartureOffset - originalArrivalOffset;
+
+                    double newArrivalOffset;
+
+                    if (i == 0) {
+                        // first stop always has an arrival offset of 0 in the simulation run
+                        newArrivalOffset = 0;
+                    } else {
+                        Double arrivalTime = stopArrivalTimes.get(stopFacilityId);
+                        if (arrivalTime == null) {
+                            throw new RuntimeException(
+                                    "Missing arrival event for stop " + stopFacilityId + " in route " + originalRoute.getId());
+                        }
+                        newArrivalOffset = arrivalTime;
+                    }
+
+                    double newDepartureOffset = newArrivalOffset + dwellTime;
+
+                    TransitRouteStop newStop = factory.createTransitRouteStop(originalStop.getStopFacility(),
+                            OptionalTime.defined(newArrivalOffset), OptionalTime.defined(newDepartureOffset));
+
+                    // preserve all other attributes from the original stop
+                    newStop.setAwaitDepartureTime(originalStop.isAwaitDepartureTime());
+                    newStop.setAllowAlighting(originalStop.isAllowAlighting());
+                    newStop.setAllowBoarding(originalStop.isAllowBoarding());
+                    newStop.setMinimumStopDuration(originalStop.getMinimumStopDuration());
+                    newStops.add(newStop);
+                }
+
+                // create an updated route with the new stops
+                TransitRoute updatedRoute = factory.createTransitRoute(originalRoute.getId(), originalRoute.getRoute(),
+                        newStops, originalRoute.getTransportMode());
+
+                // copy all departures from the original route to the updated one
+                for (Departure dep : originalRoute.getDepartures().values()) {
+                    updatedRoute.addDeparture(dep);
+                }
+
+                // replace the old route with the updated one
+                transitLine.removeRoute(originalRoute);
+                transitLine.addRoute(updatedRoute);
+            }
+        }
+    }
+
+    public void run() {
+        log.info("Starting train run calculation for: {}", configPath);
+        Config config = createTrainRunCalculationConfig();
+
+        log.info("Modify scenario for train run calculation");
+        Scenario scenario = ScenarioUtils.loadScenario(config);
+        setUnlimitedRailsimCapacity(scenario);
+        setZeroTravelTimes(scenario);
+
+        log.info("Running railsim simulation...");
+        Controller controller = ControllerUtils.createController(scenario);
+        controller.addOverridingModule(new RailsimModule());
+        controller.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
+        controller.run();
+        log.info("Simulation finished");
+
+        log.info("Processing events to calculate travel times...");
+        String eventsFile = config.controller().getOutputDirectory() + "/" + config.controller()
+                .getRunId() + ".output_events.xml.gz";
+        TrainRunEventHandler eventHandler = new TrainRunEventHandler();
+        EventsManager eventsManager = EventsUtils.createEventsManager();
+        eventsManager.addHandler(eventHandler);
+        new MatsimEventsReader(eventsManager).readFile(eventsFile);
+        Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes = eventHandler.getArrivalTimesPerDeparture();
+        log.info("Event processing complete.");
+
+        // Update schedule in-place
+        log.info("Updating transit schedule with calculated travel times...");
+        setCalculatedTravelTimes(scenario, arrivalTimes);
+
+        log.info("Writing updated schedule to: {}", outputPath);
+        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputPath + "/schedule_recalculated.xml");
+
+        log.info("Calculation complete.");
     }
 
     private Config createTrainRunCalculationConfig() {
