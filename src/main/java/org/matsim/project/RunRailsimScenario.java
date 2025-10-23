@@ -19,43 +19,36 @@
 
 package org.matsim.project;
 
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.project.scenario.BuildingBlock;
+import org.matsim.project.scenario.UseCase;
+import org.matsim.project.scenario.plan.OperationalPlan;
+import org.matsim.project.scenario.plan.OperationalPlanReader;
 import org.matsim.project.trainrun.TrainRunCalculator;
+import org.matsim.project.utils.ResourceLoader;
 
-/**
- * Example script to run a railsim simulation.
- *
- */
+import java.io.IOException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 public final class RunRailsimScenario {
 
     private static final String OUTPUT_DIRECTORY = "results";
 
-    public static void main(String[] args) {
+    private static final BuildingBlock BUILDING_BLOCK = BuildingBlock.UC1_BB2;
+    private static final UseCase USE_CASE = BUILDING_BLOCK.getUseCase();
 
-        String configFilename;
-        if (args.length != 0) {
-            configFilename = args[0];
-        } else {
-            configFilename = "scenarios/use_case_1/building_block_2/input/config.xml";
-//			configFilename = "scenarios/use_case_1/building_block_3/input/config.xml";
-//			configFilename = "scenarios/use_case_1/building_block_4/input/config.xml";
-        }
+    public static void main(String[] args) throws IOException {
 
-        new TrainRunCalculator(configFilename, OUTPUT_DIRECTORY).run();
+        Path outputPath = Paths.get(OUTPUT_DIRECTORY);
+        Path configFile = ResourceLoader.getPath(BUILDING_BLOCK.getConfigFilePath());
+        Path operationalPlanPath = ResourceLoader.getPath(USE_CASE.getOperationalPlanPath());
 
-        /*
-        Config config = ConfigUtils.loadConfig(configFilename);
-        config.controller()
-                .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-        config.controller().setOutputDirectory(OUTPUT_DIRECTORY + config.controller().getRunId() + "/");
-        Scenario scenario = ScenarioUtils.loadScenario(config);
-        Controler controler = new Controler(scenario);
+        // train run calculation for template schedule
+        Scenario template = new TrainRunCalculator(configFile, outputPath).run();
 
-        controler.addOverridingModule(new RailsimModule());
-        controler.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
-
-        controler.run();
-
-         */
+        // load train volumes per type and direction
+        OperationalPlan operationalPlan = new OperationalPlanReader().read(operationalPlanPath);
     }
 
 }

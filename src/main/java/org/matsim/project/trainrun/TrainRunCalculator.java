@@ -18,24 +18,15 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.OptionalTime;
-import org.matsim.pt.transitSchedule.api.Departure;
-import org.matsim.pt.transitSchedule.api.TransitLine;
-import org.matsim.pt.transitSchedule.api.TransitRoute;
-import org.matsim.pt.transitSchedule.api.TransitRouteStop;
-import org.matsim.pt.transitSchedule.api.TransitSchedule;
-import org.matsim.pt.transitSchedule.api.TransitScheduleFactory;
-import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
-import org.matsim.pt.transitSchedule.api.TransitStopFacility;
+import org.matsim.pt.transitSchedule.api.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.Vehicles;
 
-import java.util.ArrayList;
-import java.util.EnumSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -45,12 +36,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public final class TrainRunCalculator {
 
-    private final String configPath;
-    private final String outputPath;
-
-    public static void main(String[] args) {
-        new TrainRunCalculator(args[0], args[1]).run();
-    }
+    private final Path configPath;
+    private final Path outputPath;
 
     private static void setUnlimitedRailsimCapacity(Scenario scenario) {
         for (Link link : scenario.getNetwork().getLinks().values()) {
@@ -116,7 +103,8 @@ public final class TrainRunCalculator {
                     } else {
                         log.warn(
                                 "Stop {} in route {} has no minimumStopDuration set. " + "Setting it to dwell time = {} seconds.",
-                                originalStop.getStopFacility().getId(), originalRoute.getId(), dwellTime);
+                                originalStop.getStopFacility()
+                                        .getId(), originalRoute.getId(), dwellTime);
                     }
 
                     double newArrivalTime;
@@ -177,7 +165,8 @@ public final class TrainRunCalculator {
         }
     }
 
-    private static void setCalculatedTravelTimes(Scenario scenario, Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes) {
+    private static void setCalculatedTravelTimes(Scenario scenario,
+                                                 Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes) {
         TransitScheduleFactory factory = scenario.getTransitSchedule().getFactory();
         for (TransitLine transitLine : scenario.getTransitSchedule().getTransitLines().values()) {
             List<TransitRoute> routesToUpdate = new ArrayList<>(transitLine.getRoutes().values());
@@ -248,7 +237,7 @@ public final class TrainRunCalculator {
         }
     }
 
-    public void run() {
+    public Scenario run() {
         log.info("Starting train run calculation for: {}", configPath);
         Config config = createTrainRunCalculationConfig();
 
@@ -265,12 +254,12 @@ public final class TrainRunCalculator {
         log.info("Simulation finished");
 
         log.info("Processing events to calculate travel times...");
-        String eventsFile = config.controller().getOutputDirectory() + "/" + config.controller()
-                .getRunId() + ".output_events.xml.gz";
+        Path eventsFile = Paths.get(config.controller().getOutputDirectory())
+                .resolve(config.controller().getRunId() + ".output_events.xml.gz");
         TrainRunEventHandler eventHandler = new TrainRunEventHandler();
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(eventHandler);
-        new MatsimEventsReader(eventsManager).readFile(eventsFile);
+        new MatsimEventsReader(eventsManager).readFile(eventsFile.toString());
         Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes = eventHandler.getArrivalTimesPerDeparture();
         log.info("Event processing complete.");
 
@@ -278,16 +267,19 @@ public final class TrainRunCalculator {
         log.info("Updating transit schedule with calculated travel times...");
         setCalculatedTravelTimes(scenario, arrivalTimes);
 
-        log.info("Writing updated schedule to: {}", outputPath);
-        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputPath + "/schedule_recalculated.xml");
+        Path recalculatedScheduleFile = outputPath.resolve("schedule_recalculated.xml");
+        log.info("Writing updated schedule to: {}", recalculatedScheduleFile);
+        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(recalculatedScheduleFile.toString());
 
         log.info("Calculation complete.");
+        return scenario;
     }
 
     private Config createTrainRunCalculationConfig() {
-        Config config = ConfigUtils.loadConfig(configPath);
-        config.controller()
-                .setOutputDirectory(outputPath + "/output_" + config.controller().getRunId() + "/train_run_calc");
+        Config config = ConfigUtils.loadConfig(configPath.toString());
+        Path trainRunOutputDir = outputPath.resolve("output_" + config.controller().getRunId())
+                .resolve("train_run_calc");
+        config.controller().setOutputDirectory(trainRunOutputDir.toString());
         config.controller().setRunId(config.controller().getRunId());
         config.controller().setLastIteration(0);
         config.controller()
