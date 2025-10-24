@@ -149,12 +149,12 @@ public final class TrainRunCalculator {
                         .forEach(departure -> vehicles.removeVehicle(departure.getVehicleId()));
 
                 // create vehicle for new departure
-                Id<Vehicle> newVehicleId = Id.create("veh_" + originalRoute.getId(), Vehicle.class);
+                Id<Vehicle> newVehicleId = Id.create("train_" + originalRoute.getId() + "_0", Vehicle.class);
                 Vehicle newVehicle = VehicleUtils.createVehicle(newVehicleId, routeVehicleType);
                 vehicles.addVehicle(newVehicle);
 
                 // set one departure at simulation start
-                Id<Departure> newDepratureId = Id.create("dep_" + originalRoute.getId(), Departure.class);
+                Id<Departure> newDepratureId = Id.create(originalRoute.getId() + "dep_0", Departure.class);
                 Departure newDeparture = factory.createDeparture(newDepratureId, 0.);
                 newDeparture.setVehicleId(newVehicle.getId());
                 updatedRoute.addDeparture(newDeparture);
@@ -171,7 +171,7 @@ public final class TrainRunCalculator {
             List<TransitRoute> routesToUpdate = new ArrayList<>(transitLine.getRoutes().values());
 
             for (TransitRoute originalRoute : routesToUpdate) {
-                Id<Departure> simDepartureId = Id.create("dep_" + originalRoute.getId(), Departure.class);
+                Id<Departure> simDepartureId = Id.create(originalRoute.getId() + "dep_0", Departure.class);
                 Map<Id<TransitStopFacility>, Double> stopArrivalTimes = arrivalTimes.get(simDepartureId);
 
                 if (stopArrivalTimes == null) {
@@ -267,8 +267,7 @@ public final class TrainRunCalculator {
         setCalculatedTravelTimes(scenario, arrivalTimes);
 
         Path recalculatedScheduleFile = outputPath.resolve(
-                config.controller().getRunId() + ".output_transitSchedule_trainRunCalculation.xml.gz");
-        log.info("Writing updated schedule to: {}", recalculatedScheduleFile);
+                config.controller().getRunId() + ".output_transitSchedule_updated.xml.gz");
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(recalculatedScheduleFile.toString());
 
         log.info("Calculation complete.");
@@ -278,7 +277,7 @@ public final class TrainRunCalculator {
     private Config createTrainRunCalculationConfig() {
         Config config = ConfigUtils.loadConfig(configPath.toString());
         config.controller().setOutputDirectory(outputPath.toString());
-        config.controller().setRunId(config.controller().getRunId());
+        config.controller().setRunId("train_run_calculation");
         config.controller().setLastIteration(0);
         config.controller()
                 .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);

@@ -48,7 +48,9 @@ public final class RunRailsimScenario {
     public static void main(String[] args) throws IOException {
 
         UseCase useCase = BUILDING_BLOCK.getUseCase();
-        Path outputPath = Paths.get(OUTPUT_DIRECTORY).resolve(useCase.name()).resolve(BUILDING_BLOCK.name());
+        Path outputPath = Paths.get(OUTPUT_DIRECTORY)
+                .resolve(useCase.name().toLowerCase())
+                .resolve(BUILDING_BLOCK.name().toLowerCase());
         Path configFile = ResourceLoader.getPath(BUILDING_BLOCK.getConfigFilePath());
         Path operationalPlanPath = ResourceLoader.getPath(useCase.getOperationalPlanPath());
 
@@ -71,7 +73,7 @@ public final class RunRailsimScenario {
 
                         // save to building block directory
                         Path sampleOutputPath = outputPath.resolve("02_schedule_sampling")
-                                .resolve(subVariant.getId())
+                                .resolve(subVariant.getId().toLowerCase())
                                 .resolve("sample_" + i);
                         Files.createDirectories(sampleOutputPath);
 
