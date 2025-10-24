@@ -31,20 +31,20 @@
               "trainVolumes": [
                 {
                   "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 3
                 },
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 4
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 1
                 }
               ]
@@ -54,20 +54,20 @@
               "trainVolumes": [
                 {
                   "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 6
                 },
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 8
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 2
                 }
               ]
@@ -96,20 +96,20 @@
               "trainVolumes": [
                 {
                   "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 1
                 },
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 5
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 2
                 }
               ]
@@ -119,20 +119,20 @@
               "trainVolumes": [
                 {
                   "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 3
                 },
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 10
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 3
                 }
               ]
@@ -161,20 +161,20 @@
               "trainVolumes": [
                 {
                   "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 2
                 },
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 4
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 2
                 }
               ]
@@ -184,20 +184,20 @@
               "trainVolumes": [
                 {
                   "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 5
                 },
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 8
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 3
                 }
               ]
@@ -232,14 +232,14 @@
               "trainVolumes": [
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 6
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 2
                 }
               ]
@@ -249,14 +249,14 @@
               "trainVolumes": [
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 12
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 4
                 }
               ]
@@ -281,14 +281,14 @@
               "trainVolumes": [
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 7
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 1
                 }
               ]
@@ -298,14 +298,14 @@
               "trainVolumes": [
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 14
                 },
                 {
                   "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 2
                 }
               ]
@@ -335,8 +335,8 @@
               "trainVolumes": [
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 8
                 }
               ]
@@ -346,8 +346,8 @@
               "trainVolumes": [
                 {
                   "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
+                  "fromStop": "L1",
+                  "toStop": "R1",
                   "amount": 16
                 }
               ]

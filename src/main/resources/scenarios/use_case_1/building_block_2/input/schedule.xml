@@ -19,6 +19,7 @@
         <stopFacility id="R1" x="10730.0" y="0.0" linkRefId="stop_loop_12" name="R1" isBlocking="false">
         </stopFacility>
     </transitStops>
+
     <transitLine id="FV1">
         <transitRoute id="FV1_route_1">
             <transportMode>rail</transportMode>
@@ -39,7 +40,7 @@
                 <link refId="stop_loop_12"/>
             </route>
             <departures>
-                <departure id="FV1_route_1_dep_1" departureTime="07:00:00" vehicleRefId="train_FV_veh1"/>
+                <departure id="FV1_route_1_dep_1" departureTime="07:00:00" vehicleRefId="train_FV_1"/>
             </departures>
         </transitRoute>
     </transitLine>
@@ -67,7 +68,7 @@
                 <link refId="stop_loop_12"/>
             </route>
             <departures>
-                <departure id="GV1_route_1_dep_1" departureTime="07:00:00" vehicleRefId="train_GV_veh1"/>
+                <departure id="GV1_route_1_dep_1" departureTime="07:00:00" vehicleRefId="train_GV_1"/>
             </departures>
         </transitRoute>
     </transitLine>
@@ -98,8 +99,9 @@
                 <link refId="stop_loop_12"/>
             </route>
             <departures>
-                <departure id="RV1_route_1_dep_1" departureTime="07:00:00" vehicleRefId="train_RV_veh1"/>
+                <departure id="RV1_route_1_dep_1" departureTime="07:00:00" vehicleRefId="train_RV_1"/>
             </departures>
         </transitRoute>
     </transitLine>
+
 </transitSchedule>

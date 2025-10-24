@@ -103,8 +103,7 @@ public final class TrainRunCalculator {
                     } else {
                         log.warn(
                                 "Stop {} in route {} has no minimumStopDuration set. " + "Setting it to dwell time = {} seconds.",
-                                originalStop.getStopFacility()
-                                        .getId(), originalRoute.getId(), dwellTime);
+                                originalStop.getStopFacility().getId(), originalRoute.getId(), dwellTime);
                     }
 
                     double newArrivalTime;
@@ -267,7 +266,8 @@ public final class TrainRunCalculator {
         log.info("Updating transit schedule with calculated travel times...");
         setCalculatedTravelTimes(scenario, arrivalTimes);
 
-        Path recalculatedScheduleFile = outputPath.resolve("schedule_recalculated.xml");
+        Path recalculatedScheduleFile = outputPath.resolve(
+                config.controller().getRunId() + ".output_transitSchedule_trainRunCalculation.xml.gz");
         log.info("Writing updated schedule to: {}", recalculatedScheduleFile);
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(recalculatedScheduleFile.toString());
 
@@ -277,9 +277,7 @@ public final class TrainRunCalculator {
 
     private Config createTrainRunCalculationConfig() {
         Config config = ConfigUtils.loadConfig(configPath.toString());
-        Path trainRunOutputDir = outputPath.resolve("output_" + config.controller().getRunId())
-                .resolve("train_run_calc");
-        config.controller().setOutputDirectory(trainRunOutputDir.toString());
+        config.controller().setOutputDirectory(outputPath.toString());
         config.controller().setRunId(config.controller().getRunId());
         config.controller().setLastIteration(0);
         config.controller()
