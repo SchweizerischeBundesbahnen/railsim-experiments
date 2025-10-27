@@ -66,8 +66,17 @@ public class SimulationJobSampler {
                         Path vehiclePath = sampleFilesPath.resolve("vehicles.xml.gz");
                         new MatsimVehicleWriter(sample.vehicles()).writeFile(vehiclePath.toString());
 
+                        // setup run output path
+                        Path runOutputPath = simulationRunOutputFolderPath.resolve(subVariant.getId().toLowerCase())
+                                .resolve(runId);
+                        Files.createDirectories(runOutputPath);
+
+                        // define config file path
+                        Path configFilePath = simulationJobConfigOutputFolderPath.resolve(
+                                subVariant.getId().toLowerCase()).resolve(runId + ".config.xml");
+                        Files.createDirectories(configFilePath.getParent());
+
                         // create the simulation configuration for this specific run
-                        Path runOutputPath = simulationRunOutputFolderPath.resolve(runId);
                         Config config = ConfigUtils.loadConfig(templateConfigFileInputPath.toString());
                         config.controller().setRunId(runId);
                         config.controller().setOutputDirectory(runOutputPath.toString());
@@ -77,15 +86,13 @@ public class SimulationJobSampler {
                         config.controller().setLastIteration(0);
                         config.network()
                                 .setInputFile(ResourceLoader.getPath(buildingBlock.getNetworkFilePath()).toString());
+                        // the relative path must be calculated from the config file's parent directory
                         config.transit()
-                                .setTransitScheduleFile(
-                                        simulationJobConfigOutputFolderPath.relativize(schedulePath).toString());
-                        config.transit()
-                                .setVehiclesFile(
-                                        simulationJobConfigOutputFolderPath.relativize(vehiclePath).toString());
+                                .setTransitScheduleFile(configFilePath.getParent().relativize(schedulePath).toString());
+                        config.transit().setVehiclesFile(configFilePath.getParent().relativize(vehiclePath).toString());
+
 
                         // write the config file and create the job object with necessary metadata
-                        Path configFilePath = simulationJobConfigOutputFolderPath.resolve(runId + ".config.xml");
                         ConfigUtils.writeConfig(config, configFilePath.toString());
 
                         jobs.add(new RailsimSimulationJob(configFilePath, variant, subVariant, i));

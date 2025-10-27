@@ -71,7 +71,10 @@ public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis
         // write analysis results to file
         DelayReport report = new DelayReport(handler.getStopEvents(), handler.getDepartedTrains().size(),
                 handler.getArrivedTrains().size());
-        new TrainDelayWriter(job, report).write(this.analysisOutputPath);
+        Path trainDelayOutputPath = this.analysisOutputPath.resolve(job.getSubVariant().getId().toLowerCase())
+                .resolve(job.getRunId());
+        Files.createDirectories(trainDelayOutputPath);
+        new TrainDelayWriter(job, report).write(trainDelayOutputPath);
 
         return report;
     }
