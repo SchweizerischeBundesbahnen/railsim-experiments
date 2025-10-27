@@ -16,32 +16,45 @@ import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.Vehicles;
 
 import java.util.*;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Event handler to capture train arrival and departure events at transit stop facilities.
- * <p>
- * It compares the actual event times with the planned times from the input transit schedule
- * to calculate delays. It also tracks the number of trains that start and finish their journey.
  */
 @Log4j2
 @Getter
 public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHandler, VehicleDepartsAtFacilityEventHandler, TransitDriverStartsEventHandler, EventHandler {
 
-    private final Map<Id<TransitRoute>, TransitRoute> routes;
-    private final Vehicles vehicles;
-
-    // data collection during event processing
     private final Map<Id<Vehicle>, VehicleState> vehicleStates = new HashMap<>();
-    private final Map<Id<Departure>, Map<Id<TransitStopFacility>, StopEventData>> stopEventDataMap = new LinkedHashMap<>();
+    private final Map<Id<Departure>, Map<Id<TransitStopFacility>, StopEventData>> departureStopEvents = new LinkedHashMap<>();
     private final Set<Id<Vehicle>> departedTrains = new HashSet<>();
     private final Set<Id<Vehicle>> arrivedTrains = new HashSet<>();
+
+    private final Vehicles vehicles;
+    private final Map<Id<TransitRoute>, TransitRoute> routes;
+    private final Map<Id<TransitRoute>, Map<Id<TransitStopFacility>, RouteStopInfo>> routeStopLookup;
 
     public TrainDelayEventHandler(TransitSchedule plannedSchedule, Vehicles vehicles) {
         this.vehicles = vehicles;
         this.routes = new HashMap<>();
+        this.routeStopLookup = new HashMap<>();
 
+        // pre-process the schedule for efficient lookups during event handling
         for (TransitLine line : plannedSchedule.getTransitLines().values()) {
             this.routes.putAll(line.getRoutes());
+            for (TransitRoute route : line.getRoutes().values()) {
+
+                Map<Id<TransitStopFacility>, RouteStopInfo> stopMap = new HashMap<>();
+                List<TransitRouteStop> stops = route.getStops();
+
+                for (int i = 0; i < stops.size(); i++) {
+                    TransitRouteStop stop = stops.get(i);
+                    stopMap.put(stop.getStopFacility().getId(), new RouteStopInfo(stop, i));
+                }
+
+                this.routeStopLookup.put(route.getId(), stopMap);
+            }
         }
     }
 
@@ -50,14 +63,12 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
         Id<Vehicle> vehicleId = event.getVehicleId();
         Vehicle vehicle = vehicles.getVehicles().get(vehicleId);
         if (vehicle == null) {
-            throw new IllegalStateException(
-                    "Vehicle with id " + vehicleId + " from TransitDriverStartsEvent not found in vehicles file.");
+            throw new IllegalStateException("Vehicle with id " + vehicleId + " not found in vehicles file.");
         }
 
         TransitRoute route = this.routes.get(event.getTransitRouteId());
         if (route == null) {
-            throw new IllegalStateException(
-                    "Route with id " + event.getTransitRouteId() + " from TransitDriverStartsEvent not found in reference schedule.");
+            throw new IllegalStateException("Route with id " + event.getTransitRouteId() + " not found in schedule.");
         }
 
         Departure departure = route.getDepartures().get(event.getDepartureId());
@@ -75,102 +86,89 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
     @Override
     public void handleEvent(VehicleArrivesAtFacilityEvent event) {
         VehicleState state = vehicleStates.get(event.getVehicleId());
-        if (state != null) {
-            getStopData(state, event.getFacilityId()).ifPresent(data -> {
-                data.actualArrival = event.getTime();
-
-                // if this is the last stop of the route, the train has arrived
-                if (data.stopSequence == data.totalStopsInRoute - 1) {
-                    arrivedTrains.add(event.getVehicleId());
-                }
-
-            });
-        } else {
-            // this can happen for non-transit vehicles
-            log.warn(
-                    "Vehicle {} arrived at stop {}, but has no associated transit driver state. It might not be a transit vehicle.",
-                    event.getVehicleId(), event.getFacilityId());
+        if (state == null) {
+            // not a tracked transit vehicle, ignore
+            return;
         }
+
+        // get stop data using efficient lookup
+        getStopData(state, event.getFacilityId()).ifPresent(data -> {
+            data.actualArrival = event.getTime();
+
+            // if at last stop, the train has arrived
+            if (data.isLastStop()) {
+                arrivedTrains.add(event.getVehicleId());
+            }
+        });
     }
 
     @Override
     public void handleEvent(VehicleDepartsAtFacilityEvent event) {
         VehicleState state = vehicleStates.get(event.getVehicleId());
-        if (state != null) {
-            getStopData(state, event.getFacilityId()).ifPresent(data -> data.actualDeparture = event.getTime());
-        } else {
-            // this can happen for non-transit vehicles
-            log.warn(
-                    "Vehicle {} departed from stop {}, but has no associated transit driver state. It might not be a transit vehicle.",
-                    event.getVehicleId(), event.getFacilityId());
+
+        if (state == null) {
+            return;
         }
+
+        getStopData(state, event.getFacilityId()).ifPresent(data -> data.actualDeparture = event.getTime());
     }
 
     /**
-     * Returns the collected data as sorted list of immutable records.
+     * Returns the collected data as a sorted list of immutable records.
      */
     public List<TrainDelayAnalysis.DetailedStopInfo> getStopEvents() {
-        List<TrainDelayAnalysis.DetailedStopInfo> result = new ArrayList<>();
+        // create an efficient departureId to state lookup map for faster processing
+        Map<Id<Departure>, VehicleState> departureToStateMap = this.vehicleStates.values()
+                .stream()
+                .collect(Collectors.toMap(VehicleState::departureId, Function.identity()));
 
-        // iterate through all collected departures and their associated stop events
-        stopEventDataMap.forEach((departureId, stopMap) -> {
-            // find the corresponding vehicle state that contains metadata for this departure
-            vehicleStates.values().stream().filter(s -> s.departureId.equals(departureId)).findFirst()
-                    // if found, process all stop events for that departure
-                    .ifPresent(state -> stopMap.values().stream()
-                            // sort stops by their sequence number (0, 1, 2, ...)
-                            .sorted(Comparator.comparingInt(d -> d.stopSequence))
-                            // convert to immutable record
-                            .map(data -> data.toDetailedStopInfo(state)).forEach(result::add));
-        });
-
-        return result;
+        return this.departureStopEvents.entrySet().stream().flatMap(entry -> {
+            Id<Departure> departureId = entry.getKey();
+            VehicleState state = departureToStateMap.get(departureId);
+            // sort stops by their sequence number and map to the final, immutable record
+            return entry.getValue()
+                    .values()
+                    .stream()
+                    .sorted(Comparator.comparingInt(StopEventData::getStopSequence))
+                    .map(data -> data.toDetailedStopInfo(state));
+        }).collect(Collectors.toList());
     }
 
     /**
      * Retrieves or creates a data container for a specific stop event.
-     *
-     * @param state      The current state of the vehicle (containing route info).
-     * @param facilityId The ID of the stop facility where the event occurred.
-     * @return An Optional containing the mutable StopEventData for this event.
      */
     private Optional<StopEventData> getStopData(VehicleState state, Id<TransitStopFacility> facilityId) {
-        TransitRoute route = this.routes.get(state.routeId());
-
-        if (route == null) {
-            // vehicle is on a route not in the reference schedule
+        Map<Id<TransitStopFacility>, RouteStopInfo> stopInfoMap = this.routeStopLookup.get(state.routeId());
+        if (stopInfoMap == null) {
+            // route not found in pre-processed map
             return Optional.empty();
         }
 
-        // iterate through the planned stops of the vehicle's route to find a match
-        for (int i = 0; i < route.getStops().size(); i++) {
-            TransitRouteStop stop = route.getStops().get(i);
-
-            // check if the event's facility ID matches the planned stop's facility ID
-            if (stop.getStopFacility().getId().equals(facilityId)) {
-                // get or create the map of stops for this specific departure
-                Map<Id<TransitStopFacility>, StopEventData> stopDataMapForDeparture = stopEventDataMap.computeIfAbsent(
-                        state.departureId(), k -> new LinkedHashMap<>());
-
-                // get or create the data object for this specific stop event
-                int stopIndex = i;
-                StopEventData stopEventData = stopDataMapForDeparture.computeIfAbsent(facilityId,
-                        k -> new StopEventData(stopIndex, route.getStops().size(), stop, state.departureTime()));
-
-                return Optional.of(stopEventData);
-            }
+        RouteStopInfo stopInfo = stopInfoMap.get(facilityId);
+        if (stopInfo == null) {
+            // stop not part of this vehicle's planned route
+            return Optional.empty();
         }
 
-        // the facility is not part of this vehicle's planned route
-        return Optional.empty();
+        // get or create the map of stop events for this departure and the data object for the stop
+        int totalStops = this.routes.get(state.routeId()).getStops().size();
+        return Optional.of(departureStopEvents.computeIfAbsent(state.departureId(), k -> new LinkedHashMap<>())
+                .computeIfAbsent(facilityId,
+                        k -> new StopEventData(stopInfo.index(), totalStops, stopInfo.stop(), state.departureTime())));
     }
 
     @Override
     public void reset(int iteration) {
         vehicleStates.clear();
-        stopEventDataMap.clear();
+        departureStopEvents.clear();
         departedTrains.clear();
         arrivedTrains.clear();
+    }
+
+    /**
+     * Store pre-calculated stop information for lookups.
+     */
+    private record RouteStopInfo(TransitRouteStop stop, int index) {
     }
 
     private record VehicleState(Id<Vehicle> vehicleId, Id<Departure> departureId, Id<TransitLine> lineId,
@@ -178,13 +176,14 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
     }
 
     private static class StopEventData {
-        final int stopSequence;
-        final int totalStopsInRoute;
-        final Id<TransitStopFacility> stopId;
-        final double plannedArrival;
-        final double plannedDeparture;
-        double actualArrival = Double.NaN;
-        double actualDeparture = Double.NaN;
+        @Getter
+        private final int stopSequence;
+        private final int totalStopsInRoute;
+        private final Id<TransitStopFacility> stopId;
+        private final double plannedArrival;
+        private final double plannedDeparture;
+        private double actualArrival = Double.NaN;
+        private double actualDeparture = Double.NaN;
 
         StopEventData(int sequence, int totalStops, TransitRouteStop stop, double departureTime) {
             this.stopSequence = sequence;
@@ -194,6 +193,10 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
             // calculate absolute planned times by adding the departure time to the offset
             this.plannedArrival = departureTime + stop.getArrivalOffset().seconds();
             this.plannedDeparture = departureTime + stop.getDepartureOffset().seconds();
+        }
+
+        boolean isLastStop() {
+            return this.stopSequence == this.totalStopsInRoute - 1;
         }
 
         TrainDelayAnalysis.DetailedStopInfo toDetailedStopInfo(VehicleState state) {
@@ -206,16 +209,13 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
             if (stopSequence == 0) {
                 pArr = aArr = state.departureTime();
             }
-
-            // last stop has no planned or actual departure event
-            if (stopSequence == totalStopsInRoute - 1) {
+            if (isLastStop()) {
                 pDep = aDep = Double.NaN;
             }
 
             double arrivalDelay = (!Double.isNaN(aArr) && !Double.isNaN(pArr)) ? Math.max(0, aArr - pArr) : 0.0;
             double departureDelay = (!Double.isNaN(aDep) && !Double.isNaN(pDep)) ? Math.max(0, aDep - pDep) : 0.0;
 
-            // use the actual vehicle ID stored in the state, no reconstruction needed
             return new TrainDelayAnalysis.DetailedStopInfo(state.vehicleId(), state.departureId(), state.routeId(),
                     state.vehicleTypeId(), stopSequence, stopId, pArr, aArr, arrivalDelay, pDep, aDep, departureDelay);
         }

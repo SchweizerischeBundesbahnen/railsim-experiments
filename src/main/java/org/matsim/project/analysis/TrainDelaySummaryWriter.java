@@ -21,7 +21,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TrainDelaySummaryWriter {
 
-    private static final String SUMMARY_CSV = "_SUMMARY.csv";
+    private static final String SUMMARY_CSV = "train_delay_summary.csv";
     private static final List<Column> COLUMNS = List.of(Column.values());
     private static final String HEADER_ROW = COLUMNS.stream().map(c -> c.header).collect(Collectors.joining(","));
 
