@@ -1,141 +1,146 @@
-/* *********************************************************************** *
- * project: org.matsim.*
- *                                                                         *
- * *********************************************************************** *
- *                                                                         *
- * copyright       : (C) 2023 by the members listed in the COPYING,        *
- *                   LICENSE and WARRANTY file.                            *
- * email           : info at matsim dot org                                *
- *                                                                         *
- * *********************************************************************** *
- *                                                                         *
- *   This program is free software; you can redistribute it and/or modify  *
- *   it under the terms of the GNU General Public License as published by  *
- *   the Free Software Foundation; either version 2 of the License, or     *
- *   (at your option) any later version.                                   *
- *   See also COPYING, LICENSE and WARRANTY file                           *
- *                                                                         *
- * *********************************************************************** */
-
 package org.matsim.project;
 
-import ch.sbb.matsim.contrib.railsim.RailsimModule;
-import ch.sbb.matsim.contrib.railsim.qsimengine.RailsimQSimModule;
 import lombok.extern.log4j.Log4j2;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.controler.Controller;
-import org.matsim.core.controler.ControllerUtils;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.project.sampling.StatefulScheduleSampler;
+import org.matsim.project.analysis.TrainDelayAnalysis;
+import org.matsim.project.sampling.SimulationJobSampler;
 import org.matsim.project.sampling.strategy.DepartureSamplingStrategy;
 import org.matsim.project.sampling.strategy.RandomDepartureSampling;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.UseCase;
-import org.matsim.project.scenario.plan.*;
+import org.matsim.project.scenario.plan.OperationalPlan;
+import org.matsim.project.scenario.plan.OperationalPlanReader;
+import org.matsim.project.simulation.PostSimulationTask;
+import org.matsim.project.simulation.RailsimSimulationJob;
+import org.matsim.project.simulation.RailsimSimulationResult;
+import org.matsim.project.simulation.RailsimSimulator;
 import org.matsim.project.trainrun.TrainRunCalculator;
 import org.matsim.project.utils.ResourceLoader;
-import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
-import org.matsim.vehicles.MatsimVehicleWriter;
 
+import java.io.BufferedWriter;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.List;
 
 @Log4j2
 public final class RunRailsimScenario {
 
+    private static final BuildingBlock BUILDING_BLOCK = BuildingBlock.UC1_BB2;
+
     private static final String OUTPUT_DIRECTORY = "results";
-    private static final int N_SIMULATIONS = 3;
+    private static final int N_SAMPLES_PER_SUBVARIANT = 3;
     private static final long SEED = 123;
     private static final DepartureSamplingStrategy DEPARTURE_SAMPLING_STRATEGY = new RandomDepartureSampling();
 
-    private static final BuildingBlock BUILDING_BLOCK = BuildingBlock.UC1_BB2;
-
     public static void main(String[] args) throws IOException {
 
-        UseCase useCase = BUILDING_BLOCK.getUseCase();
-        Path outputPath = Paths.get(OUTPUT_DIRECTORY)
-                .resolve(useCase.name().toLowerCase())
-                .resolve(BUILDING_BLOCK.name().toLowerCase());
-        Path configFile = ResourceLoader.getPath(BUILDING_BLOCK.getConfigFilePath());
-        Path operationalPlanPath = ResourceLoader.getPath(useCase.getOperationalPlanPath());
+        // set matsim logs to warn, re-enable the current project
+        Configurator.setLevel("org.matsim", Level.WARN);
+        Configurator.setLevel("ch.sbb.matsim", Level.WARN);
+        Configurator.setLevel("org.matsim.project", Level.INFO);
 
-        // ensure directory
-        Files.createDirectories(outputPath);
+        // setup paths and directories
+        Path templateConfigFilePath = ResourceLoader.getPath(BUILDING_BLOCK.getConfigFilePath());
+        Path operationalPlanPath = ResourceLoader.getPath(BUILDING_BLOCK.getUseCase().getOperationalPlanPath());
 
-        // train run calculation for template schedule
-        Path trainRunCalculationOutputPath = outputPath.resolve(ProjectStructure.TRAIN_RUN_CALCULATION.getDirectory());
-        Scenario template = new TrainRunCalculator(configFile, trainRunCalculationOutputPath).run();
+        // calculate base train run times from template schedule
+        Path trainRunCalcPath = getAndEnsure(ProjectFolder.TRAIN_RUN_CALCULATION);
+        Scenario templateScenario = new TrainRunCalculator(templateConfigFilePath, trainRunCalcPath).run();
 
-        // load train volumes per type and direction
+        // create simulation jobs based on the operational plan
+        Path scheduleSamplingOutputFolderPath = getAndEnsure(ProjectFolder.SCHEDULE_SAMPLING);
+        Path simulationJobConfigOutputFolderPath = getAndEnsure(ProjectFolder.SIMULATION_JOB_CONFIG);
+        Path simulationRunOutputFolderPath = getAndEnsure(ProjectFolder.SIMULATION_RUN_OUTPUT);
         OperationalPlan operationalPlan = new OperationalPlanReader().read(operationalPlanPath);
+        SimulationJobSampler sampler = new SimulationJobSampler(SEED, templateConfigFilePath, templateScenario,
+                BUILDING_BLOCK, operationalPlan);
+        List<RailsimSimulationJob> jobs = sampler.sample(N_SAMPLES_PER_SUBVARIANT, DEPARTURE_SAMPLING_STRATEGY,
+                scheduleSamplingOutputFolderPath, simulationJobConfigOutputFolderPath, simulationRunOutputFolderPath);
 
-        // sample schedules
-        Path simulationJobPath = outputPath.resolve(ProjectStructure.SIMULATION_JOBS.getDirectory());
-        Files.createDirectories(simulationJobPath);
-        List<Path> simJobs = new ArrayList<>();
-        for (OperationMode operationMode : operationalPlan.getOperationModes()) {
-            for (Variant variant : operationMode.getVariants()) {
-                for (SubVariant subVariant : variant.getSubVariants()) {
-                    Path simulationOutputPath = outputPath.resolve(ProjectStructure.SIMULATION_OUTPUT.getDirectory())
-                            .resolve(subVariant.getId().toLowerCase());
-                    Files.createDirectories(simulationOutputPath);
-                    StatefulScheduleSampler sampler = new StatefulScheduleSampler(SEED, template, subVariant);
-                    for (int i = 0; i < N_SIMULATIONS; i++) {
-                        StatefulScheduleSampler.Sample sample = sampler.sample(DEPARTURE_SAMPLING_STRATEGY);
+        // define post-processing pipeline and run all simulations in parallel
+        List<PostSimulationTask> postSimulationTasks = List.of(new TrainDelayAnalysis());
+        RailsimSimulator simulator = new RailsimSimulator(postSimulationTasks);
+        List<RailsimSimulationResult> results = simulator.runAll(jobs);
 
-                        // save to building block directory
-                        Path sampleOutputPath = outputPath.resolve(ProjectStructure.SCHEDULE_SAMPLING.getDirectory())
-                                .resolve(subVariant.getId().toLowerCase())
-                                .resolve("sample_" + i);
-                        Files.createDirectories(sampleOutputPath);
+        // write final aggregated analysis reports
+        Path analysisOutputFolderPath = getAndEnsure(ProjectFolder.ANALYSIS);
+        writeOverallDetailed(analysisOutputFolderPath, results);
+        writeOverallSummary(analysisOutputFolderPath, results);
+        log.info("Workflow finished. Analysis reports are in: {}", analysisOutputFolderPath);
+    }
 
-                        Path schedulePath = sampleOutputPath.resolve("schedule.xml");
-                        new TransitScheduleWriter(sample.schedule()).writeFile(schedulePath.toString());
+    private static Path getAndEnsure(ProjectFolder projectFolder) throws IOException {
+        UseCase useCase = BUILDING_BLOCK.getUseCase();
 
-                        Path vehiclePath = sampleOutputPath.resolve("vehicles.xml");
-                        new MatsimVehicleWriter(sample.vehicles()).writeFile(vehiclePath.toString());
+        // ./results
+        Path outputPath = Paths.get(OUTPUT_DIRECTORY)
+                // ./uc_1
+                .resolve(useCase.name().toLowerCase())
+                // ./uc1_bb1
+                .resolve(BUILDING_BLOCK.name().toLowerCase())
+                // ./01_ , ./02_, ...
+                .resolve(projectFolder.getDirectory());
 
-                        // configure new simulation job
-                        String runId = BUILDING_BLOCK.name().toLowerCase() + "_" + subVariant.getId()
-                                .toLowerCase() + "_sample_" + i;
-                        Config config = ConfigUtils.loadConfig(configFile.toString());
-                        config.controller().setRunId(runId);
-                        config.network()
-                                .setInputFile(ResourceLoader.getPath(BUILDING_BLOCK.getNetworkFilePath()).toString());
-                        config.transit().setTransitScheduleFile(simulationJobPath.relativize(schedulePath).toString());
-                        config.transit().setVehiclesFile(simulationJobPath.relativize(vehiclePath).toString());
-                        config.controller().setOutputDirectory(simulationOutputPath.resolve("sample_" + i).toString());
-                        config.controller()
-                                .setOverwriteFileSetting(
-                                        OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-                        config.controller().setLastIteration(0);
+        Files.createDirectories(outputPath);
+        return outputPath;
+    }
 
-                        // write new sim job
-                        Path configFilePath = simulationJobPath.resolve(runId + ".config.xml");
-                        ConfigUtils.writeConfig(config, configFilePath.toString());
-                        simJobs.add(configFilePath);
-                    }
+    private static void writeOverallSummary(Path analysisPath,
+                                            List<RailsimSimulationResult> results) throws IOException {
+        Path summaryPath = analysisPath.resolve("_SUMMARY.csv");
+        log.info("Writing overall summary for {} successful runs to {}",
+                results.stream().filter(r -> r.getStatus() == RailsimSimulationResult.Status.SUCCESS).count(),
+                summaryPath);
+
+        try (BufferedWriter writer = Files.newBufferedWriter(summaryPath)) {
+            writer.write("run_id,total_arrival_delay_seconds,total_departure_delay_seconds,delayed_stops_count\n");
+            for (RailsimSimulationResult result : results) {
+                if (result.getStatus() == RailsimSimulationResult.Status.SUCCESS) {
+                    result.getAnalysisResult(TrainDelayAnalysis.RESULT_KEY, TrainDelayAnalysis.DelayReport.class)
+                            .ifPresent(report -> {
+                                try {
+                                    writer.write(String.format("%s,%.2f,%.2f,%d\n", report.getRunId(),
+                                            report.getTotalArrivalDelay(), report.getTotalDepartureDelay(),
+                                            report.getDelayedStopsCount()));
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            });
                 }
             }
         }
+    }
 
-        log.info("---------------- STARTING SIMS ---------------");
+    private static void writeOverallDetailed(Path analysisPath,
+                                             List<RailsimSimulationResult> results) throws IOException {
+        Path detailedPath = analysisPath.resolve("_all_stop_delays.csv");
+        log.info("Writing detailed stop delays for all runs to {}", detailedPath);
 
-        // run simulations
-        for (Path simJob : simJobs) {
-            Config config = ConfigUtils.loadConfig(simJob.toString());
-            Scenario scenario = ScenarioUtils.loadScenario(config);
-            Controller controller = ControllerUtils.createController(scenario);
-            controller.addOverridingModule(new RailsimModule());
-            controller.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
-            controller.run();
+        try (BufferedWriter writer = Files.newBufferedWriter(detailedPath)) {
+            writer.write(
+                    "run_id,subvariant,train,route_id,vehicle_type,departure_id,stop_sequence,stop_id,planned_arrival,actual_arrival,arrival_delay,planned_departure,actual_departure,departure_delay\n");
+            for (RailsimSimulationResult result : results) {
+                if (result.getStatus() == RailsimSimulationResult.Status.SUCCESS) {
+                    result.getAnalysisResult(TrainDelayAnalysis.RESULT_KEY, TrainDelayAnalysis.DelayReport.class)
+                            .ifPresent(report -> report.getDetailedData().forEach(info -> {
+                                try {
+                                    writer.write(
+                                            String.format("%s,%s,%s,%s,%s,%s,%d,%s,%.2f,%.2f,%.2f,%.2f,%.2f,%.2f\n",
+                                                    result.getRunId(), info.subVariant(), info.train(), info.routeId(),
+                                                    info.vehicleType(), info.departureId(), info.stopSequence(),
+                                                    info.stopId(), info.plannedArrival(), info.actualArrival(),
+                                                    info.arrivalDelay(), info.plannedDeparture(),
+                                                    info.actualDeparture(), info.departureDelay()));
+                                } catch (IOException e) {
+                                    throw new RuntimeException(e);
+                                }
+                            }));
+                }
+            }
         }
     }
 }

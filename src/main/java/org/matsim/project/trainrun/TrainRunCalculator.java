@@ -240,7 +240,7 @@ public final class TrainRunCalculator {
         log.info("Starting train run calculation for: {}", configPath);
         Config config = createTrainRunCalculationConfig();
 
-        log.info("Modify scenario for train run calculation");
+        log.info("Modify scenario (unlimited capacity and zero travel times) for train run calculation");
         Scenario scenario = ScenarioUtils.loadScenario(config);
         setUnlimitedRailsimCapacity(scenario);
         setZeroTravelTimes(scenario);
@@ -250,9 +250,8 @@ public final class TrainRunCalculator {
         controller.addOverridingModule(new RailsimModule());
         controller.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
         controller.run();
-        log.info("Simulation finished");
 
-        log.info("Processing events to calculate travel times...");
+        log.info("Processing simulation output events to calculate travel times...");
         Path eventsFile = Paths.get(config.controller().getOutputDirectory())
                 .resolve(config.controller().getRunId() + ".output_events.xml.gz");
         TrainRunEventHandler eventHandler = new TrainRunEventHandler();
@@ -260,7 +259,6 @@ public final class TrainRunCalculator {
         eventsManager.addHandler(eventHandler);
         new MatsimEventsReader(eventsManager).readFile(eventsFile.toString());
         Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes = eventHandler.getArrivalTimesPerDeparture();
-        log.info("Event processing complete.");
 
         // Update schedule in-place
         log.info("Updating transit schedule with calculated travel times...");
@@ -268,9 +266,9 @@ public final class TrainRunCalculator {
 
         Path recalculatedScheduleFile = outputPath.resolve(
                 config.controller().getRunId() + ".output_transitSchedule_updated.xml.gz");
+        log.info("Writing updated schedule to {}", recalculatedScheduleFile);
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(recalculatedScheduleFile.toString());
 
-        log.info("Calculation complete.");
         return scenario;
     }
 
