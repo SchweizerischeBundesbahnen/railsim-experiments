@@ -9,28 +9,35 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controller;
 import org.matsim.core.controler.ControllerUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.project.scenario.plan.SubVariant;
+import org.matsim.project.scenario.plan.Variant;
 
 import java.nio.file.Path;
 
 /**
- * Represents a single, runnable Railsim MATSim simulation defined by a config file.
- * This class is self-contained and holds all necessary information to execute a run.
+ * A single, runnable MATSim simulation with railsim enabled.
  */
 @Getter
 public class RailsimSimulationJob implements Runnable {
 
     private final Path configFilePath;
+    private final Variant variant;
+    private final SubVariant subVariant;
+    private final int sample;
+
     private final String runId;
     private final Path outputDirectory;
     private final Config config;
-    private final String subVariantId;
 
-    public RailsimSimulationJob(Path configFilePath, String subVariantId) {
+    public RailsimSimulationJob(Path configFilePath, Variant variant, SubVariant subVariant, int sample) {
         this.configFilePath = configFilePath;
+        this.variant = variant;
+        this.subVariant = subVariant;
+        this.sample = sample;
+
         this.config = ConfigUtils.loadConfig(configFilePath.toString());
         this.runId = config.controller().getRunId();
         this.outputDirectory = Path.of(config.controller().getOutputDirectory());
-        this.subVariantId = subVariantId;
     }
 
     @Override

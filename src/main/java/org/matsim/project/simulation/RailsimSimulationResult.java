@@ -9,7 +9,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * A container for the complete outcome of a simulation pipeline run, including its
- * status, the original job, and a map for storing results from post-processing tasks.
+ * status, the original job, and a type-safe map for storing results from post-processing tasks.
  */
 @Getter
 public class RailsimSimulationResult {
@@ -17,7 +17,7 @@ public class RailsimSimulationResult {
     private final RailsimSimulationJob job;
     private final Status status;
     private final String errorMessage;
-    private final Map<String, Object> analysisResults = new ConcurrentHashMap<>();
+    private final Map<PostProcessingTask.Key<?>, PostProcessingResult> postProcessingResults = new ConcurrentHashMap<>();
 
     private RailsimSimulationResult(RailsimSimulationJob job, Status status, String errorMessage) {
         this.job = job;
@@ -30,7 +30,8 @@ public class RailsimSimulationResult {
     }
 
     public static RailsimSimulationResult failure(RailsimSimulationJob job, Throwable error) {
-        String message = (error.getCause() != null) ? error.getCause().getMessage() : error.getMessage();
+        String message = (error != null) ? error.getClass()
+                .getSimpleName() + ": " + error.getMessage() : "Unknown error";
         return new RailsimSimulationResult(job, Status.FAILURE, message);
     }
 
@@ -42,12 +43,13 @@ public class RailsimSimulationResult {
         return job.getOutputDirectory();
     }
 
-    public <T> void addAnalysisResult(String key, T result) {
-        this.analysisResults.put(key, result);
+    public <T extends PostProcessingResult> void addPostProcessingResult(PostProcessingTask.Key<T> key, T result) {
+        this.postProcessingResults.put(key, result);
     }
 
-    public <T> Optional<T> getAnalysisResult(String key, Class<T> type) {
-        return Optional.ofNullable(analysisResults.get(key)).map(type::cast);
+    @SuppressWarnings("unchecked")
+    public <T extends PostProcessingResult> Optional<T> getPostProcessingResult(PostProcessingTask.Key<T> key) {
+        return Optional.ofNullable((T) postProcessingResults.get(key));
     }
 
     public enum Status {

@@ -33,7 +33,6 @@ public class SimulationJobSampler {
     private final BuildingBlock buildingBlock;
     private final OperationalPlan operationalPlan;
 
-    // TODO: Run in parallel per version?
     public List<RailsimSimulationJob> sample(int nSamplesPerSubvariant, DepartureSamplingStrategy strategy,
                                              Path scheduleSamplingOutputFolderPath,
                                              Path simulationJobConfigOutputFolderPath,
@@ -51,7 +50,7 @@ public class SimulationJobSampler {
                     StatefulScheduleSampler sampler = new StatefulScheduleSampler(seed, templateScenario, subVariant);
 
                     // sample schedules n times
-                    for (int i = 0; i < nSamplesPerSubvariant; i++) {
+                    for (int i = 1; i <= nSamplesPerSubvariant; i++) {
                         final String runId = String.format("%s_%s_sample_%d", buildingBlock.name().toLowerCase(),
                                 subVariant.getId().toLowerCase(), i);
 
@@ -71,7 +70,6 @@ public class SimulationJobSampler {
                         Path runOutputPath = simulationRunOutputFolderPath.resolve(runId);
                         Config config = ConfigUtils.loadConfig(templateConfigFileInputPath.toString());
                         config.controller().setRunId(runId);
-                        // toAbsolute...
                         config.controller().setOutputDirectory(runOutputPath.toString());
                         config.controller()
                                 .setOverwriteFileSetting(
@@ -90,8 +88,7 @@ public class SimulationJobSampler {
                         Path configFilePath = simulationJobConfigOutputFolderPath.resolve(runId + ".config.xml");
                         ConfigUtils.writeConfig(config, configFilePath.toString());
 
-                        // TODO: Introduce separate object to decouple sampling from simulations?
-                        jobs.add(new RailsimSimulationJob(configFilePath, subVariant.getId()));
+                        jobs.add(new RailsimSimulationJob(configFilePath, variant, subVariant, i));
                     }
                 }
             }
