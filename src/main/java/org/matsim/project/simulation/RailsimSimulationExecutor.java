@@ -70,14 +70,16 @@ public class RailsimSimulationExecutor {
                 // for each factory, create a new task instance and apply it
                 PostProcessingTask<?> task = factory.create();
                 try {
-                    log.info("Applying post-simulation task [{}] to run {}", task.getKey().name(), result.getRunId());
+                    log.info("Applying post-processing task [{}] to run {}", task.getResultType().getSimpleName(),
+                            result.getRunId());
                     PostProcessingResult taskResult = task.run(result);
                     addResultUntyped(result, task, taskResult);
 
                     return result;
 
                 } catch (Exception e) {
-                    throw new CompletionException("Post-processing task " + task.getKey().name() + " failed.", e);
+                    throw new CompletionException(
+                            "Post-processing task " + task.getResultType().getSimpleName() + " failed.", e);
                 }
 
             }, executor);
@@ -90,7 +92,7 @@ public class RailsimSimulationExecutor {
     private <T extends PostProcessingResult> void addResultUntyped(RailsimSimulationResult result,
                                                                    PostProcessingTask<T> task,
                                                                    PostProcessingResult taskResult) {
-        result.addPostProcessingResult(task.getKey(), (T) taskResult);
+        result.addPostProcessingResult(task.getResultType(), (T) taskResult);
     }
 
     private void printSummary(List<RailsimSimulationResult> results) {

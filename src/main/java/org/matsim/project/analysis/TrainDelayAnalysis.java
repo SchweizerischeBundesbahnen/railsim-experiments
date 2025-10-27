@@ -32,13 +32,11 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis.DelayReport> {
 
-    public static final Key<DelayReport> RESULT_KEY = new Key<>("train_delay_report");
-
     private final Path analysisOutputPath;
 
     @Override
-    public Key<DelayReport> getKey() {
-        return RESULT_KEY;
+    public Class<DelayReport> getResultType() {
+        return DelayReport.class;
     }
 
     @Override

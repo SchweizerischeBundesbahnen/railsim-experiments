@@ -65,7 +65,7 @@ public class TrainDelaySummaryWriter {
                     .sorted(Comparator.comparing(RailsimSimulationResult::getRunId))
                     .forEach(result -> {
                         // retrieve the specific analysis report from the result object
-                        result.getPostProcessingResult(TrainDelayAnalysis.RESULT_KEY).ifPresent(report -> {
+                        result.getPostProcessingResult(TrainDelayAnalysis.DelayReport.class).ifPresent(report -> {
                             try {
                                 String row = COLUMNS.stream()
                                         .map(column -> column.valueExtractor.apply(result, report))

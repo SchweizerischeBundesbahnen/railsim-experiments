@@ -17,7 +17,7 @@ public class RailsimSimulationResult {
     private final RailsimSimulationJob job;
     private final Status status;
     private final String errorMessage;
-    private final Map<PostProcessingTask.Key<?>, PostProcessingResult> postProcessingResults = new ConcurrentHashMap<>();
+    private final Map<Class<?>, PostProcessingResult> postProcessingResults = new ConcurrentHashMap<>();
 
     private RailsimSimulationResult(RailsimSimulationJob job, Status status, String errorMessage) {
         this.job = job;
@@ -43,13 +43,13 @@ public class RailsimSimulationResult {
         return job.getOutputDirectory();
     }
 
-    public <T extends PostProcessingResult> void addPostProcessingResult(PostProcessingTask.Key<T> key, T result) {
+    public <T extends PostProcessingResult> void addPostProcessingResult(Class<T> key, T result) {
         this.postProcessingResults.put(key, result);
     }
 
-    @SuppressWarnings("unchecked")
-    public <T extends PostProcessingResult> Optional<T> getPostProcessingResult(PostProcessingTask.Key<T> key) {
-        return Optional.ofNullable((T) postProcessingResults.get(key));
+    public <T extends PostProcessingResult> Optional<T> getPostProcessingResult(Class<T> key) {
+        // use the Class object's cast method for a truly safe cast
+        return Optional.ofNullable(key.cast(postProcessingResults.get(key)));
     }
 
     public enum Status {
