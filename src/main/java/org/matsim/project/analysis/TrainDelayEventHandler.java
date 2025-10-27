@@ -47,19 +47,29 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
 
     @Override
     public void handleEvent(TransitDriverStartsEvent event) {
-        // event links a vehicle to its transit context and marks its departure
         Id<Vehicle> vehicleId = event.getVehicleId();
         Vehicle vehicle = vehicles.getVehicles().get(vehicleId);
-
-        if (vehicle != null) {
-            vehicleStates.put(vehicleId, new VehicleState(vehicleId, event.getDepartureId(), event.getTransitLineId(),
-                    event.getTransitRouteId(), vehicle.getType().getId()));
-            departedTrains.add(vehicleId);
-        } else {
-            // this should not happen in a valid scenario
+        if (vehicle == null) {
             throw new IllegalStateException(
-                    "Vehicle with id " + vehicleId + " from TransitDriverStartsEvent not found in vehicles file");
+                    "Vehicle with id " + vehicleId + " from TransitDriverStartsEvent not found in vehicles file.");
         }
+
+        TransitRoute route = this.routes.get(event.getTransitRouteId());
+        if (route == null) {
+            throw new IllegalStateException(
+                    "Route with id " + event.getTransitRouteId() + " from TransitDriverStartsEvent not found in reference schedule.");
+        }
+
+        Departure departure = route.getDepartures().get(event.getDepartureId());
+        if (departure == null) {
+            throw new IllegalStateException(
+                    "Departure " + event.getDepartureId() + " not found in route " + route.getId());
+        }
+
+        vehicleStates.put(vehicleId,
+                new VehicleState(vehicleId, event.getDepartureId(), event.getTransitLineId(), event.getTransitRouteId(),
+                        vehicle.getType().getId(), departure.getDepartureTime()));
+        departedTrains.add(vehicleId);
     }
 
     @Override
@@ -145,7 +155,7 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
                 // get or create the data object for this specific stop event
                 int stopIndex = i;
                 StopEventData stopEventData = stopDataMapForDeparture.computeIfAbsent(facilityId,
-                        k -> new StopEventData(stopIndex, route.getStops().size(), stop));
+                        k -> new StopEventData(stopIndex, route.getStops().size(), stop, state.departureTime()));
 
                 return Optional.of(stopEventData);
             }
@@ -164,7 +174,7 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
     }
 
     private record VehicleState(Id<Vehicle> vehicleId, Id<Departure> departureId, Id<TransitLine> lineId,
-                                Id<TransitRoute> routeId, Id<VehicleType> vehicleTypeId) {
+                                Id<TransitRoute> routeId, Id<VehicleType> vehicleTypeId, double departureTime) {
     }
 
     private static class StopEventData {
@@ -176,12 +186,14 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
         double actualArrival = Double.NaN;
         double actualDeparture = Double.NaN;
 
-        StopEventData(int sequence, int totalStops, TransitRouteStop stop) {
+        StopEventData(int sequence, int totalStops, TransitRouteStop stop, double departureTime) {
             this.stopSequence = sequence;
             this.totalStopsInRoute = totalStops;
             this.stopId = stop.getStopFacility().getId();
-            this.plannedArrival = stop.getArrivalOffset().seconds();
-            this.plannedDeparture = stop.getDepartureOffset().seconds();
+
+            // calculate absolute planned times by adding the departure time to the offset
+            this.plannedArrival = departureTime + stop.getArrivalOffset().seconds();
+            this.plannedDeparture = departureTime + stop.getDepartureOffset().seconds();
         }
 
         TrainDelayAnalysis.DetailedStopInfo toDetailedStopInfo(VehicleState state) {
@@ -190,10 +202,11 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
             double pDep = plannedDeparture;
             double aDep = actualDeparture;
 
-            // first stop has no planned or actual arrival event
+            // first stop has no planned or actual arrival event, but its departure time is its planned arrival
             if (stopSequence == 0) {
-                pArr = aArr = Double.NaN;
+                pArr = aArr = state.departureTime();
             }
+
             // last stop has no planned or actual departure event
             if (stopSequence == totalStopsInRoute - 1) {
                 pDep = aDep = Double.NaN;
