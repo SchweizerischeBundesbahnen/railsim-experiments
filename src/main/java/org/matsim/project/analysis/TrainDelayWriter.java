@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TrainDelayWriter {
 
-    private static final String TRAIN_DELAYS_CSV = "train_delays.csv";
+    private static final String TRAIN_DELAYS_CSV = "analysis_train_delays.csv";
     private static final List<Column> COLUMNS = List.of(Column.values());
     private static final String HEADER_ROW = COLUMNS.stream().map(c -> c.header).collect(Collectors.joining(","));
 

@@ -32,7 +32,7 @@ public final class RunRailsimScenario {
     private static final BuildingBlock BUILDING_BLOCK = BuildingBlock.UC1_BB2;
 
     private static final String OUTPUT_DIRECTORY = "results";
-    private static final int N_SAMPLES_PER_SUBVARIANT = 3;
+    private static final int N_SAMPLES_PER_SUBVARIANT = 20;
     private static final long SEED = 123;
     private static final DepartureSamplingStrategy DEPARTURE_SAMPLING_STRATEGY = new RandomDepartureSampling();
 

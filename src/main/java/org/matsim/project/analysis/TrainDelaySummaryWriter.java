@@ -6,6 +6,7 @@ import org.matsim.project.simulation.RailsimSimulationResult;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Comparator;
@@ -21,7 +22,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class TrainDelaySummaryWriter {
 
-    private static final String SUMMARY_CSV = "train_delay_summary.csv";
+    private static final String SUMMARY_CSV = "summary_train_delays.csv";
     private static final List<Column> COLUMNS = List.of(Column.values());
     private static final String HEADER_ROW = COLUMNS.stream().map(c -> c.header).collect(Collectors.joining(","));
 
@@ -54,30 +55,43 @@ public class TrainDelaySummaryWriter {
         Path summaryPath = outputDirectory.resolve(SUMMARY_CSV);
         log.info("Aggregating {} results into summary at {}", results.size(), summaryPath);
 
+        // pair a result with its report for sorting
+        record ReportableResult(RailsimSimulationResult result, TrainDelayAnalysis.DelayReport report) {
+        }
+
+        List<ReportableResult> reportableResults = results.stream()
+                // filter for successful runs
+                .filter(result -> result.getStatus() == RailsimSimulationResult.Status.SUCCESS)
+                // unpack to a sortable record, filtering out any missing reports
+                .flatMap(result -> result.getPostProcessingResult(TrainDelayAnalysis.DelayReport.class)
+                        .map(report -> new ReportableResult(result, report))
+                        .stream())
+                // multi-level comparator, sort by:
+                .sorted(Comparator
+                        // 1. sub-variant ID (alphabetical)
+                        .comparing((ReportableResult res) -> res.result().getJob().getSubVariant().getId())
+                        // 2. the number of stuck trains (ascending)
+                        .thenComparingInt(res -> res.report().getTrainsStuck())
+                        // 3. total destination delay (ascending)
+                        .thenComparingDouble(res -> sumDestinationDelays(res.report()))).toList();
+
         try (BufferedWriter writer = Files.newBufferedWriter(summaryPath)) {
             // write the header row
             writer.write(HEADER_ROW);
             writer.newLine();
 
-            // sort results by runId for consistent output and process them
-            results.stream()
-                    .filter(result -> result.getStatus() == RailsimSimulationResult.Status.SUCCESS)
-                    .sorted(Comparator.comparing(RailsimSimulationResult::getRunId))
-                    .forEach(result -> {
-                        // retrieve the specific analysis report from the result object
-                        result.getPostProcessingResult(TrainDelayAnalysis.DelayReport.class).ifPresent(report -> {
-                            try {
-                                String row = COLUMNS.stream()
-                                        .map(column -> column.valueExtractor.apply(result, report))
-                                        .collect(Collectors.joining(","));
-                                writer.write(row);
-                                writer.newLine();
-                            } catch (IOException e) {
-                                throw new RuntimeException("Error writing summary line for run " + result.getRunId(),
-                                        e);
-                            }
-                        });
-                    });
+            // write the data to the file
+            for (ReportableResult res : reportableResults) {
+                try {
+                    String row = COLUMNS.stream()
+                            .map(column -> column.valueExtractor.apply(res.result(), res.report()))
+                            .collect(Collectors.joining(","));
+                    writer.write(row);
+                    writer.newLine();
+                } catch (IOException e) {
+                    throw new UncheckedIOException("Error writing summary line for run " + res.result().getRunId(), e);
+                }
+            }
         }
     }
 
