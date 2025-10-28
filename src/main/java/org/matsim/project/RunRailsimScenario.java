@@ -1,8 +1,6 @@
 package org.matsim.project;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.project.analysis.TrainDelayAnalysisFactory;
 import org.matsim.project.analysis.TrainDelaySummaryWriter;
@@ -31,17 +29,19 @@ public final class RunRailsimScenario {
 
     private static final BuildingBlock BUILDING_BLOCK = BuildingBlock.UC1_BB2;
 
-    private static final String OUTPUT_DIRECTORY = "results";
-    private static final int N_SAMPLES_PER_SUBVARIANT = 20;
+    private static final String OUTPUT_DIRECTORY = "//Filer22L/K-UE220L/IFI/FTO/SAM.A13783/04_projects/42_gzb_railsim/output_20251028";
+
+    // private static final String OUTPUT_DIRECTORY = "results";
+    private static final int N_SAMPLES_PER_SUBVARIANT = 5;
     private static final long SEED = 123;
     private static final DepartureSamplingStrategy DEPARTURE_SAMPLING_STRATEGY = new RandomDepartureSampling();
 
     public static void main(String[] args) throws IOException {
 
         // set matsim logs to warn, re-enable the current project
-        Configurator.setLevel("org.matsim", Level.WARN);
-        Configurator.setLevel("ch.sbb.matsim", Level.WARN);
-        Configurator.setLevel("org.matsim.project", Level.INFO);
+        // Configurator.setLevel("org.matsim", Level.WARN);
+        // Configurator.setLevel("ch.sbb.matsim", Level.WARN);
+        // Configurator.setLevel("org.matsim.project", Level.INFO);
 
         // setup paths and directories
         Path templateConfigFilePath = ResourceLoader.getPath(BUILDING_BLOCK.getConfigFilePath());
