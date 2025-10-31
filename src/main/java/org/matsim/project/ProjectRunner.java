@@ -48,7 +48,6 @@ public class ProjectRunner {
         Map<BuildingBlock, BuildingBlockWorkflow> workflows = createWorkflows();
 
         // job preparation (the job sampling is already parallel, so do not parallelize here again)
-        // some sort of an anti-pattern, consider moving paralleitation here and remove it from the sample. I tried it but performance was drippling.
         log.info("Preparing simulation jobs for all building blocks...");
         List<RailsimSimulationJob> allJobs = workflows.values().stream().flatMap(workflow -> {
             try {
