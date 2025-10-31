@@ -67,34 +67,34 @@
 		</link>
 		<link id="19" from="616" to="614" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" oneway="1" modes="rail" >
 			<attributes>
-				<attribute name="railsimResourceId" class="java.lang.String">switch2</attribute>
+				<attribute name="railsimResourceId" class="java.lang.String">switch1</attribute>
 			</attributes>
 		</link>
 		<link id="20" from="614" to="3" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" oneway="1" modes="rail" >
 			<attributes>
-				<attribute name="railsimResourceId" class="java.lang.String">switch2</attribute>
+				<attribute name="railsimResourceId" class="java.lang.String">switch1</attribute>
 			</attributes>
 		</link>
 		<link id="22" from="5" to="615" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" oneway="1" modes="rail" >
 			<attributes>
-				<attribute name="railsimResourceId" class="java.lang.String">switch3</attribute>
+				<attribute name="railsimResourceId" class="java.lang.String">switch4</attribute>
 			</attributes>
 		</link>
 		<link id="23" from="615" to="6" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" oneway="1" modes="rail" >
 			<attributes>
-				<attribute name="railsimResourceId" class="java.lang.String">switch3</attribute>
+				<attribute name="railsimResourceId" class="java.lang.String">switch4</attribute>
 			</attributes>
 		</link>
 		<link id="26" from="619" to="620" length="470.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" oneway="1" modes="rail" >
 		</link>
 		<link id="27" from="620" to="615" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" oneway="1" modes="rail" >
 			<attributes>
-				<attribute name="railsimResourceId" class="java.lang.String">switch3</attribute>
+				<attribute name="railsimResourceId" class="java.lang.String">switch4</attribute>
 			</attributes>
 		</link>
 		<link id="28" from="614" to="619" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" oneway="1" modes="rail" >
 			<attributes>
-				<attribute name="railsimResourceId" class="java.lang.String">switch2</attribute>
+				<attribute name="railsimResourceId" class="java.lang.String">switch1</attribute>
 			</attributes>
 		</link>
 		<link id="30" from="618" to="7" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" oneway="1" modes="rail" >
