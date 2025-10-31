@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum BuildingBlock {
 
+    UC1_BB1(UseCase.UC_1, "/scenarios/use_case_1/building_block_1/input"),
     UC1_BB2(UseCase.UC_1, "/scenarios/use_case_1/building_block_2/input"),
     UC1_BB3(UseCase.UC_1, "/scenarios/use_case_1/building_block_3/input"),
     UC1_BB4(UseCase.UC_1, "/scenarios/use_case_1/building_block_4/input"),

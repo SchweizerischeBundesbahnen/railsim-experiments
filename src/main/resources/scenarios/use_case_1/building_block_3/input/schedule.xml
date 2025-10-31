@@ -4,15 +4,10 @@
 <transitSchedule>
 
     <transitStops>
-        <stopFacility id="L1" x="-10700.0" y="0.0" linkRefId="stop_loop_10" name="L1" isBlocking="false">
-        </stopFacility>
-        <stopFacility id="M1" x="0.0" y="50.0" linkRefId="stop_loop_5" name="M1" isBlocking="false">
-            <attributes>
-                <attribute name="stopAreaId" class="java.lang.String">M</attribute>
-            </attributes>
-        </stopFacility>
-        <stopFacility id="R1" x="10730.0" y="0.0" linkRefId="stop_loop_12" name="R1" isBlocking="false">
-        </stopFacility>
+        <stopFacility id="L1" x="-10700.0" y="0.0" linkRefId="stop_loop_10" name="L1" isBlocking="false"/>
+        <stopFacility id="M1" x="0.0" y="50.0" linkRefId="stop_loop_5" name="M1" stopAreaId="M" isBlocking="false"/>
+        <stopFacility id="M2" x="0.0" y="0.0" linkRefId="stop_loop_4" name="M2" stopAreaId="M" isBlocking="false"/>
+        <stopFacility id="R1" x="10730.0" y="0.0" linkRefId="stop_loop_12" name="R1" isBlocking="false"/>
     </transitStops>
     <transitLine id="FV1">
         <transitRoute id="FV1_route_1">
@@ -68,7 +63,7 @@
             <routeProfile>
                 <stop refId="L1" arrivalOffset="00:00:00" departureOffset="00:00:00" awaitDeparture="true"/>
                 <stop refId="M1" arrivalOffset="00:05:00" departureOffset="00:06:42" awaitDeparture="true"
-                      minimumStopDuration="102"/>
+                      minimumStopDuration="00:01:42"/>
                 <stop refId="R1" arrivalOffset="00:10:00" departureOffset="00:10:00" awaitDeparture="true"/>
             </routeProfile>
             <route>
