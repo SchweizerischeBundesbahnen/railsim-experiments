@@ -5,8 +5,8 @@
 
     <transitStops>
         <stopFacility id="L1" x="-10700.0" y="0.0" linkRefId="stop_loop_10" name="L1" isBlocking="false"/>
-        <stopFacility id="M2" x="0.0" y="0.0" linkRefId="stop_loop_4" name="M2" stopAreaId="M" isBlocking="false"/>
-        <stopFacility id="R1" x="10730.0" y="0.0" linkRefId="stop_loop_12" name="R1" stopAreaId="M" isBlocking="false"/>
+        <stopFacility id="M2" x="0.0" y="0.0" linkRefId="3" name="M2" stopAreaId="M" isBlocking="false"/>
+        <stopFacility id="R1" x="10730.0" y="0.0" linkRefId="stop_loop_12" name="R1" isBlocking="false"/>
     </transitStops>
     <transitLine id="FV1">
         <transitRoute id="FV1_route_1">
@@ -71,7 +71,6 @@
                 <link refId="9"/>
                 <link refId="1"/>
                 <link refId="3"/>
-                <link refId="stop_loop_4"/>
                 <link refId="5"/>
                 <link refId="11"/>
                 <link refId="13"/>
