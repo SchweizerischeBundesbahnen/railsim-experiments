@@ -9,6 +9,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.controler.Controller;
 import org.matsim.core.controler.ControllerUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.plan.SubVariant;
 import org.matsim.project.scenario.plan.Variant;
 
@@ -22,6 +23,7 @@ public class RailsimSimulationJob implements Runnable {
 
     private final Path configFilePath;
     private final Variant variant;
+    private final BuildingBlock buildingBlock;
     private final SubVariant subVariant;
     private final int sample;
 
@@ -29,8 +31,10 @@ public class RailsimSimulationJob implements Runnable {
     private final Path outputDirectory;
     private final Config config;
 
-    public RailsimSimulationJob(Path configFilePath, Variant variant, SubVariant subVariant, int sample) {
+    public RailsimSimulationJob(Path configFilePath, BuildingBlock buildingBlock, Variant variant,
+                                SubVariant subVariant, int sample) {
         this.configFilePath = configFilePath;
+        this.buildingBlock = buildingBlock;
         this.variant = variant;
         this.subVariant = subVariant;
         this.sample = sample;

@@ -3,7 +3,7 @@
 <vehicleDefinitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.matsim.org/files/dtd"
                     xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.xsd">
 
-    <vehicleType id="train_FV">
+    <vehicleType id="FV">
         <attributes>
             <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
@@ -24,7 +24,7 @@
         <flowEfficiencyFactor factor="1.0"/>
     </vehicleType>
 
-    <vehicleType id="train_GV">
+    <vehicleType id="GV">
         <attributes>
             <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
@@ -45,7 +45,7 @@
         <flowEfficiencyFactor factor="1.0"/>
     </vehicleType>
 
-    <vehicleType id="train_RV">
+    <vehicleType id="RV">
         <attributes>
             <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
@@ -66,9 +66,9 @@
         <flowEfficiencyFactor factor="1.0"/>
     </vehicleType>
 
-    <vehicle id="train_FV_veh1" type="train_FV"/>
-    <vehicle id="train_GV_veh1" type="train_GV"/>
-    <vehicle id="train_RV_veh1" type="train_RV"/>
+    <vehicle id="train_FV_veh1" type="FV"/>
+    <vehicle id="train_GV_veh1" type="GV"/>
+    <vehicle id="train_RV_veh1" type="RV"/>
 
 
 </vehicleDefinitions>

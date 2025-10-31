@@ -53,7 +53,7 @@ public class TrainDelaySummaryWriter {
      */
     public void write(Path outputDirectory) throws IOException {
         Path summaryPath = outputDirectory.resolve(SUMMARY_CSV);
-        log.info("Aggregating {} results into summary at {}", results.size(), summaryPath);
+        log.debug("Aggregating {} results into summary at {}", results.size(), summaryPath);
 
         // pair a result with its report for sorting
         record ReportableResult(RailsimSimulationResult result, TrainDelayAnalysis.DelayReport report) {

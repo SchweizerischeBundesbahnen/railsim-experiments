@@ -136,7 +136,7 @@ public class SimulationJobSampler {
         ConfigUtils.writeConfig(config, configFilePath.toString());
 
         // return runnable job
-        return new RailsimSimulationJob(configFilePath, variant, subVariant, sampleIndex);
+        return new RailsimSimulationJob(configFilePath, buildingBlock, variant, subVariant, sampleIndex);
     }
 
     /**

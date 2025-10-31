@@ -75,7 +75,8 @@ public class StatefulScheduleSampler {
             if (match.isPresent()) {
                 addTransitRoute(newSchedule, newVehicles, match.get(), samplingStrategy);
             } else {
-                throw new IllegalStateException("No match found for train volume: " + trainVolume);
+                throw new IllegalStateException(
+                        "No match found for train volume " + trainVolume + " of sub-variant:" + subVariant.getId());
             }
         }
 
