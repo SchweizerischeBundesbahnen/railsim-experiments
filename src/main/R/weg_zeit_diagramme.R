@@ -101,27 +101,27 @@ message("Successfully built theoretical schedule data frame.")
 
 # --- 5. Generate the Static Graphical Schedule ---
 
-message("Generating static ggplot object with larger, backgrounded stop labels...")
+message("Generating static ggplot object with text annotations for stops...")
 
-# Determine the y-position for the stop labels
+# Determine the y-position for the stop labels (at the very top of the plot)
+# Since the y-axis is reversed, we use the minimum time value.
+# A small offset is subtracted to give it some padding from the first trajectory.
 y_label_position <- min(train_data$time, theoretical_schedule$time) - 150
 
 graphical_schedule_plot <- ggplot() +
   # Vertical lines for stations
   geom_vline(data = stops_info, aes(xintercept = x_coord), linetype = "dashed", color = "grey50") +
   
-  # --- KEY CHANGES: Use geom_label for a background and increase size ---
-  geom_label(
+  # --- KEY FIX: Add stop names as text labels at the top of the plot ---
+  geom_text(
     data = stops_info,
     aes(x = x_coord, y = y_label_position, label = name),
-    angle = 60,
-    hjust = 0,
+    angle = 60,          # Angle text for better readability if labels overlap
+    hjust = 0,           # Horizontally align to the start of the text
     vjust = 0.5,
-    inherit.aes = FALSE,
-    size = 3.5,          # Made the text larger (was 2.5)
-    color = "black",     # Use black text for better contrast
-    fill = "white",      # Add a white background to the label box
-    label.padding = unit(0.2, "lines") # Adjust padding around text
+    inherit.aes = FALSE, # Important: do not inherit main aesthetics
+    size = 2.5,          # Adjust text size as needed
+    color = "grey20"
   ) +
   
   # Theoretical (scheduled) train paths
@@ -130,7 +130,7 @@ graphical_schedule_plot <- ggplot() +
   # Actual (simulated) train paths
   geom_line(data = train_data, aes(x = headX, y = time, group = vehicle, color = train_type), linetype = "solid", linewidth = 0.8) +
   
-  # X-axis scale
+  # --- KEY FIX: Simplify the x-axis scale, removing the problematic sec.axis ---
   scale_x_continuous(name = "Position (meters)") +
   
   # Reverse Y-axis and format time labels
@@ -149,11 +149,10 @@ message("Converting ggplot object to an interactive plotly object...")
 interactive_plot <- ggplotly(graphical_schedule_plot)
 
 # Define the output file name
-output_html_file <- file.path(simulationRunPath, "interactive_graphical_schedule_final.html")
+interactive_plot
+
+output_html_file <- file.path(simulationRunPath, "interactive_graphical_schedule_with_stops.html")
 message("Saving final interactive plot to: ", output_html_file)
 
 # Save the interactive plot as a self-contained HTML file
 # saveWidget(interactive_plot, file = output_html_file, selfcontained = TRUE)
-
-# Also display the plot in the RStudio viewer
-interactive_plot
