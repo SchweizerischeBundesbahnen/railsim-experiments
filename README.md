@@ -29,32 +29,50 @@ The automated pipeline proceeds from configuration, simulation to analysis for e
 sub-variants of the Operational Plan.
 
 ```mermaid
-graph TD
+graph LR
+    %% Phase 1: Inputs
     subgraph Inputs
-        A[Project Configuration <br> Samples, Hours, Seed]
-        B[Building Block <br> Network & Base Schedule]
-        C[Operational Plan <br> Train Volumes]
+        direction LR
+        A["📄 Project Configuration<br/>(N Samples, Random Seed,<br/>Sampling Strategy, ...)"]:::input
+        B["🏗️ Building Block<br/>(Network & Base Schedule)"]:::input
+        C["📋 Operational Plan<br/>(Volumes per Product)"]:::input
     end
 
+    %% Phase 2: Preparation
     subgraph Preparation
-        D[1. Train Run Calculation <br> (Sequential)] --> E[2. Schedule Sampling <br> (Parallel per Sub-Variant)]
+        direction LR
+        D["1. Train Run Calculation<br/>(Sequential, railsim)"]:::process
+        E["2. Schedule Sampling<br/>(Parallel per Sub-Variant)"]:::parallel
     end
-
+    
+    %% Phase 3: Simulation
     subgraph Simulation
-        F[3. MATSim railsim Simulation <br> (Parallel per Job)]
+        direction LR
+        F["3. railsim Simulation<br/>(Parallel per Job)"]:::parallel
     end
 
-    subgraph Analysis & Outputs
-        G[4. Per-Run Delay Analysis <br> (Parallel per Job)] --> H[5. Result Aggregation <br> (Sequential)]
-        H --> I[Final Summary Report <br> summary_train_delays.csv]
-        G --> J[Detailed Delay Reports <br> analysis_train_delays.csv]
+    %% Phase 4: Analysis (Post-Processing)
+    subgraph Analysis
+        direction LR
+        G["4. Per-Run Delay Analysis<br/>(Parallel per Job)"]:::parallel
+        H["5. Result Aggregation<br/>(Sequential)"]:::process
     end
 
-    A --> D
-    B --> D
-    C --> E
+    %% Phase 5: Outputs
+    subgraph Outputs
+        direction LR
+        I["📈 Detailed Delay Reports<br/>analysis_train_delays.csv"]:::output
+        J["📊 Final Summary Report<br/>summary_train_delays.csv"]:::output
+    end
+
+    %% Define the connections between all phases
+    A & B & C --> D
+    D --> E
     E --> F
     F --> G
+    G --> H
+    G --> I
+    H --> J
 ```
 
 1. **Train Run Calculation**: Minimum, unconstrained travel times are calculated for each route in the base schedule of
