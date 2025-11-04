@@ -112,15 +112,15 @@ graphical_schedule_plot <- ggplot() +
   # Vertical lines for stations
   geom_vline(data = stops_info, aes(xintercept = x_coord), linetype = "dashed", color = "grey50") +
   
-  # --- KEY FIX: Add stop names as text labels at the top of the plot ---
+  # Add stop names as text labels at the top of the plot
   geom_text(
     data = stops_info,
     aes(x = x_coord, y = y_label_position, label = name),
-    angle = 60,          # Angle text for better readability if labels overlap
-    hjust = 0,           # Horizontally align to the start of the text
+    angle = 60,
+    hjust = 0,
     vjust = 0.5,
-    inherit.aes = FALSE, # Important: do not inherit main aesthetics
-    size = 2.5,          # Adjust text size as needed
+    inherit.aes = FALSE,
+    size = 2.5,
     color = "grey20"
   ) +
   
@@ -130,7 +130,7 @@ graphical_schedule_plot <- ggplot() +
   # Actual (simulated) train paths
   geom_line(data = train_data, aes(x = headX, y = time, group = vehicle, color = train_type), linetype = "solid", linewidth = 0.8) +
   
-  # --- KEY FIX: Simplify the x-axis scale, removing the problematic sec.axis ---
+  # Simplify the x-axis scale
   scale_x_continuous(name = "Position (meters)") +
   
   # Reverse Y-axis and format time labels
@@ -141,7 +141,10 @@ graphical_schedule_plot <- ggplot() +
   
   # Theme
   theme_bw() +
-  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5))
+  theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) +
+  
+  # --- SOLUTION: Override legend aesthetics to show solid lines ---
+  guides(color = guide_legend(override.aes = list(linetype = "solid")))
 
 # --- 6. Convert to an Interactive Plot and Save as HTML ---
 
@@ -155,4 +158,4 @@ output_html_file <- file.path(simulationRunPath, "interactive_graphical_schedule
 message("Saving final interactive plot to: ", output_html_file)
 
 # Save the interactive plot as a self-contained HTML file
-# saveWidget(interactive_plot, file = output_html_file, selfcontained = TRUE)
+saveWidget(interactive_plot, file = output_html_file, selfcontained = TRUE)
