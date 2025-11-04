@@ -4,16 +4,19 @@ import java.util.List;
 import java.util.Random;
 
 /**
- * Defines a strategy for sampling a number of departure times within a one-hour window.
+ * Defines a strategy for sampling departure times within one or more hourly windows.
  */
 @FunctionalInterface
 public interface DepartureSamplingStrategy {
+
     /**
-     * Generates a list of departure times.
+     * Generates a list of departure times within an hourly window.
      *
-     * @param amount The number of departures to sample within the hour.
-     * @param random A random number generator for stochastic strategies to ensure reproducibility.
-     * @return A list of departure times in seconds, relative to the start of the hour (e.g., values from 0.0 to 3599.99...).
+     * @param n      The number of departures to sample per hour.
+     * @param hours  The number of hourly windows to generate samples for.
+     * @param random A random number generator to ensure reproducibility for stochastic strategies.
+     * @return A list of departure times in seconds, relative to the start of each hour
+     * (e.g., values from 0.0 to 3599.99...).
      */
-    List<Double> sampleDepartures(int amount, Random random);
+    List<Double> sampleDepartures(int n, int hours, Random random);
 }

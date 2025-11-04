@@ -45,8 +45,8 @@ public class SimulationJobSampler {
     private final BuildingBlock buildingBlock;
     private final OperationalPlan operationalPlan;
 
-    public List<RailsimSimulationJob> sample(int nSamplesPerSubvariant, DepartureSamplingStrategy strategy,
-                                             Path scheduleSamplingOutputFolderPath,
+    public List<RailsimSimulationJob> sample(int nSamplesPerSubvariant, int simulationHours,
+                                             DepartureSamplingStrategy strategy, Path scheduleSamplingOutputFolderPath,
                                              Path simulationJobConfigOutputFolderPath,
                                              Path simulationRunOutputFolderPath) {
 
@@ -70,7 +70,8 @@ public class SimulationJobSampler {
             long taskSeed = seed + task.subVariant.getId().hashCode();
 
             // stateful sampler: ensure a random, but repeatable sequence for each sub-variant
-            StatefulScheduleSampler sampler = new StatefulScheduleSampler(taskSeed, templateScenario, task.subVariant);
+            StatefulScheduleSampler sampler = new StatefulScheduleSampler(taskSeed, templateScenario, task.subVariant,
+                    simulationHours);
 
             // for each sub variant, create a stream of samples (from 1 to n)
             return IntStream.rangeClosed(1, nSamplesPerSubvariant).mapToObj(sampleIndex -> {
@@ -131,6 +132,9 @@ public class SimulationJobSampler {
         // the relative path must be calculated from the config file's parent directory
         config.transit().setTransitScheduleFile(configFilePath.getParent().relativize(schedulePath).toString());
         config.transit().setVehiclesFile(configFilePath.getParent().relativize(vehiclePath).toString());
+
+        // reduce the number of thread per simulation, since many simulations are running in parallel
+        config.global().setNumberOfThreads(1);
 
         // write the config file
         ConfigUtils.writeConfig(config, configFilePath.toString());

@@ -67,8 +67,8 @@ public class BuildingBlockWorkflow {
         SimulationJobSampler sampler = new SimulationJobSampler(config.getSeed(), templateConfigFilePath,
                 templateScenario, buildingBlock, operationalPlan);
 
-        return sampler.sample(config.getSamplesPerSubvariant(), config.getDepartureSamplingStrategy(),
-                scheduleSamplingPath, jobConfigPath, simulationRunOutputPath);
+        return sampler.sample(config.getSamplesPerSubvariant(), config.getSimulationHours(),
+                config.getDepartureSamplingStrategy(), scheduleSamplingPath, jobConfigPath, simulationRunOutputPath);
     }
 
     /**
