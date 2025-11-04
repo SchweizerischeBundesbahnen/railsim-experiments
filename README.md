@@ -1,8 +1,8 @@
 # MATSim Railsim Experiments
 
 This project provides a configurable command-line tool for running railway simulations with `railsim` (a MATSim
-contrib). It is designed to analyze and compare the performance of different infrastructure layouts (**Building Blocks
-**) under consistent traffic scenarios (**Operational Plans**).
+contrib). It is designed to analyze and compare the performance of different infrastructure layouts
+(**Building Blocks**) under consistent traffic scenarios (**Operational Plans**).
 
 The project is structured around **Use Cases**. A Use Case groups a set of related Building Blocks and defines a single
 Operational Plan compatible with all of them, ensuring a consistent basis for comparison.
