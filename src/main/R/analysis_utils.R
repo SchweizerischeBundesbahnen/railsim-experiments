@@ -1,5 +1,7 @@
 
 
+#  --- 1. READER FUNCTIONS ------
+
 read_detailed_Results <- function(builidingBlocks){
   all_tables <- list()
   
@@ -83,3 +85,4 @@ read_summaryResults <- function(buildingBlocks){
   }
   return(big_dt)
 }
+

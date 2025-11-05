@@ -1,13 +1,23 @@
 rm(list = ls())
-library(data.table)
-library(tidyverse)
-library(ggplot2)
+
 library(patchwork)
 library(jsonlite)
 
+# Load libraries for interactivity and saving HTML
+library(plotly)
+library(htmlwidgets)
+
+# Load necessary libraries for data handling, XML parsing, and plotting
+library(data.table)
+library(tidyverse)
+library(ggplot2)
+library(xml2)
+library(lubridate)
+
+# Load uitls
 utilsDir <- rstudioapi::getSourceEditorContext()$path |> dirname()
 source(file.path(utilsDir, "analysis_utils.R"))
-  
+source(file.path(utilsDir, "weg_zeit_diagramme_utils.R"))
 
 
 filer <- '//filer22l/K-UE220L/IFI/FTO/SAM.A13783/'
@@ -16,11 +26,13 @@ run_id <- "output_20251030_ik"
 run_id <- "output_20251031_uc1_n100_th" 
 run_id <- "output_20251102_uc1_n100_mu"
 
-#baseDirectory = paste0(filer, "04_projects/26_vivaldi_phase3/")
 baseDirectory <- paste0(filer, "04_projects/42_gzb_railsim/", run_id, "/")
 
-#for local analysis
-baseDirectory <- "C://devsbb/git/railsim-experiments/results/"
+# for local analysis
+filer <- "C://devsbb/git/railsim-experiments/"
+run_id <- "results"
+baseDirectory <- paste0(filer, run_id, "/")
+
 
 
 config <- fromJSON(file.path(baseDirectory,"output_project_config.json"))
@@ -33,78 +45,158 @@ usecaseDirectory <- paste0(baseDirectory, usecase, "/")
 buildingBlocks <- list.dirs(path = usecaseDirectory, recursive = FALSE)
 
 
-#Read all detailed Tables
-big_dt <- read_detailed_Results(buildingBlocks)
-
-#Filtere auf den jeweils letzten Stop um die Verspätung am ziel zu identifizieren.
-df <- big_dt |> 
-  group_by(building_block, sample, route_id, departure_id) |> mutate(n_stop = max(stop_sequence)) |> ungroup() |> 
-  filter(n_stop == stop_sequence)
-
-# Pro sample die Summe der arrival_delay berechnen
-sample_sums <- df %>%
-  group_by(building_block, schedule, sample) %>%   # group_by nur schedule+sample wäre auch ok
-  summarise(total_arrival_delay = sum(arrival_delay, na.rm = TRUE), .groups = "drop") |> 
-  rename(total_delay_at_destination = total_arrival_delay)
 
 
+# --- READ RESULTS FROM CSV FILES---
 
-#Read summary results
-df <- read_summaryResults(buildingBlocks)
+read_detailed <- FALSE
 
-sample_sums <- df |> 
-  rename(schedule = subvariant_id)
+if (read_detailed){
+  #Read all detailed Tables
+  big_dt <- read_detailed_Results(buildingBlocks)
+  
+  #Filtere auf den jeweils letzten Stop um die Verspätung am ziel zu identifizieren.
+  df <- big_dt |> 
+    group_by(building_block, sample, route_id, departure_id) |> mutate(n_stop = max(stop_sequence)) |> ungroup() |> 
+    filter(n_stop == stop_sequence)
+  
+  # Pro sample die Summe der arrival_delay berechnen
+  sample_sums <- df %>%
+    group_by(building_block, schedule, sample) %>%   # group_by nur schedule+sample wäre auch ok
+    summarise(total_arrival_delay = sum(arrival_delay, na.rm = TRUE), .groups = "drop") |> 
+    rename(total_delay_at_destination = total_arrival_delay)
+} else {
+  
+  
+  #Read summary results
+  df <- read_summaryResults(buildingBlocks)
+  
+  sample_sums <- df |> 
+    rename(schedule = subvariant_id)
+  
+}
 
 
-# # 2) Boxplot: x = schedule, y = total_arrival_delay; jeder Punkt = ein sample
-# p_boxplots <- ggplot(sample_sums, aes(x = schedule, y = total_delay_at_destination)) +
-#   geom_boxplot(outlier.shape = NA) +                # Boxplot ohne outlier-punkte
-#   geom_jitter(width = 0.2, height = 0, alpha = 0.6, size = 0.5, color = "steelblue") + # einzelne samples
-#   facet_wrap(~ building_block, scales = "free_x", ncol = 1) +
-#   theme_minimal() +
-#   labs(
-#     x = "Schedule",
-#     y = "Summe der Arrival-Delays pro Sample",
-#     title = "Verteilung der Arrival Delays nach Schedule \ngetrennt nach Building Block"
-#   ) +
-#   theme(
-#     axis.text.x = element_text(angle = 45, hjust = 1)
-#   )
-# 
-# print(p_boxplots)
 
-# ECDF's
-# p_ecdf <- ggplot(sample_sums, 
-#                  aes(x = total_delay_at_destination, 
-#                      color = schedule)) +
-#   stat_ecdf(geom = "step", size = 0.8, alpha = 0.8) +
-#   facet_wrap(~ building_block, scales = "free_x", ncol = 2) +
-#   theme_minimal(base_size = 12) +
-#   labs(
-#     x = "Arrival Delay",
-#     y = "Kumulative Verteilungsfunktion (ECDF)",
-#     title = "Kumulative Verteilungen der Arrival-Delays\nnach Schedule und Building Block",
-#     color = "Schedule"
-#   ) +
-#   theme(
-#     legend.position = "bottom",
-#     legend.key.size = unit(0.6, "lines"),
-#     axis.text.x = element_text(angle = 45, hjust = 1)
-#   )
-# 
-# print(p_ecdf)
+
+# --- ECDF WITH PLOTLY ---
 
 # Customized ECDF's
 schedules <- sort(unique(sample_sums$schedule))
 
 #Define visual properties
 line_specs <- tibble(
-  schedule = schedules,
+  #schedule = schedules,
+  schedule = c("KM1.1", "KM1.2", "KM2.1", "KM2.2", "KM3.1", "KM3.2",
+               "M1.1", "M1.2", "R1.1", "R1.2", "R2.1", "R2.2"),
   color = c("darkred", "darkred", "red", "red", "pink", "pink",
             "darkgreen", "darkgreen", "blue", "blue", "violet", "violet"),
   linetype = c("solid", "twodash", "solid", "twodash", "solid", "twodash", 
                "solid", "twodash", "solid", "twodash", "solid", "twodash"),
   linewidth = c(.8, 1, .8, 1, .8, 1, .8, 1, .8, 1, .8, 1)
+)
+line_specs <- tibble(
+  schedule = schedules,
+  color = rep("red", length(schedules)),
+  linetype = rep("solid", length(schedules)),
+  linewidth = rep(1, length(schedules))
+)
+
+sample_sums_plot <- sample_sums |> 
+  left_join(line_specs, by = "schedule")
+
+
+# 1️⃣ ECDF-Daten vorbereiten
+ecdf_data <- sample_sums_plot %>%
+  group_by(building_block, schedule) %>%
+  arrange(total_delay_at_destination) %>%
+  mutate(
+    ecdf_y = ecdf(total_delay_at_destination)(total_delay_at_destination)
+  ) %>%
+  ungroup() |> 
+  group_by(building_block, schedule, total_delay_at_destination, ecdf_y) |> 
+  summarise(sample_list = paste(sample, collapse = "<br>")) |> 
+  ungroup()
+
+# 2️⃣ Farben und Linientypen aus line_specs übernehmen
+color_map <- setNames(line_specs$color, line_specs$schedule)
+linetype_map <- setNames(line_specs$linetype, line_specs$schedule)
+linewidth_map <- setNames(line_specs$linewidth, line_specs$schedule)
+
+# 3️⃣ Mit ggplot vorbereiten (optional, für konsistentes Layout)
+p_ecdf_base <- ggplot(ecdf_data, aes(x = total_delay_at_destination, y = ecdf_y, group = schedule)) +
+  geom_line(aes(color = schedule, linetype = schedule, linewidth = schedule)) +
+  geom_point(aes(color = schedule, text = paste0(
+    "Schedule: ", schedule, "<br>",
+    "Building block: ", building_block, "<br>",
+    "Samples: ", sample_list, "<br>",
+    "Delay: ", round(total_delay_at_destination, 2)
+  )), size = 1.3, alpha = 0.6) +
+  facet_wrap(~ building_block, scales = "free_x", ncol = 2) +
+  scale_color_manual(values = color_map) +
+  scale_linetype_manual(values = linetype_map) +
+  scale_linewidth_manual(values = linewidth_map) +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = "Arrival Delay",
+    y = "Kumulative Verteilungsfunktion (ECDF)",
+    title = paste0("ECDF of arrival delays\nRun-ID = ", config$run_id),
+    color = "Schedule",
+    linetype = "Schedule",
+    linewidth = "Schedule"
+  ) +
+  theme(
+    legend.position = "bottom",
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  )
+
+# 4️⃣ ggplot → plotly konvertieren
+p_ecdf_plotly <- ggplotly(p_ecdf_base, tooltip = "text")
+
+# 5️⃣ Plot anzeigen
+p_ecdf_plotly
+
+
+
+# --- SHOW AND SAVE WEG-ZEIT-DIAGRAMM FROM ONE SPECIFIC SAMPLE ---
+
+
+#  Weg-Zeit-Diagramm für ein Sample.
+weg_zeit_diagram(baseDirectory = baseDirectory, 
+                 usecase = "uc_1", 
+                 buildingBlock = "uc1_bb3", 
+                 subvariant = "KM2.24", 
+                 sample = "98")
+
+
+
+
+
+
+
+# --- MORE DIAGRAMS OF DELAY DISTRIBUTIONS ---
+
+# --- FIRST DRAFT OF ECDF-DIAGRAM ---
+
+# Customized ECDF's
+schedules <- sort(unique(sample_sums$schedule))
+
+#Define visual properties
+line_specs <- tibble(
+  #schedule = schedules,
+  schedule = c("KM1.1", "KM1.2", "KM2.1", "KM2.2", "KM3.1", "KM3.2",
+               "M1.1", "M1.2", "R1.1", "R1.2", "R2.1", "R2.2"),
+  color = c("darkred", "darkred", "red", "red", "pink", "pink",
+            "darkgreen", "darkgreen", "blue", "blue", "violet", "violet"),
+  linetype = c("solid", "twodash", "solid", "twodash", "solid", "twodash", 
+               "solid", "twodash", "solid", "twodash", "solid", "twodash"),
+  linewidth = c(.8, 1, .8, 1, .8, 1, .8, 1, .8, 1, .8, 1)
+)
+line_specs <- tibble(
+  schedule = schedules,
+  color = rep("red", length(schedules)),
+  linetype = rep("solid", length(schedules)),
+  linewidth = rep(1, length(schedules))
 )
 
 sample_sums_plot <- sample_sums |> 
@@ -133,6 +225,9 @@ p_ecdf_legend <- ggplot(sample_sums_plot, aes(x = total_delay_at_destination, gr
   )
 
 print(p_ecdf_legend)
+
+
+
 
 
 # Distribution Statistics
@@ -233,7 +328,7 @@ print(p_lineplot_min)
 
 
 # Boxplot (aus deinem ersten Plot)
-bb <- "uc1_bb4"
+bb <- "uc1_bb3"
 ss <- sample_sums |> filter(building_block==bb)
 schst_long <- schedule_stats_long |> filter(building_block==bb)
 
