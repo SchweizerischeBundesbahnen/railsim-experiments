@@ -4,39 +4,94 @@ import lombok.extern.log4j.Log4j2;
 import org.apache.logging.log4j.Level;
 import org.apache.logging.log4j.core.config.Configurator;
 import org.matsim.project.scenario.BuildingBlock;
+import picocli.CommandLine;
 
 import java.io.IOException;
+import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.Callable;
 
 @Log4j2
-public final class RunRailsimScenario {
+@CommandLine.Command(name = "run-railsim-scenario", mixinStandardHelpOptions = true, description = "Runs Railsim simulation scenarios with configurable parameters.")
+public class RunRailsimScenario implements Callable<Integer> {
 
-    public static final String OUTPUT_DIRECTORY = "//filer22l/K-UE220L/IFI/FTO/SAM.A13783/04_projects/42_gzb_railsim/output_20251030_test_all_rerouting";
-    public static final List<BuildingBlock> BUILDING_BLOCKS = List.of(BuildingBlock.UC1_BB1, BuildingBlock.UC1_BB2,
-            BuildingBlock.UC1_BB3, BuildingBlock.UC1_BB4);
-    public static final int SAMPLES_PER_SUBVARIANT = 5;
-    public static final ProjectConfig.DepartureSampling DEPARTURE_SAMPLING = ProjectConfig.DepartureSampling.RANDOM;
-    private static final boolean MUTE_MATSIM = true;
+    @CommandLine.Option(names = {"-o", "--output"}, description = "Output directory", required = true)
+    private String outputDirectory;
 
-    public static void main(String[] args) throws IOException {
+    @CommandLine.Option(names = {"-b", "--building-blocks"}, description = "Comma-separated building blocks (e.g., UC1_BB1,UC1_BB2), or '*' for all.", defaultValue = "*")
+    private String buildingBlocksInput;
 
-        if (MUTE_MATSIM) {
-            // set matsim logs to warn, re-enable the current project
-            Configurator.setLevel("org.matsim", Level.WARN);
-            Configurator.setLevel("ch.sbb.matsim", Level.WARN);
-            Configurator.setLevel("org.matsim.project", Level.INFO);
+    @CommandLine.Option(names = {"-s", "--samples"}, description = "Number of samples per sub-variant", defaultValue = "5")
+    private int samplesPerSubvariant;
+
+    @CommandLine.Option(names = {"-h", "--hours"}, description = "Simulation duration in hours", defaultValue = "3")
+    private int simulationHours;
+
+    @CommandLine.Option(names = {"-d", "--departure-sampling"}, description = "Departure sampling strategy (RANDOM, HEADWAY)", defaultValue = "RANDOM")
+    private ProjectConfig.DepartureSampling departureSampling;
+
+    @CommandLine.Option(names = {"-l", "--matsim-log-level"}, description = "MATSim log level (INFO, WARN, ERROR, DEBUG)", defaultValue = "INFO")
+    private String matsimLogLevel;
+
+    @CommandLine.Option(names = {"--overwrite"}, description = "Overwrite output directory if it exists", defaultValue = "false")
+    private boolean overwriteOutput;
+
+    public static void main(String[] args) {
+        int exitCode = new CommandLine(new RunRailsimScenario()).execute(args);
+        System.exit(exitCode);
+    }
+
+    @Override
+    public Integer call() throws IOException {
+        Level level = Level.valueOf(matsimLogLevel.toUpperCase());
+        Configurator.setLevel("org.matsim", level);
+        Configurator.setLevel("ch.sbb.matsim", level);
+        Configurator.setLevel("org.matsim.project", Level.INFO);
+
+        List<BuildingBlock> buildingBlocks;
+        if ("*".equals(buildingBlocksInput)) {
+            buildingBlocks = List.of(BuildingBlock.values());
+            log.info("No specific building blocks provided; running all {} available blocks", buildingBlocks.size());
+        } else {
+            buildingBlocks = Arrays.stream(buildingBlocksInput.split(","))
+                    .map(String::trim)
+                    .map(BuildingBlock::valueOf)
+                    .toList();
         }
 
-        // configure project
         ProjectConfig config = ProjectConfig.builder()
-                .outputDirectory(OUTPUT_DIRECTORY)
-                .overwriteOutput(true)
-                .buildingBlocks(BUILDING_BLOCKS)
-                .samplesPerSubvariant(SAMPLES_PER_SUBVARIANT)
-                .departureSampling(DEPARTURE_SAMPLING)
+                .outputDirectory(outputDirectory)
+                .overwriteOutput(overwriteOutput)
+                .buildingBlocks(buildingBlocks)
+                .samplesPerSubvariant(samplesPerSubvariant)
+                .simulationHours(simulationHours)
+                .departureSampling(departureSampling)
                 .build();
 
-        // run project pipeline
+        printConfiguration(config);
         new ProjectRunner(config).run();
+
+        return 0;
+    }
+
+    private void printConfiguration(ProjectConfig config) {
+        StringBuilder sb = new StringBuilder("-o ").append(config.getOutputDirectory())
+                .append(" -b ")
+                .append(config.getBuildingBlocks()
+                        .stream()
+                        .map(BuildingBlock::name)
+                        .reduce((a, b) -> a + "," + b)
+                        .orElse(""))
+                .append(" -s ")
+                .append(config.getSamplesPerSubvariant())
+                .append(" -h ")
+                .append(config.getSimulationHours())
+                .append(" -d ")
+                .append(config.getDepartureSampling())
+                .append(" -l ")
+                .append(matsimLogLevel)
+                .append(" --overwrite ")
+                .append(config.isOverwriteOutput());
+        log.info("Configuration: {}", sb);
     }
 }

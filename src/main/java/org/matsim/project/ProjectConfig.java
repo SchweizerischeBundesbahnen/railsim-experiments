@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
 import lombok.Builder;
 import lombok.Getter;
 import org.matsim.project.sampling.strategy.DepartureSamplingStrategy;
-import org.matsim.project.sampling.strategy.EvenIntervalDepartureSampling;
+import org.matsim.project.sampling.strategy.HeadwayDepartureSampling;
 import org.matsim.project.sampling.strategy.RandomDepartureSampling;
 import org.matsim.project.scenario.BuildingBlock;
 
@@ -33,6 +33,9 @@ public class ProjectConfig {
     private final int samplesPerSubvariant = 100;
 
     @Builder.Default
+    private final int simulationHours = 3;
+
+    @Builder.Default
     private final DepartureSampling departureSampling = DepartureSampling.RANDOM;
 
     @Builder.Default
@@ -40,7 +43,8 @@ public class ProjectConfig {
 
     // private constructor with validation for the builder
     private ProjectConfig(String outputDirectory, boolean overwriteOutput, long seed, int samplesPerSubvariant,
-                          DepartureSampling departureSampling, List<BuildingBlock> buildingBlocks) {
+                          int simulationHours, DepartureSampling departureSampling,
+                          List<BuildingBlock> buildingBlocks) {
 
         if (outputDirectory == null || outputDirectory.isBlank()) {
             throw new IllegalArgumentException("Output directory must be specified.");
@@ -49,6 +53,7 @@ public class ProjectConfig {
         this.outputDirectory = outputDirectory;
         this.seed = seed;
         this.samplesPerSubvariant = samplesPerSubvariant;
+        this.simulationHours = simulationHours;
         this.departureSampling = departureSampling;
         this.buildingBlocks = buildingBlocks;
         this.overwriteOutput = overwriteOutput;
@@ -82,12 +87,12 @@ public class ProjectConfig {
 
     public enum DepartureSampling {
         RANDOM,
-        EVEN_INTERVAL;
+        HEADWAY;
 
         public DepartureSamplingStrategy create() {
             return switch (this) {
                 case RANDOM -> new RandomDepartureSampling();
-                case EVEN_INTERVAL -> new EvenIntervalDepartureSampling();
+                case HEADWAY -> new HeadwayDepartureSampling();
             };
         }
     }
