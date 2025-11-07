@@ -1,0 +1,129 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE transitSchedule SYSTEM "http://www.matsim.org/files/dtd/transitSchedule_v2.dtd">
+
+<transitSchedule>
+
+    <transitStops>
+        <stopFacility id="L1" x="-10700.0" y="0.0" linkRefId="stop_loop_10" name="L1"/>
+        <stopFacility id="M3" x="0.0" y="100.0" linkRefId="4" name="M3" stopAreaId="M"/>
+        <stopFacility id="M2" x="0.0" y="50.0" linkRefId="26" name="M2" stopAreaId="M"/>
+        <stopFacility id="M1" x="0.0" y="0.0" linkRefId="623" name="M1" stopAreaId="M"/>
+        <stopFacility id="R1" x="10730.0" y="0.0" linkRefId="stop_loop_12" name="R1"/>
+    </transitStops>
+
+    <transitLine id="FV">
+        <transitRoute id="FV_LMR">
+            <transportMode>rail</transportMode>
+            <routeProfile>
+                <stop refId="L1" arrivalOffset="00:00:00" departureOffset="00:00:00" awaitDeparture="true"/>
+                <stop refId="M2" arrivalOffset="00:05:00" departureOffset="00:08:30" awaitDeparture="true"
+                      minimumStopDuration="00:03:30"/>
+                <stop refId="R1" arrivalOffset="00:10:00" departureOffset="00:10:00" awaitDeparture="true"/>
+            </routeProfile>
+            <route>
+                <link refId="stop_loop_10"/>
+                <link refId="33"/>
+                <link refId="30"/>
+                <link refId="18"/>
+                <link refId="19"/>
+                <link refId="28"/>
+                <link refId="26"/>
+                <link refId="27"/>
+                <link refId="23"/>
+                <link refId="621"/>
+                <link refId="34"/>
+                <link refId="35"/>
+                <link refId="17"/>
+                <link refId="stop_loop_12"/>
+            </route>
+            <departures>
+                <departure id="FV_LMR_dep_0" departureTime="00:00:00" vehicleRefId="FV_LMR_veh_0"/>
+            </departures>
+        </transitRoute>
+
+        <transitRoute id="FV_LR">
+            <transportMode>rail</transportMode>
+            <routeProfile>
+                <stop refId="L1" arrivalOffset="00:00:00" departureOffset="00:00:00" awaitDeparture="true"/>
+                <stop refId="R1" arrivalOffset="00:10:00" departureOffset="00:10:00" awaitDeparture="true"/>
+            </routeProfile>
+            <route>
+                <link refId="stop_loop_10"/>
+                <link refId="33"/>
+                <link refId="30"/>
+                <link refId="18"/>
+                <link refId="19"/>
+                <link refId="28"/>
+                <link refId="26"/>
+                <link refId="27"/>
+                <link refId="23"/>
+                <link refId="621"/>
+                <link refId="34"/>
+                <link refId="35"/>
+                <link refId="17"/>
+                <link refId="stop_loop_12"/>
+            </route>
+            <departures>
+                <departure id="FV_LR_dep_0" departureTime="00:00:00" vehicleRefId="FV_LR_veh_0"/>
+            </departures>
+        </transitRoute>
+    </transitLine>
+
+    <transitLine id="GV">
+        <transitRoute id="GV_LR">
+            <transportMode>rail</transportMode>
+            <routeProfile>
+                <stop refId="L1" arrivalOffset="00:00:00" departureOffset="00:00:00" awaitDeparture="true"/>
+                <stop refId="R1" arrivalOffset="00:10:00" departureOffset="00:10:00" awaitDeparture="true"/>
+            </routeProfile>
+            <route>
+                <link refId="stop_loop_10"/>
+                <link refId="33"/>
+                <link refId="30"/>
+                <link refId="31"/>
+                <link refId="622"/>
+                <link refId="623"/>
+                <link refId="624"/>
+                <link refId="32"/>
+                <link refId="34"/>
+                <link refId="35"/>
+                <link refId="17"/>
+                <link refId="stop_loop_12"/>
+            </route>
+            <departures>
+                <departure id="GV_LR_dep_0" departureTime="00:00:00" vehicleRefId="GV_LR_veh_0"/>
+            </departures>
+        </transitRoute>
+    </transitLine>
+
+    <transitLine id="RV">
+        <transitRoute id="RV_LMR">
+            <transportMode>rail</transportMode>
+            <routeProfile>
+                <stop refId="L1" arrivalOffset="00:00:00" departureOffset="00:00:00" awaitDeparture="true"/>
+                <stop refId="M3" arrivalOffset="00:05:00" departureOffset="00:06:42" awaitDeparture="true"
+                      minimumStopDuration="00:01:42"/>
+                <stop refId="R1" arrivalOffset="00:10:00" departureOffset="00:10:00" awaitDeparture="true"/>
+            </routeProfile>
+            <route>
+                <link refId="stop_loop_10"/>
+                <link refId="33"/>
+                <link refId="30"/>
+                <link refId="18"/>
+                <link refId="19"/>
+                <link refId="20"/>
+                <link refId="4"/>
+                <link refId="22"/>
+                <link refId="23"/>
+                <link refId="621"/>
+                <link refId="34"/>
+                <link refId="35"/>
+                <link refId="17"/>
+                <link refId="stop_loop_12"/>
+            </route>
+            <departures>
+                <departure id="RV_LMR_dep_0" departureTime="00:00:00" vehicleRefId="RV_LMR_veh_0"/>
+            </departures>
+        </transitRoute>
+    </transitLine>
+</transitSchedule>
