@@ -5,7 +5,6 @@ import lombok.Data;
 @Data
 public class TrainVolume {
     private ProductType product;
-    private String fromStop;
-    private String toStop;
+    private String route;
     private int amount;
 }
