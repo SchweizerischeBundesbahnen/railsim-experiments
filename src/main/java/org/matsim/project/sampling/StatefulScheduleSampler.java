@@ -5,7 +5,6 @@ import lombok.extern.log4j.Log4j2;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.project.sampling.strategy.DepartureSamplingStrategy;
-import org.matsim.project.scenario.plan.ProductType;
 import org.matsim.project.scenario.plan.SubVariant;
 import org.matsim.project.scenario.plan.TrainVolume;
 import org.matsim.pt.transitSchedule.api.*;
@@ -72,14 +71,8 @@ public class StatefulScheduleSampler {
         this.scenario.getTransitVehicles().getVehicleTypes().values().forEach(newVehicles::addVehicleType);
 
         for (TrainVolume trainVolume : subVariant.getTrainVolumes()) {
-            Optional<Match> match = findMatchingRoute(trainVolume);
-
-            if (match.isPresent()) {
-                addTransitRoute(newSchedule, newVehicles, match.get(), samplingStrategy);
-            } else {
-                throw new IllegalStateException(
-                        "No match found for train volume " + trainVolume + " of sub-variant:" + subVariant.getId());
-            }
+            Match match = findMatchingRoute(trainVolume);
+            addTransitRoute(newSchedule, newVehicles, match, samplingStrategy);
         }
 
         return new Sample(newSchedule, newVehicles);
@@ -127,51 +120,33 @@ public class StatefulScheduleSampler {
     }
 
     /**
-     * Finds a transit route in the template schedule that matches the product type and OD pair.
+     * Finds a transit route in the template schedule that matches the product type and route ID.
      */
-    private Optional<Match> findMatchingRoute(TrainVolume trainVolume) {
-        final TransitStopFacility fromStop = getTransitStopFacility(trainVolume.getFromStop());
-        final TransitStopFacility toStop = getTransitStopFacility(trainVolume.getToStop());
-        final ProductType productType = trainVolume.getProduct();
+    private Match findMatchingRoute(TrainVolume trainVolume) {
+        Id<TransitLine> lineId = Id.create(trainVolume.getProduct().name(), TransitLine.class);
+        TransitLine transitLine = scenario.getTransitSchedule().getTransitLines().get(lineId);
 
-        for (TransitLine transitLine : scenario.getTransitSchedule().getTransitLines().values()) {
-            for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
-                Id<VehicleType> vehicleTypeId = routeVehicleType.get(transitRoute.getId());
-
-                // product not matching
-                if (!productType.name().equals(vehicleTypeId.toString())) {
-                    continue;
-                }
-                // first stop not matching
-                if (!transitRoute.getStops().getFirst().getStopFacility().getId().equals(fromStop.getId())) {
-                    continue;
-                }
-                // last stop not matching
-                if (!transitRoute.getStops().getLast().getStopFacility().getId().equals(toStop.getId())) {
-                    continue;
-                }
-
-                log.debug("Match {} ({} -> {}) for product type: {} == vehicle type: {}", transitRoute.getId(),
-                        fromStop.getId(), toStop.getId(), productType, vehicleTypeId);
-                VehicleType vehicleType = scenario.getTransitVehicles().getVehicleTypes().get(vehicleTypeId);
-
-                return Optional.of(new Match(transitLine, transitRoute, vehicleType, trainVolume));
-            }
+        if (transitLine == null) {
+            throw new IllegalStateException(String.format(
+                    "Configuration error in sub-variant '%s': No matching transit line found for product '%s' defined in train volume: %s",
+                    subVariant.getId(), trainVolume.getProduct(), trainVolume));
         }
 
-        return Optional.empty();
-    }
-
-    private TransitStopFacility getTransitStopFacility(String id) {
-        TransitStopFacility transitStopFacility = scenario.getTransitSchedule()
-                .getFacilities()
-                .get(Id.create(id, TransitStopFacility.class));
-
-        if (transitStopFacility == null) {
-            throw new IllegalStateException("No transit stop facility found for operational plan id " + id);
+        Id<TransitRoute> routeId = Id.create(trainVolume.getRoute(), TransitRoute.class);
+        TransitRoute transitRoute = transitLine.getRoutes().get(routeId);
+        if (transitRoute == null) {
+            throw new IllegalStateException(String.format(
+                    "Configuration error in sub-variant '%s': No matching transit route '%s' found in transit line '%s' for train volume: %s",
+                    subVariant.getId(), trainVolume.getRoute(), lineId, trainVolume));
         }
 
-        return transitStopFacility;
+        Id<VehicleType> vehicleTypeId = routeVehicleType.get(transitRoute.getId());
+        log.debug("Found match for sub-variant {}: TrainVolume({} -> {}) uses route {} with vehicle type {}",
+                subVariant.getId(), trainVolume.getProduct(), trainVolume.getRoute(), transitRoute.getId(),
+                vehicleTypeId);
+
+        VehicleType vehicleType = scenario.getTransitVehicles().getVehicleTypes().get(vehicleTypeId);
+        return new Match(transitLine, transitRoute, vehicleType, trainVolume);
     }
 
     private record Match(TransitLine transitLine, TransitRoute transitRoute, VehicleType vehicleType,

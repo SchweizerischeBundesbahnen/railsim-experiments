@@ -19,9 +19,9 @@ The simulation is structured around these three key concepts, from general to sp
   resources) and a template transit schedule (routes and stops), but does not contain specific departure times on the
   routes. It is defined by a set of MATSim XML files (`network.xml`, `schedule.xml`, and `vehicles.xml`).
 * **Operational Plan**: A generic timetable (`Mengengerüst`) that specifies the desired train volumes. It defines how
-  many trains of each product type (e.g., FV, RV, GV) should run between origin-destination pairs within a given period.
-  It is provided as a JSON file with hierarchical structure that allows for defining different operational concepts,
-  variants, and sub-variants.
+  many trains of each product type (e.g., FV, RV, GV) should run on specific, pre-defined transit routes within a given
+  period. It is provided as a JSON file with hierarchical structure that allows for defining different operational
+  concepts, variants, and sub-variants.
 
 ## Simulation Pipeline
 
@@ -89,7 +89,13 @@ graph LR
 
 ```json
 {
-  "operationalPlan": [
+  "trainVolumePeriod": 1800,
+  "minimumHeadway": {
+    "FV": 120,
+    "RV": 90,
+    "GV": 180
+  },
+  "operationModes": [
     {
       "name": "KM",
       "description": "Kernnetz-Mischbetrieb",
@@ -112,24 +118,21 @@ graph LR
           ],
           "subVariants": [
             {
-              "id": "KM1.1",
+              "id": "KM1.4",
               "trainVolumes": [
                 {
                   "product": "FV",
-                  "fromStop": "L1",
-                  "toStop": "R1",
-                  "amount": 3
+                  "route": "FV_LMR",
+                  "amount": 1
                 },
                 {
                   "product": "RV",
-                  "fromStop": "L1",
-                  "toStop": "R1",
-                  "amount": 4
+                  "route": "RV_LMR",
+                  "amount": 2
                 },
                 {
                   "product": "GV",
-                  "fromStop": "L1",
-                  "toStop": "R1",
+                  "route": "GV_LR",
                   "amount": 1
                 }
               ]
@@ -184,7 +187,7 @@ program arguments in an IDE.
 ```sh
 ARGS_ARRAY=(
 --output "/path/to/your/output_directory"
---building-blocks "UC1_BB1,UC1_BB2,UC1_BB3,UC1_BB4"
+--building-blocks "UC1_BB1,UC1_BB2,UC1_BB3"
 --samples "5"
 --hours "3"
 --departure-sampling "RANDOM"
