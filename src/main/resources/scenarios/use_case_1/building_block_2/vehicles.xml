@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8"?>
-
 <vehicleDefinitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns="http://www.matsim.org/files/dtd"
                     xsi:schemaLocation="http://www.matsim.org/files/dtd http://www.matsim.org/files/dtd/vehicleDefinitions_v2.0.xsd">
 
@@ -10,12 +9,10 @@
             <attribute name="railsimAcceleration" class="java.lang.Double">0.6</attribute>
             <attribute name="railsimDeceleration" class="java.lang.Double">0.7</attribute>
         </attributes>
-
+        <capacity seats="9999" standingRoomInPersons="9999"/>
         <length meter="400.0"/>
         <width meter="1.0"/>
         <maximumVelocity meterPerSecond="44.444"/>
-
-        <capacity seats="9999" standingRoomInPersons="9999"/>
         <networkMode networkMode="rail"/>
     </vehicleType>
 
@@ -26,12 +23,10 @@
             <attribute name="railsimAcceleration" class="java.lang.Double">0.2</attribute>
             <attribute name="railsimDeceleration" class="java.lang.Double">0.4</attribute>
         </attributes>
-
+        <capacity seats="9999" standingRoomInPersons="9999"/>
         <length meter="400.0"/>
         <width meter="1.0"/>
         <maximumVelocity meterPerSecond="27.7778"/>
-
-        <capacity seats="9999" standingRoomInPersons="9999"/>
         <networkMode networkMode="rail"/>
     </vehicleType>
 
@@ -42,12 +37,10 @@
             <attribute name="railsimAcceleration" class="java.lang.Double">1.0</attribute>
             <attribute name="railsimDeceleration" class="java.lang.Double">0.7</attribute>
         </attributes>
-
+        <capacity seats="9999" standingRoomInPersons="9999"/>
         <length meter="200.0"/>
         <width meter="1.0"/>
         <maximumVelocity meterPerSecond="44.444"/>
-
-        <capacity seats="9999" standingRoomInPersons="9999"/>
         <networkMode networkMode="rail"/>
     </vehicleType>
 
