@@ -19,15 +19,18 @@ public class StatefulScheduleSampler {
     private final Random random;
     private final Scenario scenario;
     private final SubVariant subVariant;
-    private final int hours;
+    private final int samplingPeriod;
+    private final int simulationTime;
 
     private final Map<Id<TransitRoute>, Id<VehicleType>> routeVehicleType = new HashMap<>();
 
-    public StatefulScheduleSampler(long seed, Scenario scenario, SubVariant subVariant, int hours) {
+    public StatefulScheduleSampler(long seed, Scenario scenario, SubVariant subVariant, int samplingPeriod,
+                                   int simulationTime) {
         this.random = new Random(seed);
         this.scenario = scenario;
         this.subVariant = subVariant;
-        this.hours = hours;
+        this.samplingPeriod = samplingPeriod;
+        this.simulationTime = simulationTime;
 
         // assign unique vehicle type to route
         for (TransitLine transitLine : scenario.getTransitSchedule().getTransitLines().values()) {
@@ -101,7 +104,8 @@ public class StatefulScheduleSampler {
                 match.transitRoute.getStops(), match.transitRoute.getTransportMode());
 
         // sample departure times and add departures
-        List<Double> departureTimes = samplingStrategy.sampleDepartures(match.trainVolume.getAmount(), hours, random);
+        List<Double> departureTimes = samplingStrategy.sampleDepartures(match.trainVolume.getAmount(),
+                this.samplingPeriod, this.simulationTime, random);
         int i = 1;
         for (double departureTime : departureTimes) {
             Id<Vehicle> vehicleId = Id.create("train_" + match.vehicleType.getId() + "_" + i, Vehicle.class);
@@ -134,6 +138,7 @@ public class StatefulScheduleSampler {
 
         Id<TransitRoute> routeId = Id.create(trainVolume.getRoute(), TransitRoute.class);
         TransitRoute transitRoute = transitLine.getRoutes().get(routeId);
+
         if (transitRoute == null) {
             throw new IllegalStateException(String.format(
                     "Configuration error in sub-variant '%s': No matching transit route '%s' found in transit line '%s' for train volume: %s",

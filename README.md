@@ -172,15 +172,15 @@ program arguments in an IDE.
 
 ### Parameters
 
-| Flag                         | Description                                                        | Default  | Required |
-|------------------------------|--------------------------------------------------------------------|----------|:--------:|
-| `--output`                   | Output directory for simulation results.                           |          |   Yes    |
-| `--building-blocks`          | Comma-separated list of building blocks (e.g., `UC1_BB1,UC1_BB2`). | `*`      |          |
-| `-s`, `--samples`            | Number of samples per sub-variant.                                 | `5`      |          |
-| `-h`, `--hours`              | Simulation duration in hours.                                      | `3`      |          |
-| `-d`, `--departure-sampling` | Departure sampling strategy. (`RANDOM` or `HEADWAY`)               | `RANDOM` |          |
-| `-l`, `--matsim-log-level`   | MATSim log level. (`INFO`, `WARN`, `ERROR`, `DEBUG`)               | `INFO`   |          |
-| `--overwrite`                | Overwrite the output directory if it exists.                       | `false`  |          |
+| Flag                         | Description                                                          | Default  | Required |
+|------------------------------|----------------------------------------------------------------------|----------|:--------:|
+| `--output`                   | Output directory for simulation results.                             |          |   Yes    |
+| `--building-blocks`          | Comma-separated list of building blocks (e.g., `UC1_BB1,UC1_BB2`).   | `*`      |          |
+| `-s`, `--samples`            | Number of samples per sub-variant.                                   | `5`      |          |
+| `-t`, `--simulation-time`    | Total simulation time in seconds (should match the sampling period). | `10800`  |          |
+| `-d`, `--departure-sampling` | Departure sampling strategy. (`RANDOM` or `HEADWAY`)                 | `RANDOM` |          |
+| `-l`, `--matsim-log-level`   | MATSim log level. (`INFO`, `WARN`, `ERROR`, `DEBUG`)                 | `INFO`   |          |
+| `--overwrite`                | Overwrite the output directory if it exists.                         | `false`  |          |
 
 ### Example Execution
 

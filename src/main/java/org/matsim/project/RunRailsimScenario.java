@@ -24,8 +24,8 @@ public class RunRailsimScenario implements Callable<Integer> {
     @CommandLine.Option(names = {"-s", "--samples"}, description = "Number of samples per sub-variant", defaultValue = "5")
     private int samplesPerSubvariant;
 
-    @CommandLine.Option(names = {"-h", "--hours"}, description = "Simulation duration in hours", defaultValue = "3")
-    private int simulationHours;
+    @CommandLine.Option(names = {"-t", "--simulation-time"}, description = "Total simulation time in seconds.", defaultValue = "10800")
+    private int simulationTime;
 
     @CommandLine.Option(names = {"-d", "--departure-sampling"}, description = "Departure sampling strategy (RANDOM, HEADWAY)", defaultValue = "RANDOM")
     private ProjectConfig.DepartureSampling departureSampling;
@@ -64,7 +64,7 @@ public class RunRailsimScenario implements Callable<Integer> {
                 .overwriteOutput(overwriteOutput)
                 .buildingBlocks(buildingBlocks)
                 .samplesPerSubvariant(samplesPerSubvariant)
-                .simulationHours(simulationHours)
+                .simulationTime(simulationTime)
                 .departureSampling(departureSampling)
                 .build();
 
@@ -84,14 +84,14 @@ public class RunRailsimScenario implements Callable<Integer> {
                         .orElse(""))
                 .append(" -s ")
                 .append(config.getSamplesPerSubvariant())
-                .append(" -h ")
-                .append(config.getSimulationHours())
+                .append(" -t ")
+                .append(config.getSimulationTime())
                 .append(" -d ")
                 .append(config.getDepartureSampling())
                 .append(" -l ")
                 .append(matsimLogLevel)
                 .append(" --overwrite ")
                 .append(config.isOverwriteOutput());
-        log.info("Configuration: {}", sb);
+        log.info("Running with command-line equivalent: {}", sb);
     }
 }
