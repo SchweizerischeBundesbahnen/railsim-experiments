@@ -189,7 +189,7 @@ ARGS_ARRAY=(
 --output "/path/to/your/output_directory"
 --building-blocks "UC1_BB1,UC1_BB2,UC1_BB3"
 --samples "5"
---hours "3"
+--simulation-time "10800"
 --departure-sampling "RANDOM"
 --matsim-log-level "WARN"
 --overwrite
