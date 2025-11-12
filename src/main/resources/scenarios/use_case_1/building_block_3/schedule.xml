@@ -4,11 +4,11 @@
 <transitSchedule>
 
     <transitStops>
-        <stopFacility id="L1" x="-10700.0" y="0.0" linkRefId="stop_loop_10" name="L1"/>
+        <stopFacility id="L1" x="-10700.0" y="0.0" linkRefId="stop_loop_10" name="L1" stopAreaId="L"/>
         <stopFacility id="M3" x="0.0" y="100.0" linkRefId="4" name="M3" stopAreaId="M"/>
         <stopFacility id="M2" x="0.0" y="50.0" linkRefId="26" name="M2" stopAreaId="M"/>
         <stopFacility id="M1" x="0.0" y="0.0" linkRefId="623" name="M1" stopAreaId="M"/>
-        <stopFacility id="R1" x="10730.0" y="0.0" linkRefId="stop_loop_12" name="R1"/>
+        <stopFacility id="R1" x="10730.0" y="0.0" linkRefId="stop_loop_12" name="R1" stopAreaId="R"/>
     </transitStops>
 
     <transitLine id="FV">
