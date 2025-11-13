@@ -36,6 +36,9 @@ public class ProjectConfig {
     private final int simulationTime = 3 * 3600;
 
     @Builder.Default
+    private final int workerThreads = -1; // -1 means use all available cores
+
+    @Builder.Default
     private final DepartureSampling departureSampling = DepartureSampling.RANDOM;
 
     @Builder.Default

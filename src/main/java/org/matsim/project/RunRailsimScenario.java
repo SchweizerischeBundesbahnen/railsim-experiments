@@ -27,6 +27,9 @@ public class RunRailsimScenario implements Callable<Integer> {
     @CommandLine.Option(names = {"-t", "--simulation-time"}, description = "Total simulation time in seconds.", defaultValue = "10800")
     private int simulationTime;
 
+    @CommandLine.Option(names = {"-w", "--worker-threads"}, description = "The number of worker threads in the simulation executor (default is number of cores).", defaultValue = "-1")
+    private int workerThreads;
+
     @CommandLine.Option(names = {"-d", "--departure-sampling"}, description = "Departure sampling strategy (RANDOM, HEADWAY)", defaultValue = "RANDOM")
     private ProjectConfig.DepartureSampling departureSampling;
 
@@ -65,6 +68,7 @@ public class RunRailsimScenario implements Callable<Integer> {
                 .buildingBlocks(buildingBlocks)
                 .samplesPerSubvariant(samplesPerSubvariant)
                 .simulationTime(simulationTime)
+                .workerThreads(workerThreads)
                 .departureSampling(departureSampling)
                 .build();
 
@@ -86,6 +90,8 @@ public class RunRailsimScenario implements Callable<Integer> {
                 .append(config.getSamplesPerSubvariant())
                 .append(" -t ")
                 .append(config.getSimulationTime())
+                .append(" -w ")
+                .append(config.getWorkerThreads())
                 .append(" -d ")
                 .append(config.getDepartureSampling())
                 .append(" -l ")

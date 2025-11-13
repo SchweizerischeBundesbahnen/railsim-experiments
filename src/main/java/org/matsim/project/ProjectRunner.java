@@ -6,6 +6,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.project.scenario.BuildingBlock;
+import org.matsim.project.simulation.PostProcessingTaskFactory;
 import org.matsim.project.simulation.RailsimSimulationExecutor;
 import org.matsim.project.simulation.RailsimSimulationJob;
 import org.matsim.project.simulation.RailsimSimulationResult;
@@ -62,16 +63,20 @@ public class ProjectRunner {
             return;
         }
 
-        // parallel simulation execution
-        RailsimSimulationExecutor executor = new RailsimSimulationExecutor(
-                // collect post-processing task factories from all workflows
-                workflows.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+        // collect post-processing task factories from all workflows
+        Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories = workflows.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     try {
                         return entry.getValue().createPostProcessingTaskFactories();
                     } catch (IOException e) {
                         throw new UncheckedIOException(e);
                     }
-                })));
+                }));
+
+        // parallel simulation execution (default is number if cores)
+        RailsimSimulationExecutor executor = config.getWorkerThreads() == -1 ? new RailsimSimulationExecutor(
+                taskFactories) : new RailsimSimulationExecutor(config.getWorkerThreads(), taskFactories);
         List<RailsimSimulationResult> allResults = executor.runAll(allJobs);
 
         // write summary per building block
