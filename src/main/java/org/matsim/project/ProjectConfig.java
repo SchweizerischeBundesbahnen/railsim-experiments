@@ -46,7 +46,8 @@ public class ProjectConfig {
 
     // private constructor with validation for the builder
     private ProjectConfig(String outputDirectory, boolean overwriteOutput, long seed, int samplesPerSubvariant,
-                          int simulationTime, DepartureSampling departureSampling, List<BuildingBlock> buildingBlocks) {
+                          int simulationTime, int workerThreads, DepartureSampling departureSampling,
+                          List<BuildingBlock> buildingBlocks) {
 
         if (outputDirectory == null || outputDirectory.isBlank()) {
             throw new IllegalArgumentException("Output directory must be specified.");
@@ -56,6 +57,7 @@ public class ProjectConfig {
         this.seed = seed;
         this.samplesPerSubvariant = samplesPerSubvariant;
         this.simulationTime = simulationTime;
+        this.workerThreads = workerThreads;
         this.departureSampling = departureSampling;
         this.buildingBlocks = buildingBlocks;
         this.overwriteOutput = overwriteOutput;
