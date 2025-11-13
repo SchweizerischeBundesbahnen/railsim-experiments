@@ -7,10 +7,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 @Log4j2
 public class RailsimSimulationExecutor {
+
+    private static final long LOG_HEARTBEAT_INTERVAL_MS = TimeUnit.MINUTES.toMillis(1);
+    private static final long MAX_SILENCE_INTERVAL_MS = TimeUnit.MINUTES.toMillis(5);
 
     private final int workerThreads;
     private final Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories;
@@ -32,6 +36,7 @@ public class RailsimSimulationExecutor {
         // progress tracking init
         final AtomicInteger completedJobs = new AtomicInteger(0);
         final long startTime = System.currentTimeMillis();
+        final AtomicLong lastLogTime = new AtomicLong(startTime);
         final int logFrequency = Math.max(1, totalJobs / 40);
 
         // create separate thread pools for different workloads
@@ -39,6 +44,19 @@ public class RailsimSimulationExecutor {
         ExecutorService simulationExecutor = Executors.newFixedThreadPool(workerThreads);
         // flexible pool for I/O-bound post-processing tasks
         ExecutorService postProcessingExecutor = Executors.newCachedThreadPool();
+        // executor for the time-based progress heartbeat
+        ScheduledExecutorService progressHeartbeatExecutor = Executors.newSingleThreadScheduledExecutor();
+
+        // checks periodically if too much time has passed since the last log message.
+        progressHeartbeatExecutor.scheduleAtFixedRate(() -> {
+            long now = System.currentTimeMillis();
+            if (now - lastLogTime.get() > MAX_SILENCE_INTERVAL_MS) {
+                // safely ensure only one thread logs and updates the time
+                if (lastLogTime.compareAndSet(lastLogTime.get(), now)) {
+                    logProgress(completedJobs.get(), totalJobs, startTime);
+                }
+            }
+        }, LOG_HEARTBEAT_INTERVAL_MS, LOG_HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
 
         List<CompletableFuture<RailsimSimulationResult>> futures = jobs.stream().map(job -> {
             CompletableFuture<RailsimSimulationResult> pipelineFuture = runJobPipelineAsync(job, simulationExecutor,
@@ -47,9 +65,9 @@ public class RailsimSimulationExecutor {
             // attach a non-blocking action to log progress upon completion of each job
             pipelineFuture.whenComplete((result, throwable) -> {
                 int currentCompleted = completedJobs.incrementAndGet();
-                // log progress for the first job, last job, and every 5 jobs to avoid spam
                 if (currentCompleted == 1 || currentCompleted == totalJobs || currentCompleted % logFrequency == 0) {
                     logProgress(currentCompleted, totalJobs, startTime);
+                    lastLogTime.set(System.currentTimeMillis());
                 }
             });
             return pipelineFuture;
@@ -63,14 +81,23 @@ public class RailsimSimulationExecutor {
                 .map(CompletableFuture::join)
                 .collect(Collectors.toList());
 
+        // shutdown all executors
+        shutdownExecutor(progressHeartbeatExecutor);
         shutdownExecutor(simulationExecutor);
         shutdownExecutor(postProcessingExecutor);
+
         printSummary(results);
 
         return results;
     }
 
     private void logProgress(int completed, int total, long startTime) {
+        if (completed == 0) {
+            log.info("Progress: 0/{} (0.0%) | No jobs completed yet. Elapsed: {}...", total,
+                    formatDuration(System.currentTimeMillis() - startTime));
+            return;
+        }
+
         long elapsedTimeMs = System.currentTimeMillis() - startTime;
         String percentageStr = String.format("%.1f%%", (double) completed / total * 100.0);
 
