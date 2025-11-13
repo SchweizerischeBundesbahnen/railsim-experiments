@@ -39,6 +39,7 @@
         <link id="11" from="6" to="8" length="100.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" oneway="1"
               modes="rail">
             <attributes>
+                <attribute name="railsimExit" class="java.lang.Boolean">true</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
@@ -81,6 +82,7 @@
         <link id="9" from="7" to="1" length="100.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" oneway="1"
               modes="rail">
             <attributes>
+                <attribute name="railsimEntry" class="java.lang.Boolean">true</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>

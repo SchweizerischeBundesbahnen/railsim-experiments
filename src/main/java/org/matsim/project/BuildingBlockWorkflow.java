@@ -3,8 +3,9 @@ package org.matsim.project;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.project.analysis.MinimumHeadwayAnalysisFactory;
+import org.matsim.project.analysis.RunSummaryWriter;
 import org.matsim.project.analysis.TrainDelayAnalysisFactory;
-import org.matsim.project.analysis.TrainDelaySummaryWriter;
 import org.matsim.project.sampling.SimulationJobSampler;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.UseCase;
@@ -77,7 +78,8 @@ public class BuildingBlockWorkflow {
     public List<PostProcessingTaskFactory> createPostProcessingTaskFactories() throws IOException {
         Path analysisOutputPath = paths.getAndEnsure(ProjectPaths.Folder.ANALYSIS);
 
-        return List.of(new TrainDelayAnalysisFactory(analysisOutputPath));
+        return List.of(new TrainDelayAnalysisFactory(analysisOutputPath),
+                new MinimumHeadwayAnalysisFactory(analysisOutputPath));
     }
 
     /**
@@ -87,7 +89,7 @@ public class BuildingBlockWorkflow {
         Path analysisOutputPath = paths.getAndEnsure(ProjectPaths.Folder.ANALYSIS);
         log.info("Writing summary for {} with {} results.", buildingBlock.name(), results.size());
 
-        new TrainDelaySummaryWriter(results).write(analysisOutputPath);
+        new RunSummaryWriter(results).write(analysisOutputPath);
     }
 
     /**
