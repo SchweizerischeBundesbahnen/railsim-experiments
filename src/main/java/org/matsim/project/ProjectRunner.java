@@ -63,9 +63,15 @@ public class ProjectRunner {
         }
 
         // parallel simulation execution
-        BuildingBlockWorkflow firstWorkflow = workflows.values().stream().findFirst().orElseThrow();
         RailsimSimulationExecutor executor = new RailsimSimulationExecutor(
-                firstWorkflow.createPostProcessingTaskFactories());
+                // collect post-processing task factories from all workflows
+                workflows.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                    try {
+                        return entry.getValue().createPostProcessingTaskFactories();
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                })));
         List<RailsimSimulationResult> allResults = executor.runAll(allJobs);
 
         // write summary per building block

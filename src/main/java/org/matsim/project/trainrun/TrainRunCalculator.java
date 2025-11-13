@@ -10,14 +10,13 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.ControllerConfigGroup.EventsFileFormat;
 import org.matsim.core.controler.Controller;
 import org.matsim.core.controler.ControllerUtils;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.OptionalTime;
+import org.matsim.project.utils.RailsimConfigHelper;
 import org.matsim.pt.transitSchedule.api.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
@@ -26,7 +25,10 @@ import org.matsim.vehicles.Vehicles;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -250,10 +252,13 @@ public final class TrainRunCalculator {
         controller.addOverridingModule(new RailsimModule());
         controller.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
         controller.run();
+        RailsimConfigHelper.writeStaticOutputFiles(controller);
 
         log.info("Processing simulation output events to calculate travel times...");
         Path eventsFile = Paths.get(config.controller().getOutputDirectory())
-                .resolve(config.controller().getRunId() + ".output_events.xml.gz");
+                .resolve("ITERS")
+                .resolve("it.0")
+                .resolve(config.controller().getRunId() + ".0.events.xml.gz");
         TrainRunEventHandler eventHandler = new TrainRunEventHandler();
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(eventHandler);
@@ -276,10 +281,12 @@ public final class TrainRunCalculator {
         Config config = ConfigUtils.loadConfig(configPath.toString());
         config.controller().setOutputDirectory(outputPath.toString());
         config.controller().setRunId("train_run_calculation");
-        config.controller().setLastIteration(0);
-        config.controller()
-                .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-        config.controller().setEventsFileFormats(EnumSet.of(EventsFileFormat.xml));
+
+        // set railsim specific config options: one iteration, disable unnecessary outputs
+        RailsimConfigHelper.configure(config);
+
         return config;
     }
+
+
 }

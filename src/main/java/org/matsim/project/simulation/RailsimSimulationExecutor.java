@@ -1,8 +1,10 @@
 package org.matsim.project.simulation;
 
 import lombok.extern.log4j.Log4j2;
+import org.matsim.project.scenario.BuildingBlock;
 
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
@@ -10,13 +12,14 @@ import java.util.stream.Collectors;
 public class RailsimSimulationExecutor {
 
     private final int workerThreads;
-    private final List<PostProcessingTaskFactory> taskFactories;
+    private final Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories;
 
-    public RailsimSimulationExecutor(List<PostProcessingTaskFactory> taskFactories) {
+    public RailsimSimulationExecutor(Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories) {
         this(Runtime.getRuntime().availableProcessors(), taskFactories);
     }
 
-    public RailsimSimulationExecutor(int workerThreads, List<PostProcessingTaskFactory> taskFactories) {
+    public RailsimSimulationExecutor(int workerThreads,
+                                     Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories) {
         this.workerThreads = Math.max(1, workerThreads);
         this.taskFactories = taskFactories;
     }
@@ -80,8 +83,8 @@ public class RailsimSimulationExecutor {
                                                                               Executor executor) {
         CompletableFuture<RailsimSimulationResult> future = CompletableFuture.completedFuture(successfulResult);
 
-        // for each factory, create a new post-processing task instance and apply it
-        for (PostProcessingTaskFactory factory : taskFactories) {
+        // for each building block specific factory, create a new post-processing task instance and apply it
+        for (PostProcessingTaskFactory factory : taskFactories.get(successfulResult.getJob().getBuildingBlock())) {
             future = future.thenApplyAsync(result -> {
                 PostProcessingTask<?> task = factory.create();
                 try {

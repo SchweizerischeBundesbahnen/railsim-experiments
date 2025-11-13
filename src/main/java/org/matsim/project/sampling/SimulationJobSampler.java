@@ -5,7 +5,6 @@ import lombok.extern.log4j.Log4j2;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.project.sampling.strategy.DepartureSamplingStrategy;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.plan.OperationMode;
@@ -13,6 +12,7 @@ import org.matsim.project.scenario.plan.OperationalPlan;
 import org.matsim.project.scenario.plan.SubVariant;
 import org.matsim.project.scenario.plan.Variant;
 import org.matsim.project.simulation.RailsimSimulationJob;
+import org.matsim.project.utils.RailsimConfigHelper;
 import org.matsim.project.utils.ResourceLoader;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.vehicles.MatsimVehicleWriter;
@@ -110,15 +110,12 @@ public class SimulationJobSampler {
         Config config = ConfigUtils.loadConfig(templateConfigFileInputPath.toString());
         config.controller().setRunId(runId);
         config.controller().setOutputDirectory(runOutputPath.toString());
-        config.controller()
-                .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-        config.controller().setLastIteration(0);
         config.network().setInputFile(ResourceLoader.getPath(buildingBlock.getNetworkFilePath()).toString());
-
         config.transit().setTransitScheduleFile(configFilePath.getParent().relativize(schedulePath).toString());
         config.transit().setVehiclesFile(configFilePath.getParent().relativize(vehiclePath).toString());
 
-        config.global().setNumberOfThreads(1);
+        // set railsim specific config options: one iteration, disable unnecessary outputs
+        RailsimConfigHelper.configure(config);
 
         ConfigUtils.writeConfig(config, configFilePath.toString());
 

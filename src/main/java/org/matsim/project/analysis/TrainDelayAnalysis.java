@@ -48,7 +48,10 @@ public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis
         Path configDir = job.getConfigFilePath().getParent();
         Path schedulePath = configDir.resolve(config.transit().getTransitScheduleFile()).normalize();
         Path vehiclesPath = configDir.resolve(config.transit().getVehiclesFile()).normalize();
-        Path eventsFile = result.getOutputDirectory().resolve(config.controller().getRunId() + ".output_events.xml.gz");
+        Path eventsFile = result.getOutputDirectory()
+                .resolve("ITERS")
+                .resolve("it.0")
+                .resolve(config.controller().getRunId() + ".0.events.xml.gz");
 
         if (!Files.exists(eventsFile)) {
             throw new IOException("Events file not found: " + eventsFile);
