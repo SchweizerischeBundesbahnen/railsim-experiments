@@ -2,6 +2,9 @@ package org.matsim.project.analysis;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.matsim.project.analysis.delay.TrainDelayAnalysis;
+import org.matsim.project.analysis.headway.HeadwayInfo;
+import org.matsim.project.analysis.headway.MinimumHeadwayAnalysis;
 import org.matsim.project.simulation.RailsimSimulationResult;
 
 import java.io.BufferedWriter;
@@ -16,10 +19,6 @@ import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/**
- * Aggregates results from multiple simulation runs and writes a final summary report.
- * This class is instantiated with the full list of simulation results it needs to process.
- */
 @Log4j2
 @RequiredArgsConstructor
 public class RunSummaryWriter {
@@ -47,24 +46,14 @@ public class RunSummaryWriter {
                 .sum();
     }
 
-    // calculate the sum of all headway violations in seconds
-    private static double sumHeadwayViolations(MinimumHeadwayAnalysis.HeadwayReport report) {
-        if (report == null || report.detailedData() == null) {
-            return 0.0;
-        }
-        return report.detailedData()
-                .stream()
-                .filter(info -> !Double.isNaN(info.headway()) && !Double.isNaN(info.minimumHeadway()))
-                .mapToDouble(info -> Math.max(0, info.minimumHeadway() - info.headway()))
-                .sum();
+    private static double sumTailToHeadViolations(MinimumHeadwayAnalysis.HeadwayReport report) {
+        return report.detailedData().stream().mapToDouble(HeadwayInfo::getViolationTailToHead).sum();
     }
 
-    /**
-     * Aggregates the results and writes a single summary CSV file.
-     *
-     * @param outputDirectory The directory to write the summary file to.
-     * @throws IOException If writing the summary file fails.
-     */
+    private static double sumHeadToHeadViolations(MinimumHeadwayAnalysis.HeadwayReport report) {
+        return report.detailedData().stream().mapToDouble(HeadwayInfo::getViolationHeadToHead).sum();
+    }
+
     public void write(Path outputDirectory) throws IOException {
         Path summaryPath = outputDirectory.resolve(SUMMARY_CSV);
         log.debug("Aggregating {} results into summary at {}", results.size(), summaryPath);
@@ -90,8 +79,8 @@ public class RunSummaryWriter {
                         .thenComparingInt(res -> res.delayReport().getTrainsStuck())
                         // 3. total destination delay (ascending)
                         .thenComparingDouble(res -> sumDestinationDelays(res.delayReport()))
-                        // 4. total headway violation (ascending)
-                        .thenComparingDouble(res -> sumHeadwayViolations(res.headwayReport()))).toList();
+                        .thenComparingDouble(res -> sumTailToHeadViolations(res.headwayReport()))
+                        .thenComparingDouble(res -> sumHeadToHeadViolations(res.headwayReport()))).toList();
 
         try (BufferedWriter writer = Files.newBufferedWriter(summaryPath)) {
             // write the header row
@@ -121,8 +110,12 @@ public class RunSummaryWriter {
         SAMPLE("sample", res -> String.valueOf(res.result().getJob().getSample())),
         TOTAL_DELAY_AT_DESTINATION("total_delay_at_destination",
                 res -> String.format("%.2f", sumDestinationDelays(res.delayReport()))),
-        TOTAL_HEADWAY_VIOLATION("total_headway_violation",
-                res -> String.format("%.2f", sumHeadwayViolations(res.headwayReport()))),
+
+        TOTAL_HEADWAY_VIOLATION_TAIL_TO_HEAD("total_headway_violation_tail_to_head",
+                res -> String.format("%.2f", sumTailToHeadViolations(res.headwayReport()))),
+        TOTAL_HEADWAY_VIOLATION_HEAD_TO_HEAD("total_headway_violation_head_to_head",
+                res -> String.format("%.2f", sumHeadToHeadViolations(res.headwayReport()))),
+
         TRAINS_DEPARTED("trains_departed", res -> String.valueOf(res.delayReport().getTrainsDeparted())),
         TRAINS_ARRIVED("trains_arrived", res -> String.valueOf(res.delayReport().getTrainsArrived())),
         TRAINS_STUCK("trains_stuck", res -> String.valueOf(res.delayReport().getTrainsStuck()));
@@ -131,7 +124,7 @@ public class RunSummaryWriter {
         private final Function<ReportableResult, String> valueExtractor;
     }
 
-    // A temporary record to hold all necessary reports for sorting and writing
+    // hold all necessary reports for sorting and writing
     private record ReportableResult(RailsimSimulationResult result, TrainDelayAnalysis.DelayReport delayReport,
                                     MinimumHeadwayAnalysis.HeadwayReport headwayReport) {
     }

@@ -1,4 +1,4 @@
-package org.matsim.project.analysis;
+package org.matsim.project.analysis.headway;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
@@ -31,7 +31,7 @@ public class MinimumHeadwayWriter {
             writer.write(HEADER_ROW);
             writer.newLine();
 
-            for (MinimumHeadwayAnalysis.HeadwayInfo info : this.report.detailedData()) {
+            for (HeadwayInfo info : this.report.detailedData()) {
                 String row = COLUMNS.stream()
                         .map(column -> column.valueExtractor.apply(info))
                         .collect(Collectors.joining(","));
@@ -43,22 +43,30 @@ public class MinimumHeadwayWriter {
 
     @RequiredArgsConstructor
     private enum Column {
-        LINK_ID("link_id", info -> info.linkId().toString()),
-        ROUTE_ID("route_id", info -> info.routeId().toString()),
-        DEPARTURE_ID("departure_id", info -> info.departureId().toString()),
-        VEHICLE_TYPE_ID("vehicle_type_id", info -> info.vehicleTypeId().toString()),
-        VEHICLE_ID("vehicle_id", info -> info.vehicleId().toString()),
-        VEHICLE_TIME("vehicle_time", info -> String.format("%.2f", info.time())),
-        PREVIOUS_VEHICLE_TIME("headway_vehicle_time", info -> formatDouble(info.previousVehicleTime())),
-        HEADWAY("headway", info -> formatDouble(info.headway())),
-        MINIMUM_HEADWAY("minimum_headway", info -> formatDouble(info.minimumHeadway())),
-        PREVIOUS_VEHICLE_TYPE_ID("headway_vehicle_type_id",
-                info -> info.previousVehicleTypeId() != null ? info.previousVehicleTypeId().toString() : ""),
-        PREVIOUS_VEHICLE_ID("headway_vehicle_id",
-                info -> info.previousVehicleId() != null ? info.previousVehicleId().toString() : "");
+        LINK_ID("link_id", info -> info.getLinkId().toString()),
+        FOLLOWING_VEHICLE_ID("following_vehicle_id", info -> info.getFollowingVehicleId().toString()),
+        FOLLOWING_VEHICLE_TYPE_ID("following_vehicle_type_id", info -> info.getFollowingVehicleTypeId().toString()),
+        FOLLOWING_VEHICLE_ENTER_TIME("following_vehicle_enter_time",
+                info -> formatDouble(info.getFollowingVehicleEnterTime())),
+
+        PREVIOUS_VEHICLE_ID("previous_vehicle_id", info -> info.getPreviousVehicleId().toString()),
+        PREVIOUS_VEHICLE_TYPE_ID("previous_vehicle_type_id", info -> info.getPreviousVehicleTypeId().toString()),
+        PREVIOUS_VEHICLE_ENTER_TIME("previous_vehicle_enter_time",
+                info -> formatDouble(info.getPreviousVehicleEnterTime())),
+        PREVIOUS_VEHICLE_LEAVE_TIME("previous_vehicle_leave_time",
+                info -> formatDouble(info.getPreviousVehicleLeaveTime())),
+
+        HEADWAY_HEAD_TO_HEAD("headway_head_to_head", info -> formatDouble(info.getHeadwayHeadToHead())),
+        HEADWAY_TAIL_TO_HEAD("headway_tail_to_head", info -> formatDouble(info.getHeadwayTailToHead())),
+
+        MINIMUM_HEADWAY("minimum_headway", info -> formatDouble(info.getMinimumHeadway())),
+        HEADWAY_VIOLATION_HEAD_TO_HEAD("headway_violation_head_to_head",
+                info -> formatDouble(info.getViolationHeadToHead())),
+        HEADWAY_VIOLATION_TAIL_TO_HEAD("headway_violation_tail_to_head",
+                info -> formatDouble(info.getViolationTailToHead()));
 
         private final String header;
-        private final Function<MinimumHeadwayAnalysis.HeadwayInfo, String> valueExtractor;
+        private final Function<HeadwayInfo, String> valueExtractor;
 
         private static String formatDouble(double value) {
             return Double.isNaN(value) ? "" : String.format("%.2f", value);

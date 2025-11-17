@@ -1,4 +1,4 @@
-package org.matsim.project.analysis;
+package org.matsim.project.analysis.headway;
 
 import lombok.RequiredArgsConstructor;
 import org.matsim.project.simulation.PostProcessingTask;
