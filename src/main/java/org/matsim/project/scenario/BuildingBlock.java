@@ -24,5 +24,13 @@ public enum BuildingBlock {
     public String getNetworkFilePath() {
         return inputPath + "/network.xml";
     }
+
+    public String getTransitScheduleFilePath() {
+        return inputPath + "/schedule.xml";
+    }
+
+    public String getVehiclesFilePath() {
+        return inputPath + "/vehicles.xml";
+    }
 }
 

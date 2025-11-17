@@ -55,15 +55,15 @@ public class BuildingBlockWorkflow {
 
         // calculate base train run times to get a template scenario
         Path trainRunCalcPath = paths.getAndEnsure(ProjectPaths.Folder.TRAIN_RUN_CALCULATION);
-        Path templateConfigFilePath = ResourceLoader.getPath(buildingBlock.getConfigFilePath());
-        Scenario templateScenario = new TrainRunCalculator(templateConfigFilePath, trainRunCalcPath).run();
+        Scenario templateScenario = new TrainRunCalculator(buildingBlock, trainRunCalcPath).run();
 
         // load operational plan and sample schedules and generate simulation jobs
         Path scheduleSamplingPath = paths.getAndEnsure(ProjectPaths.Folder.SCHEDULE_SAMPLING);
         Path jobConfigPath = paths.getAndEnsure(ProjectPaths.Folder.SIMULATION_JOB_CONFIG);
         Path simulationRunOutputPath = paths.getAndEnsure(ProjectPaths.Folder.SIMULATION_RUN_OUTPUT);
-        Path operationalPlanPath = ResourceLoader.getPath(buildingBlock.getUseCase().getOperationalPlanPath());
 
+        Path operationalPlanPath = ResourceLoader.getPath(buildingBlock.getUseCase().getOperationalPlanPath());
+        Path templateConfigFilePath = ResourceLoader.getPath(buildingBlock.getConfigFilePath());
         OperationalPlan operationalPlan = new OperationalPlanReader().read(operationalPlanPath);
         SimulationJobSampler sampler = new SimulationJobSampler(config.getSeed(), templateConfigFilePath,
                 templateScenario, buildingBlock, operationalPlan);

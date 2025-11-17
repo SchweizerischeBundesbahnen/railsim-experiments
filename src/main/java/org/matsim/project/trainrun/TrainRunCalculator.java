@@ -16,13 +16,16 @@ import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.OptionalTime;
+import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.utils.RailsimConfigHelper;
+import org.matsim.project.utils.ResourceLoader;
 import org.matsim.pt.transitSchedule.api.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.Vehicles;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -38,7 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public final class TrainRunCalculator {
 
-    private final Path configPath;
+    private final BuildingBlock buildingBlock;
     private final Path outputPath;
 
     private static void setUnlimitedRailsimCapacity(Scenario scenario) {
@@ -238,8 +241,8 @@ public final class TrainRunCalculator {
         }
     }
 
-    public Scenario run() {
-        log.info("Starting train run calculation for: {}", configPath);
+    public Scenario run() throws IOException {
+        log.info("Starting train run calculation for: {}", buildingBlock.name());
         Config config = createTrainRunCalculationConfig();
 
         log.info("Modify scenario (unlimited capacity and zero travel times) for train run calculation");
@@ -277,16 +280,20 @@ public final class TrainRunCalculator {
         return scenario;
     }
 
-    private Config createTrainRunCalculationConfig() {
-        Config config = ConfigUtils.loadConfig(configPath.toString());
+    private Config createTrainRunCalculationConfig() throws IOException {
+        Config config = ConfigUtils.loadConfig(ResourceLoader.getPath(buildingBlock.getConfigFilePath()).toString());
         config.controller().setOutputDirectory(outputPath.toString());
         config.controller().setRunId("train_run_calculation");
+
+        // overwrite relative paths from the config file with absolute paths to the extracted resources
+        config.network().setInputFile(ResourceLoader.getPath(buildingBlock.getNetworkFilePath()).toString());
+        config.transit()
+                .setTransitScheduleFile(ResourceLoader.getPath(buildingBlock.getTransitScheduleFilePath()).toString());
+        config.transit().setVehiclesFile(ResourceLoader.getPath(buildingBlock.getVehiclesFilePath()).toString());
 
         // set railsim specific config options: one iteration, disable unnecessary outputs
         RailsimConfigHelper.configure(config);
 
         return config;
     }
-
-
 }
