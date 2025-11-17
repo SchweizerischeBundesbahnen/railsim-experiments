@@ -6,16 +6,21 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.project.scenario.BuildingBlock;
+import org.matsim.project.simulation.PostProcessingTaskFactory;
 import org.matsim.project.simulation.RailsimSimulationExecutor;
 import org.matsim.project.simulation.RailsimSimulationJob;
 import org.matsim.project.simulation.RailsimSimulationResult;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
+import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -62,10 +67,20 @@ public class ProjectRunner {
             return;
         }
 
-        // parallel simulation execution
-        BuildingBlockWorkflow firstWorkflow = workflows.values().stream().findFirst().orElseThrow();
-        RailsimSimulationExecutor executor = new RailsimSimulationExecutor(
-                firstWorkflow.createPostProcessingTaskFactories());
+        // collect post-processing task factories from all workflows
+        Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories = workflows.entrySet()
+                .stream()
+                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+                    try {
+                        return entry.getValue().createPostProcessingTaskFactories();
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                }));
+
+        // parallel simulation execution (default is number if cores)
+        RailsimSimulationExecutor executor = config.getWorkerThreads() == -1 ? new RailsimSimulationExecutor(
+                taskFactories) : new RailsimSimulationExecutor(config.getWorkerThreads(), taskFactories);
         List<RailsimSimulationResult> allResults = executor.runAll(allJobs);
 
         // write summary per building block
@@ -102,6 +117,7 @@ public class ProjectRunner {
         }
 
         Files.createDirectories(outputDir);
+        createAndSaveRunInfo(outputDir.resolve("output_run_info.json"));
         saveJson(config, outputDir.resolve("output_project_config.json"));
     }
 
@@ -109,6 +125,32 @@ public class ProjectRunner {
         return config.getBuildingBlocks()
                 .stream()
                 .collect(Collectors.toMap(Function.identity(), block -> new BuildingBlockWorkflow(config, block)));
+    }
+
+    private void createAndSaveRunInfo(Path path) throws IOException {
+        Properties gitProperties = new Properties();
+        try (InputStream stream = ProjectRunner.class.getResourceAsStream("/git.properties")) {
+            if (stream != null) {
+                gitProperties.load(stream);
+            } else {
+                log.warn(
+                        "Could not find git.properties file. Run 'mvn package' to generate it. Git info will be missing.");
+            }
+        }
+
+        String implementationVersion = Optional.ofNullable(ProjectRunner.class.getPackage().getImplementationVersion())
+                .orElse("dev-snapshot");
+        RunInfo runInfo = RunInfo.builder()
+                .executionTimestamp(Instant.now().toString())
+                .executedBy(System.getProperty("user.name"))
+                .jarVersion(implementationVersion)
+                .gitBranch(gitProperties.getProperty("git.branch", "unknown"))
+                .gitCommitId(gitProperties.getProperty("git.commit.id.abbrev", "unknown"))
+                .gitCommitTime(gitProperties.getProperty("git.commit.time", "unknown"))
+                .gitTags(gitProperties.getProperty("git.tags", "none"))
+                .build();
+
+        saveJson(runInfo, path);
     }
 
     private void saveJson(Object object, Path path) throws IOException {

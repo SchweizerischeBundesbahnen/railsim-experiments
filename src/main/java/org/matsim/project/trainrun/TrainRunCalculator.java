@@ -10,23 +10,28 @@ import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.ControllerConfigGroup.EventsFileFormat;
 import org.matsim.core.controler.Controller;
 import org.matsim.core.controler.ControllerUtils;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.events.EventsUtils;
 import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.misc.OptionalTime;
+import org.matsim.project.scenario.BuildingBlock;
+import org.matsim.project.utils.RailsimConfigHelper;
+import org.matsim.project.utils.ResourceLoader;
 import org.matsim.pt.transitSchedule.api.*;
 import org.matsim.vehicles.Vehicle;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehicleUtils;
 import org.matsim.vehicles.Vehicles;
 
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -36,7 +41,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public final class TrainRunCalculator {
 
-    private final Path configPath;
+    private final BuildingBlock buildingBlock;
     private final Path outputPath;
 
     private static void setUnlimitedRailsimCapacity(Scenario scenario) {
@@ -236,8 +241,8 @@ public final class TrainRunCalculator {
         }
     }
 
-    public Scenario run() {
-        log.info("Starting train run calculation for: {}", configPath);
+    public Scenario run() throws IOException {
+        log.info("Starting train run calculation for: {}", buildingBlock.name());
         Config config = createTrainRunCalculationConfig();
 
         log.info("Modify scenario (unlimited capacity and zero travel times) for train run calculation");
@@ -250,10 +255,13 @@ public final class TrainRunCalculator {
         controller.addOverridingModule(new RailsimModule());
         controller.configureQSimComponents(components -> new RailsimQSimModule().configure(components));
         controller.run();
+        RailsimConfigHelper.writeStaticOutputFiles(controller);
 
         log.info("Processing simulation output events to calculate travel times...");
         Path eventsFile = Paths.get(config.controller().getOutputDirectory())
-                .resolve(config.controller().getRunId() + ".output_events.xml.gz");
+                .resolve("ITERS")
+                .resolve("it.0")
+                .resolve(config.controller().getRunId() + ".0.events.xml.gz");
         TrainRunEventHandler eventHandler = new TrainRunEventHandler();
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(eventHandler);
@@ -272,14 +280,20 @@ public final class TrainRunCalculator {
         return scenario;
     }
 
-    private Config createTrainRunCalculationConfig() {
-        Config config = ConfigUtils.loadConfig(configPath.toString());
+    private Config createTrainRunCalculationConfig() throws IOException {
+        Config config = ConfigUtils.loadConfig(ResourceLoader.getPath(buildingBlock.getConfigFilePath()).toString());
         config.controller().setOutputDirectory(outputPath.toString());
         config.controller().setRunId("train_run_calculation");
-        config.controller().setLastIteration(0);
-        config.controller()
-                .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-        config.controller().setEventsFileFormats(EnumSet.of(EventsFileFormat.xml));
+
+        // overwrite relative paths from the config file with absolute paths to the extracted resources
+        config.network().setInputFile(ResourceLoader.getPath(buildingBlock.getNetworkFilePath()).toString());
+        config.transit()
+                .setTransitScheduleFile(ResourceLoader.getPath(buildingBlock.getTransitScheduleFilePath()).toString());
+        config.transit().setVehiclesFile(ResourceLoader.getPath(buildingBlock.getVehiclesFilePath()).toString());
+
+        // set railsim specific config options: one iteration, disable unnecessary outputs
+        RailsimConfigHelper.configure(config);
+
         return config;
     }
 }

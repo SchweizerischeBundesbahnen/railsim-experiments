@@ -33,7 +33,10 @@ public class ProjectConfig {
     private final int samplesPerSubvariant = 100;
 
     @Builder.Default
-    private final int simulationHours = 3;
+    private final int simulationTime = 3 * 3600;
+
+    @Builder.Default
+    private final int workerThreads = -1; // -1 means use all available cores
 
     @Builder.Default
     private final DepartureSampling departureSampling = DepartureSampling.RANDOM;
@@ -43,7 +46,7 @@ public class ProjectConfig {
 
     // private constructor with validation for the builder
     private ProjectConfig(String outputDirectory, boolean overwriteOutput, long seed, int samplesPerSubvariant,
-                          int simulationHours, DepartureSampling departureSampling,
+                          int simulationTime, int workerThreads, DepartureSampling departureSampling,
                           List<BuildingBlock> buildingBlocks) {
 
         if (outputDirectory == null || outputDirectory.isBlank()) {
@@ -53,7 +56,8 @@ public class ProjectConfig {
         this.outputDirectory = outputDirectory;
         this.seed = seed;
         this.samplesPerSubvariant = samplesPerSubvariant;
-        this.simulationHours = simulationHours;
+        this.simulationTime = simulationTime;
+        this.workerThreads = workerThreads;
         this.departureSampling = departureSampling;
         this.buildingBlocks = buildingBlocks;
         this.overwriteOutput = overwriteOutput;

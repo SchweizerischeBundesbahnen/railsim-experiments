@@ -12,6 +12,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.plan.SubVariant;
 import org.matsim.project.scenario.plan.Variant;
+import org.matsim.project.utils.RailsimConfigHelper;
 
 import java.nio.file.Path;
 
@@ -51,5 +52,6 @@ public class RailsimSimulationJob implements Runnable {
         controller.addOverridingModule(new RailsimModule());
         controller.configureQSimComponents(c -> new RailsimQSimModule().configure(c));
         controller.run();
+        RailsimConfigHelper.writeStaticOutputFiles(controller);
     }
 }

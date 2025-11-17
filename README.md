@@ -19,9 +19,9 @@ The simulation is structured around these three key concepts, from general to sp
   resources) and a template transit schedule (routes and stops), but does not contain specific departure times on the
   routes. It is defined by a set of MATSim XML files (`network.xml`, `schedule.xml`, and `vehicles.xml`).
 * **Operational Plan**: A generic timetable (`Mengengerüst`) that specifies the desired train volumes. It defines how
-  many trains of each product type (e.g., FV, RV, GV) should run between origin-destination pairs within a given period.
-  It is provided as a JSON file with hierarchical structure that allows for defining different operational concepts,
-  variants, and sub-variants.
+  many trains of each product type (e.g., FV, RV, GV) should run on specific, pre-defined transit routes within a given
+  period. It is provided as a JSON file with hierarchical structure that allows for defining different operational
+  concepts, variants, and sub-variants.
 
 ## Simulation Pipeline
 
@@ -89,7 +89,13 @@ graph LR
 
 ```json
 {
-  "operationalPlan": [
+  "trainVolumePeriod": 1800,
+  "minimumHeadway": {
+    "FV": 120,
+    "RV": 90,
+    "GV": 180
+  },
+  "operationModes": [
     {
       "name": "KM",
       "description": "Kernnetz-Mischbetrieb",
@@ -112,24 +118,21 @@ graph LR
           ],
           "subVariants": [
             {
-              "id": "KM1.1",
+              "id": "KM1.4",
               "trainVolumes": [
                 {
                   "product": "FV",
-                  "fromStop": "L1",
-                  "toStop": "R1",
-                  "amount": 3
+                  "route": "FV_LMR",
+                  "amount": 1
                 },
                 {
                   "product": "RV",
-                  "fromStop": "L1",
-                  "toStop": "R1",
-                  "amount": 4
+                  "route": "RV_LMR",
+                  "amount": 2
                 },
                 {
                   "product": "GV",
-                  "fromStop": "L1",
-                  "toStop": "R1",
+                  "route": "GV_LR",
                   "amount": 1
                 }
               ]
@@ -169,30 +172,32 @@ program arguments in an IDE.
 
 ### Parameters
 
-| Flag                         | Description                                                        | Default  | Required |
-|------------------------------|--------------------------------------------------------------------|----------|:--------:|
-| `--output`                   | Output directory for simulation results.                           |          |   Yes    |
-| `--building-blocks`          | Comma-separated list of building blocks (e.g., `UC1_BB1,UC1_BB2`). | `*`      |          |
-| `-s`, `--samples`            | Number of samples per sub-variant.                                 | `5`      |          |
-| `-h`, `--hours`              | Simulation duration in hours.                                      | `3`      |          |
-| `-d`, `--departure-sampling` | Departure sampling strategy. (`RANDOM` or `HEADWAY`)               | `RANDOM` |          |
-| `-l`, `--matsim-log-level`   | MATSim log level. (`INFO`, `WARN`, `ERROR`, `DEBUG`)               | `INFO`   |          |
-| `--overwrite`                | Overwrite the output directory if it exists.                       | `false`  |          |
+| Flag                         | Description                                                          | Default  | Required |
+|------------------------------|----------------------------------------------------------------------|----------|:--------:|
+| `--output`                   | Output directory for simulation results.                             |          |   Yes    |
+| `--building-blocks`          | Comma-separated list of building blocks (e.g., `UC1_BB1,UC1_BB2`).   | `*`      |          |
+| `-s`, `--samples`            | Number of samples per sub-variant.                                   | `5`      |          |
+| `-t`, `--simulation-time`    | Total simulation time in seconds (should match the sampling period). | `10800`  |          |
+| `-d`, `--departure-sampling` | Departure sampling strategy. (`RANDOM` or `HEADWAY`)                 | `RANDOM` |          |
+| `--overwrite`                | Overwrite the output directory if it exists.                         | `false`  |          |
 
 ### Example Execution
 
 ```sh
+# reduce MATSim verbosity
+MATSIM_LOG_LEVEL='ERROR'
+
+# program arguments
 ARGS_ARRAY=(
---output "/path/to/your/output_directory"
---building-blocks "UC1_BB1,UC1_BB2,UC1_BB3,UC1_BB4"
---samples "5"
---hours "3"
---departure-sampling "RANDOM"
---matsim-log-level "WARN"
---overwrite
+    --output "/path/to/your/output_directory"
+    --building-blocks "UC1_BB1,UC1_BB2,UC1_BB3"
+    --samples "5"
+    --simulation-time "10800"
+    --departure-sampling "RANDOM"
+    --overwrite
 )
 
-./mvnw exec:java -Dexec.args="${ARGS_ARRAY[*]}"
+./mvnw exec:java -Dmatsim.log.level=${MATSIM_LOG_LEVEL} -Dexec.args="${ARGS_ARRAY[*]}"
 ```
 
 ## Licenses

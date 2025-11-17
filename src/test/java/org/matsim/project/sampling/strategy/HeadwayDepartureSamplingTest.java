@@ -11,132 +11,105 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class HeadwayDepartureSamplingTest {
 
+    public static final int SEED = 42;
     private HeadwayDepartureSampling strategy;
-    private Random random;
 
     @BeforeEach
     void setUp() {
         strategy = new HeadwayDepartureSampling();
-        random = new Random(42);
     }
 
     @Nested
     class InvalidParametersTests {
 
         @Test
-        void testZeroDeparturesThrows() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> strategy.sampleDepartures(0, 1, random));
-            assertTrue(ex.getMessage().contains("n=0"));
-        }
-
-        @Test
-        void testZeroHoursThrows() {
-            IllegalArgumentException ex = assertThrows(IllegalArgumentException.class,
-                    () -> strategy.sampleDepartures(1, 0, random));
-            assertTrue(ex.getMessage().contains("hours=0"));
-        }
-
-        @Test
-        void testNegativeParametersThrow() {
-            assertThrows(IllegalArgumentException.class, () -> strategy.sampleDepartures(-1, 1, random));
-            assertThrows(IllegalArgumentException.class, () -> strategy.sampleDepartures(1, -2, random));
+        void testNonPositiveParametersThrow() {
+            assertThrows(IllegalArgumentException.class, () -> strategy.sampleDepartures(0, 3600, 7200, new Random()));
+            assertThrows(IllegalArgumentException.class, () -> strategy.sampleDepartures(1, 0, 7200, new Random()));
+            assertThrows(IllegalArgumentException.class, () -> strategy.sampleDepartures(1, 3600, 0, new Random()));
+            assertThrows(IllegalArgumentException.class, () -> strategy.sampleDepartures(-1, 3600, 7200, new Random()));
         }
     }
 
     @Nested
-    class SingleHourTests {
+    class CoreFunctionalityTests {
 
         @Test
-        void testSingleDeparture() {
-            List<Double> departures = strategy.sampleDepartures(1, 1, random);
-            assertEquals(1, departures.size());
-            assertEquals(0.0, departures.getFirst());
+        void testAllDeparturesAreSortedAndWithinTime() {
+            int time = 7200;
+            List<Double> departures = strategy.sampleDepartures(10, 1800, time, new Random(SEED));
+            assertFalse(departures.isEmpty());
+            for (int i = 0; i < departures.size() - 1; i++) {
+                assertTrue(departures.get(i) <= departures.get(i + 1), "Departures should be sorted.");
+            }
+            assertTrue(departures.getLast() < time, "All departures must be before the end time.");
         }
 
         @Test
-        void testMultipleDepartures() {
-            int n = 4;
-            List<Double> departures = strategy.sampleDepartures(n, 1, random);
-            assertEquals(n, departures.size());
-
-            // Check that headway is constant within the hour
-            double headway = departures.get(1) - departures.get(0);
-            for (int i = 1; i < departures.size(); i++) {
-                assertEquals(headway, departures.get(i) - departures.get(i - 1), 1e-6);
+        void testAllDeparturesAreWholeSeconds() {
+            // Use parameters that guarantee fractional headways
+            List<Double> departures = strategy.sampleDepartures(7, 1800, 5000, new Random(SEED));
+            assertFalse(departures.isEmpty());
+            for (double dep : departures) {
+                assertEquals(0.0, dep - Math.floor(dep), "Departure time should be a whole number.");
             }
+        }
 
-            // Check that all departures fit within the hour
-            departures.forEach(d -> assertTrue(d >= 0 && d < 3600));
+        @Test
+        void testHeadwayIsApproximatelyConstant() {
+            int n = 7;
+            int period = 1000;
+            double expectedHeadway = (double) period / n;
+
+            List<Double> departures = strategy.sampleDepartures(n, period, 3600, new Random(SEED));
+
+            // Due to rounding, the final integer headway can have a +/- 1s jitter.
+            for (int i = 0; i < departures.size() - 1; i++) {
+                double actualHeadway = departures.get(i + 1) - departures.get(i);
+                assertTrue(Math.abs(expectedHeadway - actualHeadway) <= 1.0,
+                        "Actual headway should fluctuate by at most 1s around the true headway.");
+            }
         }
     }
 
     @Nested
-    class MultiHourTests {
+    class EdgeCaseTests {
 
         @Test
-        void testMultipleHoursNumberOfDepartures() {
-            int n = 3;
-            int hours = 5;
-            List<Double> departures = strategy.sampleDepartures(n, hours, random);
+        void testTimeIsShorterThanPeriod() {
+            int n = 10; // Headway of 180s
+            int period = 1800;
+            int time = 500;
+            List<Double> departures = strategy.sampleDepartures(n, period, time, new Random(SEED));
 
-            // Total departures
-            assertEquals(n * hours, departures.size());
-
-            // Check number of departures per hour
-            for (int h = 0; h < hours; h++) {
-                int startIndex = h * n;
-                int endIndex = startIndex + n;
-                List<Double> hourDepartures = departures.subList(startIndex, endIndex);
-
-                // Headway constant within hour
-                double headway = hourDepartures.get(1) - hourDepartures.get(0);
-                for (int i = 1; i < hourDepartures.size(); i++) {
-                    assertEquals(headway, hourDepartures.get(i) - hourDepartures.get(i - 1), 1e-6);
-                }
-
-                // Departures relative to hour
-                for (Double d : hourDepartures) {
-                    double relative = d - h * 3600;
-                    assertTrue(relative >= 0 && relative < 3600);
-                }
-            }
+            // We don't assert the exact number, as it depends on the random offset.
+            // Instead, we test the properties that must hold true.
+            assertAll("Properties for short simulation time", () -> assertTrue(departures.size() <= n),
+                    () -> assertTrue(departures.stream().allMatch(d -> d < time)));
         }
 
         @Test
-        void testHeadwayConsistentAcrossHours() {
-            int n = 4;
-            int hours = 3;
-            List<Double> departures = strategy.sampleDepartures(n, hours, random);
-
-            // Headway should be the same for every hour
-            for (int h = 0; h < hours; h++) {
-                int startIndex = h * n;
-                int endIndex = startIndex + n;
-                List<Double> hourDepartures = departures.subList(startIndex, endIndex);
-
-                double headway = hourDepartures.get(1) - hourDepartures.get(0);
-                for (int i = 1; i < hourDepartures.size(); i++) {
-                    assertEquals(headway, hourDepartures.get(i) - hourDepartures.get(i - 1), 1e-6);
-                }
-            }
+        void testTimeIsNotMultipleOfPeriod() {
+            int n = 2; // Headway of 900s
+            int period = 1800;
+            int time = 4000; // 4.44 periods
+            // With a fixed seed (42), we know the offset is ~658s.
+            // Departures are expected at ~658, ~1558, ~2458, ~3358. The next at ~4258 is cut off.
+            List<Double> departures = strategy.sampleDepartures(n, period, time, new Random(SEED));
+            assertEquals(4, departures.size());
+            assertTrue(departures.stream().allMatch(d -> d < time));
         }
 
         @Test
-        void testTransitionBetweenHours() {
-            int n = 2;
-            int hours = 2;
-            List<Double> departures = strategy.sampleDepartures(n, hours, random);
-
-            // Check that the last departure of the first hour < first departure of second hour
-            double lastFirstHour = departures.get(n - 1);
-            double firstSecondHour = departures.get(n);
-            assertTrue(lastFirstHour < firstSecondHour);
-
-            // Check that second hour departures are exactly 3600s ahead of first hour offsets
-            double firstHourOffset0 = departures.getFirst();
-            double secondHourOffset0 = departures.get(n);
-            assertEquals(firstHourOffset0 + 3600, secondHourOffset0, 1e-6);
+        void testNoDeparturesGeneratedWhenTimeIsShorterThanFirstPossibleDeparture() {
+            // Headway is 180s. The first departure must be in [0, 180).
+            // If time is very short, it's possible no departures are generated.
+            List<Double> departures = strategy.sampleDepartures(10, 1800, 10, new Random(SEED));
+            // We can't guarantee it's empty, but we can check its properties if it's not.
+            if (!departures.isEmpty()) {
+                assertEquals(1, departures.size());
+                assertTrue(departures.getFirst() < 10);
+            }
         }
     }
 }

@@ -1,4 +1,4 @@
-package org.matsim.project.analysis;
+package org.matsim.project.analysis.delay;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;

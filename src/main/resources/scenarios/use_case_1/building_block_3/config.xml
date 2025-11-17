@@ -7,8 +7,8 @@
         <param name="coordinateSystem" value="Atlantis"/>
     </module>
 
-    <module name="controler">
-        <param name="runId" value="case2_run1"/>
+    <module name="controller">
+        <param name="runId" value="uc1_bb3_template"/>
         <param name="firstIteration" value="0"/>
         <param name="lastIteration" value="0"/>
     </module>
@@ -21,7 +21,7 @@
         <!-- Comma separated set of modes that are handled by the railsim qsim engine in the simulation. Defaults to 'rail'. -->
         <param name="networkModes" value="rail"/>
         <!-- Time interval in seconds a train has to wait until trying again to request a track reservation if the track was blocked by another train. -->
-        <param name="pollInterval" value="10.0"/>
+        <param name="pollInterval" value="1.0"/>
         <!-- Speed profile to use within train disposition to calculate the target speed -->
         <param name="speedProfile" value="maxSpeed"/>
         <!-- Maximum time interval in seconds which is used to update the train position update events. -->
@@ -44,14 +44,14 @@
 
     <module name="transit">
         <param name="routingAlgorithmType" value="SwissRailRaptor"/>
-        <param name="transitScheduleFile" value="schedule.xml.gz"/>
+        <param name="transitScheduleFile" value="schedule.xml"/>
         <param name="useTransit" value="true"/>
         <param name="usingTransitInMobsim" value="true"/>
-        <param name="vehiclesFile" value="vehicles.xml.gz"/>
+        <param name="vehiclesFile" value="vehicles.xml"/>
     </module>
 
     <module name="network">
-        <param name="inputNetworkFile" value="network.xml.gz"/>
+        <param name="inputNetworkFile" value="network.xml"/>
     </module>
 
 </config>
