@@ -1,8 +1,6 @@
 package org.matsim.project;
 
 import lombok.extern.log4j.Log4j2;
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.matsim.project.scenario.BuildingBlock;
 import picocli.CommandLine;
 
@@ -33,9 +31,6 @@ public class RunRailsimScenario implements Callable<Integer> {
     @CommandLine.Option(names = {"-d", "--departure-sampling"}, description = "Departure sampling strategy (RANDOM, HEADWAY)", defaultValue = "RANDOM")
     private ProjectConfig.DepartureSampling departureSampling;
 
-    @CommandLine.Option(names = {"-l", "--matsim-log-level"}, description = "MATSim log level (INFO, WARN, ERROR, DEBUG)", defaultValue = "INFO")
-    private String matsimLogLevel;
-
     @CommandLine.Option(names = {"--overwrite"}, description = "Overwrite output directory if it exists", defaultValue = "false")
     private boolean overwriteOutput;
 
@@ -46,11 +41,6 @@ public class RunRailsimScenario implements Callable<Integer> {
 
     @Override
     public Integer call() throws IOException {
-        Level level = Level.valueOf(matsimLogLevel.toUpperCase());
-        Configurator.setLevel("org.matsim", level);
-        Configurator.setLevel("ch.sbb.matsim", level);
-        Configurator.setLevel("org.matsim.project", Level.INFO);
-
         List<BuildingBlock> buildingBlocks;
         if ("*".equals(buildingBlocksInput)) {
             buildingBlocks = List.of(BuildingBlock.values());
@@ -94,8 +84,6 @@ public class RunRailsimScenario implements Callable<Integer> {
                 .append(config.getWorkerThreads())
                 .append(" -d ")
                 .append(config.getDepartureSampling())
-                .append(" -l ")
-                .append(matsimLogLevel)
                 .append(" --overwrite ")
                 .append(config.isOverwriteOutput());
         log.info("Running with command-line equivalent: {}", sb);

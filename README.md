@@ -179,23 +179,25 @@ program arguments in an IDE.
 | `-s`, `--samples`            | Number of samples per sub-variant.                                   | `5`      |          |
 | `-t`, `--simulation-time`    | Total simulation time in seconds (should match the sampling period). | `10800`  |          |
 | `-d`, `--departure-sampling` | Departure sampling strategy. (`RANDOM` or `HEADWAY`)                 | `RANDOM` |          |
-| `-l`, `--matsim-log-level`   | MATSim log level. (`INFO`, `WARN`, `ERROR`, `DEBUG`)                 | `INFO`   |          |
 | `--overwrite`                | Overwrite the output directory if it exists.                         | `false`  |          |
 
 ### Example Execution
 
 ```sh
+# reduce MATSim verbosity
+MATSIM_LOG_LEVEL='ERROR'
+
+# program arguments
 ARGS_ARRAY=(
---output "/path/to/your/output_directory"
---building-blocks "UC1_BB1,UC1_BB2,UC1_BB3"
---samples "5"
---simulation-time "10800"
---departure-sampling "RANDOM"
---matsim-log-level "WARN"
---overwrite
+    --output "/path/to/your/output_directory"
+    --building-blocks "UC1_BB1,UC1_BB2,UC1_BB3"
+    --samples "5"
+    --simulation-time "10800"
+    --departure-sampling "RANDOM"
+    --overwrite
 )
 
-./mvnw exec:java -Dexec.args="${ARGS_ARRAY[*]}"
+./mvnw exec:java -Dmatsim.log.level=${MATSIM_LOG_LEVEL} -Dexec.args="${ARGS_ARRAY[*]}"
 ```
 
 ## Licenses
