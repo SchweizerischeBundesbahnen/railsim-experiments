@@ -80,6 +80,48 @@ extract_theoretical_schedule <- function(sched, stops_info){
 }
 
 
+
+
+#library(htmlwidgets)
+#library(fs)   # für saubere File-Operationen (optional)
+
+
+# We need a clean saving-function because saveWidget with selfcontained = TRUE makes problems on network-storage
+save_interactive_widget <- function(widget, target_file) {
+  
+  # 1️⃣ Lokalen temporären Speicherort erzeugen
+  temp_dir  <- tempfile(pattern = "widget_tmp_")
+  dir.create(temp_dir)
+  
+  temp_html <- file.path(temp_dir, "widget.html")
+  
+  message("Saving widget temporarily to: ", temp_html)
+  
+  # 2️⃣ HTML zuerst lokal speichern (funktioniert IMMER)
+  saveWidget(
+    widget,
+    file = temp_html,
+    selfcontained = TRUE
+  )
+  
+  # 3️⃣ Zielverzeichnis sicherstellen
+  target_dir <- dirname(target_file)
+  if (!dir.exists(target_dir)) {
+    dir.create(target_dir, recursive = TRUE)
+  }
+  
+  # 4️⃣ Datei ans Ziel kopieren
+  message("Copying widget to final destination: ", target_file)
+  file.copy(temp_html, target_file, overwrite = TRUE)
+  
+  # 5️⃣ TEMP-Ordner sauber löschen
+  message("Cleaning up temporary files...")
+  unlink(temp_dir, recursive = TRUE, force = TRUE)
+  
+  message("✔ Done! File saved to: ", target_file)
+}
+
+
 # --- 3. Generate Plot ---
 
 weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A13783/04_projects/42_gzb_railsim/output_20251030_ik/", 
@@ -178,10 +220,12 @@ weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A1
   interactive_plot <- ggplotly(graphical_schedule_plot)
   
   output_html_file <- file.path(simulationRunPath, "interactive_graphical_schedule_with_stops.html")
-  message("Saving final interactive plot to: ", output_html_file)
+  
   
   # Save the interactive plot as a self-contained HTML file
-  saveWidget(interactive_plot, file = output_html_file, selfcontained = TRUE)
+  #saveWidget(interactive_plot, file = output_html_file, selfcontained = TRUE)
+  save_interactive_widget(interactive_plot, output_html_file)
+  
   
   return(interactive_plot)
 }

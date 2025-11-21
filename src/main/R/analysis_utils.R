@@ -25,11 +25,12 @@ read_detailed_Results <- function(builidingBlocks){
         if (!dir.exists(sa)) next
         
         # alle csv-Dateien unter dem Sample-Verzeichnis (rekursiv)
-        files <- list.files(path = sa, pattern = "\\.csv$", recursive = TRUE, full.names = TRUE)
+        files <- list.files(path = sa, pattern = "analysis_train_delays\\.csv$", recursive = TRUE, full.names = TRUE)
         if (length(files) == 0) next
         
         # Einlesen mit fread; Fehler abfangen, damit ein fehlerhaftes File nicht alles stoppt
         for (f in files) {
+          message(paste0("Reading file: ", f))
           try({
             dt <- fread(f)
             # Optional: Zusatzspalten, damit du später Quelle nachvollziehen kannst
@@ -62,7 +63,7 @@ read_summaryResults <- function(buildingBlocks){
     if (!dir.exists(analysis_dir)) next
     
     # alle csv-Dateien mit summary train delays im dem Sample-Verzeichnis (rekursiv)
-    files <- list.files(path = analysis_dir, pattern = "summary_train_delays\\.csv$", recursive = FALSE, full.names = TRUE)
+    files <- list.files(path = analysis_dir, pattern = "summary_runs\\.csv$", recursive = FALSE, full.names = TRUE)
     if (length(files) == 0) next
     
     for (f in files){

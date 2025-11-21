@@ -25,6 +25,7 @@ filer <- '//filer22l/K-UE220L/IFI/FTO/SAM.A13783/'
 run_id <- "output_20251030_ik"
 run_id <- "output_20251031_uc1_n100_th" 
 run_id <- "output_20251102_uc1_n100_mu"
+run_id <- "output_20251117_it2_n100"
 
 baseDirectory <- paste0(filer, "04_projects/42_gzb_railsim/", run_id, "/")
 
@@ -49,7 +50,9 @@ buildingBlocks <- list.dirs(path = usecaseDirectory, recursive = FALSE)
 
 # --- READ RESULTS FROM CSV FILES---
 
-read_detailed <- FALSE
+read_detailed <- TRUE
+earliest_arrival <- 3600
+latest_arrival <- earliest_arrival + 3600
 
 if (read_detailed){
   #Read all detailed Tables
@@ -58,12 +61,15 @@ if (read_detailed){
   #Filtere auf den jeweils letzten Stop um die Verspätung am ziel zu identifizieren.
   df <- big_dt |> 
     group_by(building_block, sample, route_id, departure_id) |> mutate(n_stop = max(stop_sequence)) |> ungroup() |> 
-    filter(n_stop == stop_sequence)
+    filter(n_stop == stop_sequence) |> 
+    filter(planned_arrival > earliest_arrival & planned_arrival <= latest_arrival)
   
   # Pro sample die Summe der arrival_delay berechnen
   sample_sums <- df %>%
     group_by(building_block, schedule, sample) %>%   # group_by nur schedule+sample wäre auch ok
-    summarise(total_arrival_delay = sum(arrival_delay, na.rm = TRUE), .groups = "drop") |> 
+    summarise(total_arrival_delay = sum(arrival_delay, na.rm = TRUE),
+              n_trains = n(),
+              .groups = "drop") |> 
     rename(total_delay_at_destination = total_arrival_delay)
 } else {
   
@@ -76,13 +82,19 @@ if (read_detailed){
   
 }
 
-
-
+sample_sums <- sample_sums |> 
+  separate(schedule, into = c("schedule_type", "schedule_scaling"), sep = "\\.", extra = "merge", remove = FALSE) |> 
+  mutate(schedule_scaling_int = as.integer(schedule_scaling),
+         schedule_type = str_to_upper(schedule_type)) |> 
+  mutate(total_delay_per_train = total_delay_at_destination / n_trains)
 
 # --- ECDF WITH PLOTLY ---
 
 # Customized ECDF's
-schedules <- sort(unique(sample_sums$schedule))
+
+
+
+schedules <- sort(unique(sample_sums$schedule_type))
 
 #Define visual properties
 line_specs <- tibble(
@@ -96,59 +108,142 @@ line_specs <- tibble(
   linewidth = c(.8, 1, .8, 1, .8, 1, .8, 1, .8, 1, .8, 1)
 )
 line_specs <- tibble(
-  schedule = schedules,
-  color = rep("red", length(schedules)),
+  schedule = str_to_upper(c("KM1_FV_PASS", "KM1_FV_STOP", "KM2_FV_PASS", "KM2_FV_STOP", "M1",          "R1",          "R2" )),
+  color =    c("darkred",     "red",         "darkgray",    "lightgray",   "green",       "blue",       "violet"),
   linetype = rep("solid", length(schedules)),
   linewidth = rep(1, length(schedules))
 )
 
+
 sample_sums_plot <- sample_sums |> 
-  left_join(line_specs, by = "schedule")
+  left_join(line_specs, by = c("schedule_type" = "schedule"))
 
 
-# 1️⃣ ECDF-Daten vorbereiten
-ecdf_data <- sample_sums_plot %>%
-  group_by(building_block, schedule) %>%
-  arrange(total_delay_at_destination) %>%
-  mutate(
-    ecdf_y = ecdf(total_delay_at_destination)(total_delay_at_destination)
-  ) %>%
-  ungroup() |> 
-  group_by(building_block, schedule, total_delay_at_destination, ecdf_y) |> 
-  summarise(sample_list = paste(sample, collapse = "<br>")) |> 
-  ungroup()
+# # 1️⃣ ECDF-Daten vorbereiten
+# ecdf_data <- sample_sums_plot %>%
+#   group_by(building_block, schedule_type, schedule_scaling, schedule) %>%
+#   arrange(total_delay_at_destination) %>%
+#   mutate(
+#     ecdf_y = ecdf(total_delay_at_destination)(total_delay_at_destination)
+#   ) %>%
+#   ungroup() |> 
+#   group_by(building_block, schedule_type, schedule_scaling, schedule, total_delay_at_destination, ecdf_y) |> 
+#   summarise(sample_list = paste(sample, collapse = "<br>")) |> 
+#   ungroup()
 
 # 2️⃣ Farben und Linientypen aus line_specs übernehmen
 color_map <- setNames(line_specs$color, line_specs$schedule)
 linetype_map <- setNames(line_specs$linetype, line_specs$schedule)
 linewidth_map <- setNames(line_specs$linewidth, line_specs$schedule)
 
-# 3️⃣ Mit ggplot vorbereiten (optional, für konsistentes Layout)
-p_ecdf_base <- ggplot(ecdf_data, aes(x = total_delay_at_destination, y = ecdf_y, group = schedule)) +
-  geom_line(aes(color = schedule, linetype = schedule, linewidth = schedule)) +
-  geom_point(aes(color = schedule, text = paste0(
-    "Schedule: ", schedule, "<br>",
-    "Building block: ", building_block, "<br>",
-    "Samples: ", sample_list, "<br>",
-    "Delay: ", round(total_delay_at_destination, 2)
-  )), size = 1.3, alpha = 0.6) +
-  facet_wrap(~ building_block, scales = "free_x", ncol = 2) +
-  scale_color_manual(values = color_map) +
-  scale_linetype_manual(values = linetype_map) +
-  scale_linewidth_manual(values = linewidth_map) +
-  theme_minimal(base_size = 12) +
-  labs(
-    x = "Arrival Delay",
-    y = "Kumulative Verteilungsfunktion (ECDF)",
-    title = paste0("ECDF of arrival delays\nRun-ID = ", config$run_id),
-    color = "Schedule",
-    linetype = "Schedule",
-    linewidth = "Schedule"
+# # 3️⃣ Mit ggplot vorbereiten (optional, für konsistentes Layout)
+# p_ecdf_base <- ggplot(ecdf_data, aes(x = total_delay_at_destination, y = ecdf_y, group = schedule_scaling)) +
+#   geom_line(aes(color = schedule_type)) +
+#   geom_point(aes(color = schedule_type, text = paste0(
+#     "Schedule: ", schedule, "<br>",
+#     "Building block: ", building_block, "<br>",
+#     "Samples: ", sample_list, "<br>",
+#     "Delay: ", round(total_delay_at_destination, 2)
+#   )), size = .8, alpha = 0.6) +
+#   #facet_wrap(~ building_block, scales = "free_x", ncol = 2) +
+#   facet_grid(schedule_type ~ building_block, scales = "free_x") +
+#   scale_color_manual(values = color_map) +
+#   #scale_linetype_manual(values = linetype_map) +
+#   #scale_linewidth_manual(values = linewidth_map) +
+#   theme_minimal(base_size = 12) +
+#   labs(
+#     x = "Arrival Delay",
+#     y = "Kumulative Verteilungsfunktion (ECDF)",
+#     title = paste0("ECDF of arrival delays (Run-ID = ", config$run_id, ")"),
+#     color = "Schedule_type",
+#     linetype = "Schedule",
+#     linewidth = "Schedule"
+#   ) +
+#   theme(
+#     legend.position = "bottom",
+#     axis.text.x = element_text(angle = 45, hjust = 1)
+#   )
+# 
+
+
+plot_ecdf_variable <- function(
+    data,
+    var,                # z.B. total_delay_at_destination
+    x_label = NULL,
+    title = NULL,
+    subtitle = NULL
+) {
+  # gernereischer Umgang mit Variablenname
+  var_sym <- rlang::ensym(var)
+  
+  # ECDF-Daten vorbereiten
+  ecdf_data <- data %>%
+    group_by(building_block, schedule_type, schedule_scaling, schedule) %>%
+    arrange(!!var_sym) %>%
+    mutate(
+      ecdf_y = ecdf(!!var_sym)(!!var_sym)
+    ) %>%
+    ungroup() %>% 
+    group_by(
+      building_block, schedule_type, schedule_scaling,
+      schedule, !!var_sym, ecdf_y
+    ) %>% 
+    summarise(sample_list = paste(sample, collapse = "<br>"), .groups = "drop")
+  
+  # Plot
+  p <- ggplot(
+    ecdf_data, 
+    aes(x = !!var_sym, y = ecdf_y, group = schedule_scaling)
   ) +
-  theme(
-    legend.position = "bottom",
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
+    geom_line(aes(color = schedule_type)) +
+    geom_point(
+      aes(color = schedule_type, text = paste0(
+        "Schedule: ", schedule, "<br>",
+        "Building block: ", building_block, "<br>",
+        "Samples: ", sample_list, "<br>",
+        "Value: ", round(!!var_sym, 2)
+      )),
+      size = .8, alpha = 0.6
+    ) +
+    facet_grid(schedule_type ~ building_block, scales = "free_x") +
+    scale_color_manual(values = color_map) +
+    # Falls gewünscht aktivierbar:
+    # scale_linetype_manual(values = linetype_map) +
+    # scale_linewidth_manual(values = linewidth_map) +
+    theme_minimal(base_size = 12) +
+    labs(
+      x = x_label,
+      y = "Kumulative Verteilungsfunktion (ECDF)",
+      title = title,
+      subtitle = subtitle,
+      color = "Schedule Type",
+      linetype = "Schedule",
+      linewidth = "Schedule"
+    ) +
+    theme(
+      legend.position = "bottom",
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    )
+  
+  return(p)
+}
+
+p_ecdf_base <- plot_ecdf_variable(
+  data = sample_sums_plot,
+  var = total_delay_at_destination,
+  x_label = "Arrival Delay",
+  title = paste0("ECDF Total Arrival Delay, (Run ID = ", config$run_id), ")"
+)
+
+p_ecdf_base <- plot_ecdf_variable(
+  data = sample_sums_plot,
+  var = total_delay_per_train,
+  x_label = "Delay per Train",
+  title = paste0("ECDF Delay per Train, (Run ID = ", config$run_id), ")"
+)
+
+
+
 
 # 4️⃣ ggplot → plotly konvertieren
 p_ecdf_plotly <- ggplotly(p_ecdf_base, tooltip = "text")
@@ -158,15 +253,97 @@ p_ecdf_plotly
 
 
 
+
+
+
+# --- SAME, BUT AS BOXPLOT ---  
+
+# p_box <- ggplot(sample_sums_plot, 
+#                 aes(x = as.factor(schedule_scaling_int), 
+#                     y = total_delay_at_destination #, 
+#                     # fill = building_block)
+#                 )) +
+#   #geom_boxplot(position = position_dodge(width = 0.8), outlier.shape = NA) +
+#   #geom_jitter(position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.8),
+#   #            alpha = 0.5, size = 0.5, color = "gray40") +
+#   geom_boxplot(outlier.shape =  NA) +
+#   geom_jitter(alpha = 0.5, size = 0.5, color = "gray40") +
+#   facet_grid(schedule_type ~ building_block, scales = "free_x") +
+#   theme_minimal(base_size = 12) +
+#   labs(
+#     x = "Schedule",
+#     y = "Summe der Arrival-Delays pro Sample",
+#     title = "Verteilung der Arrival Delays nach Schedule und Building Block",
+#     fill = "Building Block"
+#   ) +
+#   theme(
+#     axis.text.x = element_text(angle = 45, hjust = 1)
+#   )
+
+
+plot_box_variable <- function(
+    data,
+    x_var,                 # z.B. schedule_scaling_int
+    y_var,                 # z.B. total_delay_at_destination
+    x_label = NULL,
+    y_label = NULL,
+    title = NULL,
+    subtitle = NULL
+) {
+  x_sym <- rlang::ensym(x_var)
+  y_sym <- rlang::ensym(y_var)
+  
+  p <- ggplot(
+    data,
+    aes(x = as.factor(!!x_sym), y = !!y_sym)
+  ) +
+    geom_boxplot(outlier.shape = NA) +
+    geom_jitter(alpha = 0.5, size = 0.5, color = "gray40") +
+    facet_grid(schedule_type ~ building_block, scales = "free_x") +
+    theme_minimal(base_size = 12) +
+    labs(
+      x = x_label,
+      y = y_label,
+      title = title,
+      subtitle = subtitle
+    ) +
+    theme(
+      axis.text.x = element_text(angle = 45, hjust = 1)
+    )
+  
+  return(p)
+}
+
+plot_box_variable(
+  data = sample_sums_plot,
+  x_var = schedule_scaling_int,
+  y_var = total_delay_at_destination,
+  x_label = "Schedule",
+  y_label = "Arrival Delays",
+  title = "Arrival Delay Distriution",
+  subtitle = paste("Run ID:", config$run_id)
+)
+plot_box_variable(
+  data = sample_sums_plot,
+  x_var = schedule_scaling_int,
+  y_var = total_delay_per_train,
+  x_label = "Schedule",
+  y_label = "Arrival Delays",
+  title = "Arrival Delay per Train",
+  subtitle = paste("Run ID:", config$run_id)
+)
+print(p_box)
+
+
 # --- SHOW AND SAVE WEG-ZEIT-DIAGRAMM FROM ONE SPECIFIC SAMPLE ---
 
 
 #  Weg-Zeit-Diagramm für ein Sample.
 weg_zeit_diagram(baseDirectory = baseDirectory, 
                  usecase = "uc_1", 
-                 buildingBlock = "uc1_bb3", 
-                 subvariant = "KM2.24", 
-                 sample = "98")
+                 buildingBlock = "uc1_bb2", 
+                 subvariant = "KM1_FV_STOP.12", 
+                 sample = "99")
 
 
 
@@ -178,54 +355,6 @@ weg_zeit_diagram(baseDirectory = baseDirectory,
 
 # --- FIRST DRAFT OF ECDF-DIAGRAM ---
 
-# Customized ECDF's
-schedules <- sort(unique(sample_sums$schedule))
-
-#Define visual properties
-line_specs <- tibble(
-  #schedule = schedules,
-  schedule = c("KM1.1", "KM1.2", "KM2.1", "KM2.2", "KM3.1", "KM3.2",
-               "M1.1", "M1.2", "R1.1", "R1.2", "R2.1", "R2.2"),
-  color = c("darkred", "darkred", "red", "red", "pink", "pink",
-            "darkgreen", "darkgreen", "blue", "blue", "violet", "violet"),
-  linetype = c("solid", "twodash", "solid", "twodash", "solid", "twodash", 
-               "solid", "twodash", "solid", "twodash", "solid", "twodash"),
-  linewidth = c(.8, 1, .8, 1, .8, 1, .8, 1, .8, 1, .8, 1)
-)
-line_specs <- tibble(
-  schedule = schedules,
-  color = rep("red", length(schedules)),
-  linetype = rep("solid", length(schedules)),
-  linewidth = rep(1, length(schedules))
-)
-
-sample_sums_plot <- sample_sums |> 
-  left_join(line_specs, by = "schedule")
-
-
-
-p_ecdf_legend <- ggplot(sample_sums_plot, aes(x = total_delay_at_destination, group = schedule)) +
-  stat_ecdf(aes(color = schedule, linetype = schedule, size = schedule)) +
-  facet_wrap(~ building_block, scales = "free_x", ncol = 2) +
-  scale_color_manual(values = setNames(line_specs$color, line_specs$schedule)) +
-  scale_linetype_manual(values = setNames(line_specs$linetype, line_specs$schedule)) +
-  scale_size_manual(values = setNames(line_specs$linewidth, line_specs$schedule)) +
-  theme_minimal(base_size = 12) +
-  labs(
-    x = "Arrival Delay",
-    y = "Kumulative Verteilungsfunktion (ECDF)",
-    title = paste0("ECDF of arrival delays\nRun-ID = ", config$run_id),
-    color = "Schedule",
-    linetype = "Schedule",
-    size = "Schedule"
-  ) +
-  theme(
-    legend.position = "bottom",
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-
-print(p_ecdf_legend)
-
 
 
 
@@ -233,68 +362,107 @@ print(p_ecdf_legend)
 # Distribution Statistics
 
 schedule_stats <- sample_sums |> 
-  group_by(building_block, schedule) |> 
+  group_by(building_block, schedule_type, schedule_scaling, schedule_scaling_int, schedule) |> 
+  # summarise(
+  #   delay_min   = min(total_delay_at_destination, na.rm = TRUE),
+  #   delay_5pct  = quantile(total_delay_at_destination, probs = 0.05, na.rm = TRUE, type = 7),
+  #   delay_median= median(total_delay_at_destination, na.rm = TRUE),
+  #   delay_mean  = mean(total_delay_at_destination, na.rm = TRUE),
+  #   delay_95pct = quantile(total_delay_at_destination, probs = 0.95, na.rm = TRUE, type = 7),
+  #   delay_max   = max(total_delay_at_destination, na.rm = TRUE),
+  #   n_samples   = n(),
+  #   .groups = "drop"
+  # ) 
   summarise(
-    delay_min   = min(total_delay_at_destination, na.rm = TRUE),
-    delay_5pct  = quantile(total_delay_at_destination, probs = 0.05, na.rm = TRUE, type = 7),
-    delay_median= median(total_delay_at_destination, na.rm = TRUE),
-    delay_mean  = mean(total_delay_at_destination, na.rm = TRUE),
-    delay_95pct = quantile(total_delay_at_destination, probs = 0.95, na.rm = TRUE, type = 7),
-    delay_max   = max(total_delay_at_destination, na.rm = TRUE),
-    n_samples   = n(),
+    # --- Delay statistics for total delay ---
+    delay_tt_qq = list(quantile(
+      total_delay_at_destination,
+      probs = c(0, 0.05, .1, 0.5, 0.9, 0.95, 1),
+      na.rm = TRUE
+    )),
+    delay_tt_mean = mean(total_delay_at_destination, na.rm = TRUE),
+    delay_tt_prob = {
+      F <- ecdf(total_delay_at_destination)
+      tibble(
+        p_00sec = F(00),
+        p_10sec = F(10),
+        p_30sec = F(30),
+        p_60sec = F(60)
+      )
+    },
+    # --- Delay statistics for delay per train ---
+    delay_pt_qq = list(quantile(
+      total_delay_per_train,
+      probs = c(0, 0.05, .1, 0.5, 0.9, 0.95, 1),
+      na.rm = TRUE
+    )),
+    delay_pt_mean = mean(total_delay_per_train, na.rm = TRUE),
+    delay_pt_prob = {
+      F <- ecdf(total_delay_per_train)
+      tibble(
+        p_00sec = F(00),
+        p_10sec = F(10),
+        p_30sec = F(30),
+        p_60sec = F(60)
+      )
+    },
+    n_samples = dplyr::n(),
     .groups = "drop"
   ) |> 
-  ungroup()
+  unnest_wider(delay_tt_qq, names_sep = "_") |> 
+  unnest_wider(delay_pt_qq, names_sep = "_") |> 
+  # unnest_wider(delay_tt_prob, names_sep = "tt_prob_") |> 
+  # unnest_wider(delay_pt_prob, names_sep = "pt_prob_")
+  unnest_wider(delay_tt_prob, names_sep = "_") |> 
+  unnest_wider(delay_pt_prob, names_sep = "_")
 
-# Long-Format (wie zuvor)
-schedule_stats_long <- schedule_stats |> 
+
+
+
+# Long-Format
+schedule_stats_long <- schedule_stats |>
   pivot_longer(
-    cols = starts_with("delay_"), 
-    names_to = "statistic", 
-    values_to = "delay_value"
+    cols = starts_with("delay_"),
+    names_to = c("which", "stat"),
+    values_to = "value",
+    # capture group 1: tt oder pt
+    # capture group 2: restlicher name (stat)
+    names_pattern = "^delay_(tt|pt)_(.*)$"
+  ) |>
+  pivot_wider(
+    names_from = which,
+    values_from = value,
+    names_prefix = "value_"
   )
-
-# Reihenfolge & Labels der Statistik-Kategorien
 schedule_stats_long <- schedule_stats_long |> 
-  mutate(
-    statistic = factor(statistic,
-                       levels = c("delay_min", "delay_5pct", "delay_median", 
-                                  "delay_mean", "delay_95pct", "delay_max"),
-                       labels = c("Min", "5. Perzentil", "Median", 
-                                  "Mittelwert", "95. Perzentil", "Max"))
-  )
+  mutate(stat_factor = factor(stat, 
+                              levels = schedule_stats_long |> 
+                                filter(grepl("^qq_", stat)) |> 
+                                mutate(quantile_number = as.numeric(gsub("qq_|_|%", "", stat))) |> 
+                                arrange(quantile_number) |> 
+                                distinct(stat) |> 
+                                pull(stat)
+                                ))
 
-# Plot mit abgestuften Farben & Linienstilen
-p_lineplot_all <- ggplot(schedule_stats_long, 
-                         aes(x = schedule, 
-                             y = delay_value, 
-                             group = statistic, 
-                             color = statistic,
-                             linetype = statistic)) +
-  geom_line(linewidth = 1) +
-  geom_point(size = 1.8) +
-  scale_color_manual(values = c(
-    "Min" = "#1b9e77",
-    "5. Perzentil" = "#66a61e",
-    "Median" = "#7570b3",
-    "Mittelwert" = "#e6ab02",
-    "95. Perzentil" = "#d95f02",
-    "Max" = "#e7298a"
-  )) +
-  scale_linetype_manual(values = c(
-    "Min" = "solid",
-    "5. Perzentil" = "dotted",
-    "Median" = "solid",
-    "Mittelwert" = "longdash",
-    "95. Perzentil" = "dotted",
-    "Max" = "solid"
-  )) +
-  facet_wrap(~ building_block, scales = "free_x", ncol = 1) +
+
+
+
+
+quantile_plot <- ggplot(schedule_stats_long |> filter(grepl("^qq_", stat)),
+                        aes(x = as.factor(schedule_scaling_int),
+                            #y = value_tt,
+                            y = value_pt,
+                            group = stat_factor,
+                            color = stat_factor)) + 
+  geom_line() +
+  facet_grid(schedule_type ~ building_block, scales = "free_x") +
   theme_minimal(base_size = 12) +
   labs(
     x = "Schedule",
-    y = "Summe der Arrival-Delays pro Sample",
-    title = "Delay-Statistiken nach Schedule\ngetrennt nach Building Block",
+    # y = "Arrival Delay per Train",
+    y = "Arrival Delay",
+    # title = "Quantiles for Total Delay",
+    title = "Quantiles for Delay per Train",
     color = "Statistik",
     linetype = "Statistik"
   ) +
@@ -302,29 +470,69 @@ p_lineplot_all <- ggplot(schedule_stats_long,
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "bottom"
   )
+quantile_plot
 
-print(p_lineplot_all)
 
-
-p_lineplot_min <- schedule_stats_long |> 
-  filter(statistic == "Min") |> 
-  ggplot(aes(x = schedule, y = delay_value, group = 1)) +
-  geom_line(color = "#1b9e77", linewidth = 1.2) +
-  geom_point(color = "#1b9e77", size = 2) +
-  geom_text(aes(label = round(delay_value, 1)), vjust = -0.5, size = 3, check_overlap = TRUE) +
-  coord_cartesian(clip = "off", expand = TRUE) +
-  facet_wrap(~ building_block, scales = "free_y", ncol = 1) +
+# Plot als „Tabellen“:
+quantile_table_plot <- ggplot(schedule_stats_long |> 
+                                filter(grepl("^qq_", stat)),
+                              aes(
+                                x = as.factor(schedule_scaling_int),
+                                y = stat_factor  # jede Statistik auf einer eigenen y-Position
+                              )) +
+  geom_tile(aes(fill = value_pt), color = "gray50", linewidth = 0.5) + 
+  geom_text(aes(label = round(value_pt, 0)), size = 3) +  # Werte als Text
+  # Farbverlauf definieren:
+  # - Werte = 0 sollen grün sein
+  # - Werte > 0 bis 180 sollen von Gelb nach Rot verlaufen
+  scale_fill_gradientn(
+    colors = c("green", "yellow", "orange", "red"), # Definieren Sie die Zwischenfarben
+    values = scales::rescale(c(0, 0.01, 90, 180)), # Setzt die Positionen der Farben im Verlauf
+    limits = c(0, 180), # Stellen Sie sicher, dass die Skala bis 180 geht
+    oob = scales::squish, # Stellt sicher, dass Werte > 180 auf den Wert 180 (Rot) projiziert werden
+    na.value = "grey" # Für fehlende Werte
+  ) +
+  facet_grid(schedule_type ~ building_block, scales = "free_x") +
   theme_minimal(base_size = 12) +
   labs(
     x = "Schedule",
-    y = "Minimaler Arrival-Delay",
-    title = "Minimale Arrival-Delays nach Schedule\ngetrennt nach Building Block"
+    y = "Quantile",
+    title = "Quantiles for Delay per Train"
   ) +
   theme(
-    axis.text.x = element_text(angle = 45, hjust = 1)
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(face = "bold")
   )
+quantile_table_plot
 
-print(p_lineplot_min)
+
+quality_plot <- ggplot(schedule_stats_long |> filter(grepl("^prob_p", stat)),
+                       aes(x = as.factor(schedule_scaling_int), 
+                           y = value_pt,
+                           group = stat,
+                           color = stat)) +
+  geom_line() +
+  facet_grid(schedule_type ~ building_block, scales = "free_x") +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = "Schedule",
+    y = "Probabilty for less Delay",
+    title = "Probability of Punctuality",
+    color = "Statistik",
+    linetype = "Statistik"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "bottom"
+  )
+quality_plot
+
+ggplotly(quality_plot)
+
+
+
+
+
 
 
 # Boxplot (aus deinem ersten Plot)
