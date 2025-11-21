@@ -258,29 +258,6 @@ p_ecdf_plotly
 
 # --- SAME, BUT AS BOXPLOT ---  
 
-# p_box <- ggplot(sample_sums_plot, 
-#                 aes(x = as.factor(schedule_scaling_int), 
-#                     y = total_delay_at_destination #, 
-#                     # fill = building_block)
-#                 )) +
-#   #geom_boxplot(position = position_dodge(width = 0.8), outlier.shape = NA) +
-#   #geom_jitter(position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.8),
-#   #            alpha = 0.5, size = 0.5, color = "gray40") +
-#   geom_boxplot(outlier.shape =  NA) +
-#   geom_jitter(alpha = 0.5, size = 0.5, color = "gray40") +
-#   facet_grid(schedule_type ~ building_block, scales = "free_x") +
-#   theme_minimal(base_size = 12) +
-#   labs(
-#     x = "Schedule",
-#     y = "Summe der Arrival-Delays pro Sample",
-#     title = "Verteilung der Arrival Delays nach Schedule und Building Block",
-#     fill = "Building Block"
-#   ) +
-#   theme(
-#     axis.text.x = element_text(angle = 45, hjust = 1)
-#   )
-
-
 plot_box_variable <- function(
     data,
     x_var,                 # z.B. schedule_scaling_int
@@ -288,7 +265,8 @@ plot_box_variable <- function(
     x_label = NULL,
     y_label = NULL,
     title = NULL,
-    subtitle = NULL
+    subtitle = NULL,
+    logarithmic = FALSE
 ) {
   x_sym <- rlang::ensym(x_var)
   y_sym <- rlang::ensym(y_var)
@@ -311,6 +289,10 @@ plot_box_variable <- function(
       axis.text.x = element_text(angle = 45, hjust = 1)
     )
   
+  if (logarithmic){
+    p <- p + scale_y_log10()
+  }
+  
   return(p)
 }
 
@@ -332,7 +314,17 @@ plot_box_variable(
   title = "Arrival Delay per Train",
   subtitle = paste("Run ID:", config$run_id)
 )
-print(p_box)
+plot_box_variable(
+  data = sample_sums_plot,
+  x_var = schedule_scaling_int,
+  y_var = total_delay_per_train,
+  x_label = "Schedule",
+  y_label = "Arrival Delays",
+  title = "Arrival Delay per Train",
+  subtitle = paste("Run ID:", config$run_id),
+  logarithmic = TRUE
+)
+
 
 
 # --- SHOW AND SAVE WEG-ZEIT-DIAGRAMM FROM ONE SPECIFIC SAMPLE ---
@@ -360,6 +352,7 @@ weg_zeit_diagram(baseDirectory = baseDirectory,
 
 
 # Distribution Statistics
+quantiles <- c(0, .02, .05, .1, .5, 1)
 
 schedule_stats <- sample_sums |> 
   group_by(building_block, schedule_type, schedule_scaling, schedule_scaling_int, schedule) |> 
@@ -377,7 +370,7 @@ schedule_stats <- sample_sums |>
     # --- Delay statistics for total delay ---
     delay_tt_qq = list(quantile(
       total_delay_at_destination,
-      probs = c(0, 0.05, .1, 0.5, 0.9, 0.95, 1),
+      probs = quantiles,
       na.rm = TRUE
     )),
     delay_tt_mean = mean(total_delay_at_destination, na.rm = TRUE),
@@ -393,7 +386,7 @@ schedule_stats <- sample_sums |>
     # --- Delay statistics for delay per train ---
     delay_pt_qq = list(quantile(
       total_delay_per_train,
-      probs = c(0, 0.05, .1, 0.5, 0.9, 0.95, 1),
+      probs = quantiles,
       na.rm = TRUE
     )),
     delay_pt_mean = mean(total_delay_per_train, na.rm = TRUE),
@@ -486,9 +479,9 @@ quantile_table_plot <- ggplot(schedule_stats_long |>
   # - Werte = 0 sollen grün sein
   # - Werte > 0 bis 180 sollen von Gelb nach Rot verlaufen
   scale_fill_gradientn(
-    colors = c("green", "yellow", "orange", "red"), # Definieren Sie die Zwischenfarben
-    values = scales::rescale(c(0, 0.01, 90, 180)), # Setzt die Positionen der Farben im Verlauf
-    limits = c(0, 180), # Stellen Sie sicher, dass die Skala bis 180 geht
+    colors = c("green", "yellow", "orange", "red", "darkred"), # Definieren Sie die Zwischenfarben
+    values = scales::rescale(c(0, 0.01, 90, 180, 600)), # Setzt die Positionen der Farben im Verlauf
+    limits = c(0, 600), # Stellen Sie sicher, dass die Skala bis 180 geht
     oob = scales::squish, # Stellt sicher, dass Werte > 180 auf den Wert 180 (Rot) projiziert werden
     na.value = "grey" # Für fehlende Werte
   ) +
@@ -531,6 +524,46 @@ ggplotly(quality_plot)
 
 
 
+quality_table_plot <- ggplot(schedule_stats_long |> 
+                               filter(grepl("^prob_p", stat)),
+                             aes(
+                               x = as.factor(schedule_scaling_int),
+                               y = stat  # jede Statistik auf einer eigenen y-Position
+                             )) +
+  geom_tile(aes(fill = value_pt), color = "gray50", linewidth = 0.5) + 
+  geom_text(aes(label = round(value_pt, 2)), size = 3) +  # Werte als Text
+  # Farbverlauf definieren:
+  # - Werte = 0 sollen grün sein
+  # - Werte > 0 bis 180 sollen von Gelb nach Rot verlaufen
+  scale_fill_gradientn(
+    colors = c("red", "orange", "yellow", "green", "darkgreen"), # Definieren Sie die Zwischenfarben
+    values = scales::rescale(c(0, 0.025, 0.05, 0.1, 1)), # Setzt die Positionen der Farben im Verlauf
+    limits = c(0, 1), # Stellen Sie sicher, dass die Skala bis 180 geht
+    oob = scales::squish, # Stellt sicher, dass Werte > 180 auf den Wert 180 (Rot) projiziert werden
+    na.value = "grey" # Für fehlende Werte
+  ) +
+  facet_grid(schedule_type ~ building_block, scales = "free_x") +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = "Schedule",
+    y = "Delay Quality",
+    title = "Probability of Mean Delay lower than Quality-Benchmark",
+    subtitle = "Numbers > 0.00 indicate Existance of a Schedule that meet this Quality Benchmark"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(face = "bold")
+  )
+quality_table_plot
+
+
+
+
+
+
+################################
+#  ALTE ANALYSEN
+################################
 
 
 
