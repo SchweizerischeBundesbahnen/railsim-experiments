@@ -31,7 +31,7 @@ baseDirectory <- paste0(filer, "04_projects/42_gzb_railsim/", run_id, "/")
 
 # for local analysis
 filer <- "C://devsbb/git/railsim-experiments/"
-run_id <- "results"
+run_id <- "output_20251117_it2_n100"
 baseDirectory <- paste0(filer, run_id, "/")
 
 
@@ -56,7 +56,10 @@ latest_arrival <- earliest_arrival + 3600
 
 if (read_detailed){
   #Read all detailed Tables
+  #This may take several hours when reading from filer.
   big_dt <- read_detailed_Results(buildingBlocks)
+  
+  #big_dt <- fread(paste0(baseDirectory, "big_dt.csv"))
   
   #Filtere auf den jeweils letzten Stop um die Verspätung am ziel zu identifizieren.
   df <- big_dt |> 
@@ -169,35 +172,48 @@ linewidth_map <- setNames(line_specs$linewidth, line_specs$schedule)
 plot_ecdf_variable <- function(
     data,
     var,                # z.B. total_delay_at_destination
+    color = "schedule_type",
+    group = "schedule_scaling_int",
+    x_facet = "building_block",
+    y_facet = "schedule_type",
     x_label = NULL,
+    y_label = "cumulative distribution (ECDF)",
     title = NULL,
-    subtitle = NULL
+    subtitle = NULL,
+    logarithmic = FALSE,
+    x_lim = NULL
 ) {
   # gernereischer Umgang mit Variablenname
   var_sym <- rlang::ensym(var)
+  var_color <- rlang::ensym(color)
+  var_group <- rlang::ensym(group)
+  var_x_facet <- rlang::ensym(x_facet)
+  var_y_facet <- rlang::ensym(y_facet)
   
   # ECDF-Daten vorbereiten
   ecdf_data <- data %>%
-    group_by(building_block, schedule_type, schedule_scaling, schedule) %>%
+    group_by(building_block, schedule_type, schedule, schedule_scaling_int) %>%
     arrange(!!var_sym) %>%
     mutate(
       ecdf_y = ecdf(!!var_sym)(!!var_sym)
     ) %>%
     ungroup() %>% 
     group_by(
-      building_block, schedule_type, schedule_scaling,
-      schedule, !!var_sym, ecdf_y
+      building_block, schedule_type, schedule_scaling_int,
+      schedule, as.factor(!!var_x_facet), !!var_sym, ecdf_y
     ) %>% 
     summarise(sample_list = paste(sample, collapse = "<br>"), .groups = "drop")
+  
+  facet_formula <- rlang::new_formula(var_y_facet, var_x_facet)
   
   # Plot
   p <- ggplot(
     ecdf_data, 
-    aes(x = !!var_sym, y = ecdf_y, group = schedule_scaling)
+    aes(x = !!var_sym, y = ecdf_y, group = !!var_group)
   ) +
-    geom_line(aes(color = schedule_type)) +
+    geom_line(aes(color = !!var_color)) +
     geom_point(
-      aes(color = schedule_type, text = paste0(
+      aes(color = !!var_color, text = paste0(
         "Schedule: ", schedule, "<br>",
         "Building block: ", building_block, "<br>",
         "Samples: ", sample_list, "<br>",
@@ -205,18 +221,23 @@ plot_ecdf_variable <- function(
       )),
       size = .8, alpha = 0.6
     ) +
-    facet_grid(schedule_type ~ building_block, scales = "free_x") +
-    scale_color_manual(values = color_map) +
+    #facet_grid(facet_formula, scales = "free_x") +
+    facet_grid(facet_formula)
+  if(color == "schedule_type"){
+    p <- p +
+    scale_color_manual(values = color_map)
+  }
+  p <- p +
     # Falls gewünscht aktivierbar:
     # scale_linetype_manual(values = linetype_map) +
     # scale_linewidth_manual(values = linewidth_map) +
     theme_minimal(base_size = 12) +
     labs(
       x = x_label,
-      y = "Kumulative Verteilungsfunktion (ECDF)",
+      y = y_label,
       title = title,
       subtitle = subtitle,
-      color = "Schedule Type",
+      color = color,
       linetype = "Schedule",
       linewidth = "Schedule"
     ) +
@@ -225,6 +246,16 @@ plot_ecdf_variable <- function(
       axis.text.x = element_text(angle = 45, hjust = 1)
     )
   
+  if (logarithmic){
+    p <- p + scale_x_log10(limits = c(1,1e4))
+  } else {
+    if(!is.null(x_lim)){
+      p <- p + scale_x_continuous(limits = x_lim)
+    }
+    
+  }
+  
+  
   return(p)
 }
 
@@ -232,16 +263,38 @@ p_ecdf_base <- plot_ecdf_variable(
   data = sample_sums_plot,
   var = total_delay_at_destination,
   x_label = "Arrival Delay",
-  title = paste0("ECDF Total Arrival Delay, (Run ID = ", config$run_id), ")"
+  title = paste0("ECDF Total Arrival Delay, (Run ID = ", config$run_id, ")")
 )
+p_ecdf_base
+p_ecdf_base <- plot_ecdf_variable(
+  data = sample_sums_plot,
+  var = total_delay_per_train,
+  x_label = "Arrival Delay",
+  title = paste0("ECDF Total Arrival Delay, (Run ID = ", config$run_id, ")")
+)
+p_ecdf_base
+
+p_ecdf_base <- plot_ecdf_variable(
+  data = sample_sums_plot |> mutate(schedule_scaling_int = as.factor(schedule_scaling_int)),
+  color = "building_block",
+  group = "building_block",
+  x_facet = "schedule_scaling_int",
+  y_facet = "schedule_type",
+  var = total_delay_per_train,
+  x_label = "Arrival Delay",
+  title = paste0("ECDF Arrival Delay per Train, (Run ID = ", config$run_id, ")"),
+  logarithmic = FALSE,
+  #x_lim = c(0,600)
+)
+p_ecdf_base
 
 p_ecdf_base <- plot_ecdf_variable(
   data = sample_sums_plot,
   var = total_delay_per_train,
   x_label = "Delay per Train",
-  title = paste0("ECDF Delay per Train, (Run ID = ", config$run_id), ")"
+  title = paste0("ECDF Arrival Delay per Train, (Run ID = ", config$run_id, ")")
 )
-
+p_ecdf_base
 
 
 
@@ -252,7 +305,10 @@ p_ecdf_plotly <- ggplotly(p_ecdf_base, tooltip = "text")
 p_ecdf_plotly
 
 
+bb_to_filter <- "uc1_bb1"
+schedtype_to_filter <- "M1"
 
+sample_sums_plot_filtered <- sample_sums_plot |> filter(building_block == bb_to_filter & schedule_type == schedtype_to_filter)
 
 
 
@@ -438,15 +494,18 @@ schedule_stats_long <- schedule_stats_long |>
                                 ))
 
 
+schedule_stats_long_filter <- schedule_stats_long |> filter(building_block == bb_to_filter & schedule_type == schedtype_to_filter)
 
 
-
-quantile_plot <- ggplot(schedule_stats_long |> filter(grepl("^qq_", stat)),
-                        aes(x = as.factor(schedule_scaling_int),
-                            #y = value_tt,
-                            y = value_pt,
-                            group = stat_factor,
-                            color = stat_factor)) + 
+quantile_plot <- ggplot(
+  schedule_stats_long_filter |> 
+    filter(grepl("^qq_", stat)),
+  aes(x = as.factor(schedule_scaling_int),
+      #value_tt -> total (summed) arrival delay. value_pt -> arrival delay PER TRAIN
+      #y = value_tt, 
+      y = value_pt,
+      group = stat_factor,
+      color = stat_factor)) + 
   geom_line() +
   facet_grid(schedule_type ~ building_block, scales = "free_x") +
   theme_minimal(base_size = 12) +
@@ -467,12 +526,13 @@ quantile_plot
 
 
 # Plot als „Tabellen“:
-quantile_table_plot <- ggplot(schedule_stats_long |> 
-                                filter(grepl("^qq_", stat)),
-                              aes(
-                                x = as.factor(schedule_scaling_int),
-                                y = stat_factor  # jede Statistik auf einer eigenen y-Position
-                              )) +
+quantile_table_plot <- ggplot(
+  schedule_stats_long |> 
+    filter(grepl("^qq_", stat)),
+  aes(
+    x = as.factor(schedule_scaling_int),
+    y = stat_factor  # jede Statistik auf einer eigenen y-Position
+  )) +
   geom_tile(aes(fill = value_pt), color = "gray50", linewidth = 0.5) + 
   geom_text(aes(label = round(value_pt, 0)), size = 3) +  # Werte als Text
   # Farbverlauf definieren:
@@ -499,11 +559,13 @@ quantile_table_plot <- ggplot(schedule_stats_long |>
 quantile_table_plot
 
 
-quality_plot <- ggplot(schedule_stats_long |> filter(grepl("^prob_p", stat)),
-                       aes(x = as.factor(schedule_scaling_int), 
-                           y = value_pt,
-                           group = stat,
-                           color = stat)) +
+quality_plot <- ggplot(
+  schedule_stats_long |> 
+    filter(grepl("^prob_p", stat)),
+  aes(x = as.factor(schedule_scaling_int), 
+      y = value_pt, #value_tt -> total (summed) arrival delay. value_pt -> arrival delay PER TRAIN
+      group = stat,
+      color = stat)) +
   geom_line() +
   facet_grid(schedule_type ~ building_block, scales = "free_x") +
   theme_minimal(base_size = 12) +
@@ -524,12 +586,13 @@ ggplotly(quality_plot)
 
 
 
-quality_table_plot <- ggplot(schedule_stats_long |> 
-                               filter(grepl("^prob_p", stat)),
-                             aes(
-                               x = as.factor(schedule_scaling_int),
-                               y = stat  # jede Statistik auf einer eigenen y-Position
-                             )) +
+quality_table_plot <- ggplot(
+  schedule_stats_long_filter |> 
+    filter(grepl("^prob_p", stat)),
+  aes(
+    x = as.factor(schedule_scaling_int),
+    y = stat  # jede Statistik auf einer eigenen y-Position
+  )) +
   geom_tile(aes(fill = value_pt), color = "gray50", linewidth = 0.5) + 
   geom_text(aes(label = round(value_pt, 2)), size = 3) +  # Werte als Text
   # Farbverlauf definieren:

@@ -26,4 +26,5 @@ hs_err_pid*
 *.iml
 
 # ignore railsim-expiriments results
-/results/
+/results*/
+/output*/
