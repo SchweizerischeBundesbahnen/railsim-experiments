@@ -124,33 +124,47 @@ save_interactive_widget <- function(widget, target_file) {
 
 # --- 3. Generate Plot ---
 
-weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A13783/04_projects/42_gzb_railsim/output_20251030_ik/", 
+weg_zeit_diagram <- function(simulationRunPath = NULL,
+                             baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A13783/04_projects/42_gzb_railsim/output_20251030_ik/", 
                              usecase       = "uc_1", 
                              buildingBlock = "uc1_bb2", 
                              subvariant    = "km1.1", 
                              sample        = "1"){
   
-  # Remove any trailing slash or backslash at the end of baseDirectory
-  baseDirectory <- sub("[/\\\\]+$", "", baseDirectory)
-
+  # Remove any trailing slash or backslash at the end of simulationRunPath
+  simulationRunPath <- sub("[/\\\\]+$", "", simulationRunPath)
+  
+  if (is.null(simulationRunPath)){
+    # Remove any trailing slash or backslash at the end of baseDirectory
+    baseDirectory <- sub("[/\\\\]+$", "", baseDirectory)
+    
     # Construct the path to the specific simulation run output
-  simulationRunPath <- file.path(baseDirectory, 
-                                 usecase, 
-                                 buildingBlock, 
-                                 "04_simulation_run_output", 
-                                 subvariant, 
-                                 paste0(buildingBlock, "_", subvariant, "_sample_", sample)
-  )
+    simulationRunPath <- file.path(baseDirectory, 
+                                   usecase, 
+                                   buildingBlock, 
+                                   "04_simulation_run_output", 
+                                   subvariant, 
+                                   paste0(buildingBlock, "_", subvariant, "_sample_", sample)
+    )
+  }
+  
+  #reverse engingeer the run_id
+  if(!dir.exists(simulationRunPath)){
+    stop(sprintf("Path does not exist: %s", simulationRunPath),
+         call. = TRUE)
+    
+  }
+  runId <- basename(normalizePath(simulationRunPath, mustWork = TRUE))
   
   # Full path to the train states CSV file
   trainStatesFile <- file.path(simulationRunPath,
                                "ITERS",
                                "it.0",
-                               paste0(buildingBlock, "_", subvariant, "_sample_", sample, ".0.railsimTrainStates.csv.gz")
+                               paste0(runId, ".0.railsimTrainStates.csv.gz")
   )
   # Full path to the transit schedule XML file
   transitScheduleFile <- file.path(simulationRunPath,
-                                   paste0(buildingBlock, "_", subvariant, "_sample_", sample, ".output_transitSchedule.xml.gz")
+                                   paste0(runId, ".output_transitSchedule.xml.gz")
   )
   
   
@@ -181,6 +195,7 @@ weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A1
     # Vertical lines for stations
     geom_vline(data = stops_info, aes(xintercept = x_coord), linetype = "dashed", color = "grey50") +
     
+    
     # Add stop names as text labels at the top of the plot
     geom_text(
       data = stops_info,
@@ -203,14 +218,26 @@ weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A1
     scale_x_continuous(name = "Position (meters)") +
     
     # Reverse Y-axis and format time labels
-    scale_y_reverse(labels = format_time_hms) +
+    scale_y_reverse(
+      labels = format_time_hms,
+      breaks = seq(0, max(train_data$time, theoretical_schedule$time), by = 1800),
+      #minor_breaks = seq(0, max(train_data$time, theoretical_schedule$time), by = 600)
+    ) +
     
     # Labels and Title
     labs(title = "Graphical Schedule: Simulated (Solid) vs. Theoretical (Dashed)", subtitle = paste("Showing trajectories from use case:", usecase), y = "Time", color = "Train Type") +
     
     # Theme
     theme_bw() +
-    theme(legend.position = "bottom", plot.title = element_text(hjust = 0.5), plot.subtitle = element_text(hjust = 0.5)) +
+    theme(
+      legend.position = "bottom", 
+      plot.title = element_text(hjust = 0.5), 
+      plot.subtitle = element_text(hjust = 0.5),
+      panel.grid.major.y = element_line(color = "grey50", linewidth = 0.5),
+      panel.grid.minor.y = element_line(color = "grey80", linewidth = 0.3),
+      panel.grid.major.x = element_blank(),
+      panel.grid.minor.x = element_blank()
+    ) +
     
     # --- SOLUTION: Override legend aesthetics to show solid lines ---
     guides(color = guide_legend(override.aes = list(linetype = "solid")))
@@ -219,6 +246,7 @@ weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A1
   message("Converting ggplot object to an interactive plotly object...")
   interactive_plot <- ggplotly(graphical_schedule_plot)
   
+
   output_html_file <- file.path(simulationRunPath, "interactive_graphical_schedule_with_stops.html")
   
   

@@ -88,6 +88,7 @@ if (read_detailed){
 sample_sums <- sample_sums |> 
   separate(schedule, into = c("schedule_type", "schedule_scaling"), sep = "\\.", extra = "merge", remove = FALSE) |> 
   mutate(schedule_scaling_int = as.integer(schedule_scaling),
+         schedule_scaling_int2 = schedule_scaling_int * 2,
          schedule_type = str_to_upper(schedule_type)) |> 
   mutate(total_delay_per_train = total_delay_at_destination / n_trains)
 
@@ -305,9 +306,10 @@ p_ecdf_plotly <- ggplotly(p_ecdf_base, tooltip = "text")
 p_ecdf_plotly
 
 
-bb_to_filter <- "uc1_bb1"
-schedtype_to_filter <- "M1"
+bb_to_filter <- "uc1_bb3"
+schedtype_to_filter <- "KM1_FV_STOP"
 
+sample_sums_filtered <- sample_sums |> filter(building_block == bb_to_filter & schedule_type == schedtype_to_filter)
 sample_sums_plot_filtered <- sample_sums_plot |> filter(building_block == bb_to_filter & schedule_type == schedtype_to_filter)
 
 
@@ -353,20 +355,20 @@ plot_box_variable <- function(
 }
 
 plot_box_variable(
-  data = sample_sums_plot,
-  x_var = schedule_scaling_int,
+  data = sample_sums_filtered,
+  x_var = schedule_scaling_int2,
   y_var = total_delay_at_destination,
-  x_label = "Schedule",
+  x_label = "Schedule-Scaling [trains per hour]",
   y_label = "Arrival Delays",
   title = "Arrival Delay Distriution",
   subtitle = paste("Run ID:", config$run_id)
 )
 plot_box_variable(
-  data = sample_sums_plot,
-  x_var = schedule_scaling_int,
+  data = sample_sums_filtered,
+  x_var = schedule_scaling_int2,
   y_var = total_delay_per_train,
-  x_label = "Schedule",
-  y_label = "Arrival Delays",
+  x_label = "Schedule-Scaling [trains per hour]",
+  y_label = "Arrival Delay Per Train [sec]",
   title = "Arrival Delay per Train",
   subtitle = paste("Run ID:", config$run_id)
 )
@@ -374,7 +376,7 @@ plot_box_variable(
   data = sample_sums_plot,
   x_var = schedule_scaling_int,
   y_var = total_delay_per_train,
-  x_label = "Schedule",
+  x_label = "Schedule-Scaling [trains per hour]",
   y_label = "Arrival Delays",
   title = "Arrival Delay per Train",
   subtitle = paste("Run ID:", config$run_id),
@@ -411,7 +413,7 @@ weg_zeit_diagram(baseDirectory = baseDirectory,
 quantiles <- c(0, .02, .05, .1, .5, 1)
 
 schedule_stats <- sample_sums |> 
-  group_by(building_block, schedule_type, schedule_scaling, schedule_scaling_int, schedule) |> 
+  group_by(building_block, schedule_type, schedule_scaling, schedule_scaling_int, schedule_scaling_int2, schedule) |> 
   # summarise(
   #   delay_min   = min(total_delay_at_destination, na.rm = TRUE),
   #   delay_5pct  = quantile(total_delay_at_destination, probs = 0.05, na.rm = TRUE, type = 7),
@@ -551,6 +553,41 @@ quantile_table_plot <- ggplot(
     x = "Schedule",
     y = "Quantile",
     title = "Quantiles for Delay per Train"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(face = "bold")
+  )
+quantile_table_plot
+
+# 2%-Quantile Table Plot:
+quantile_table_plot <- ggplot(
+  schedule_stats_long |> 
+    filter(grepl("^qq_2%", stat)),
+  aes(
+    x = as.factor(schedule_scaling_int2),
+    y = schedule_type  # jeder Fahrplan-Typ auf einer eigenen y-Position
+  )) +
+  geom_tile(aes(fill = value_pt), color = "gray50", linewidth = 0.5) + 
+  geom_text(aes(label = round(value_pt, 0)), size = 3) +  # Werte als Text
+  # Farbverlauf definieren:
+  # - Werte = 0 sollen grün sein
+  # - Werte > 0 bis 180 sollen von Gelb nach Rot verlaufen
+  scale_fill_gradientn(
+    name = "delay",
+    colors = c("green", "yellow", "orange", "red", "darkred"), # Definieren Sie die Zwischenfarben
+    values = scales::rescale(c(0, 0.01, 90, 180, 600)), # Setzt die Positionen der Farben im Verlauf
+    limits = c(0, 600), # Stellen Sie sicher, dass die Skala bis 180 geht
+    oob = scales::squish, # Stellt sicher, dass Werte > 180 auf den Wert 180 (Rot) projiziert werden
+    na.value = "grey" # Für fehlende Werte
+  ) +
+  scale_y_discrete(limits = rev) +
+  facet_grid( ~ building_block, scales = "free_x") +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = "Schedule Scaling [trains per hour]",
+    y = "Schedule Type",
+    title = "2% Quantiles for Delay per Train"
   ) +
   theme(
     axis.text.x = element_text(angle = 45, hjust = 1),
