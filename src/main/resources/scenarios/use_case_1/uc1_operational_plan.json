@@ -1,1237 +1,143 @@
 {
-  "trainVolumePeriod": 1800,
-  "minimumHeadway": {
-    "FV": 120,
-    "RV": 90,
-    "GV": 180
+  "trainVolumes": {
+    "period": 1800,
+    "min": 4,
+    "max": 12,
+    "step": 1,
+    "bidirectional": false
   },
-  "operationModes": [
-    {
-      "name": "KM",
-      "description": "Kernnetz-Mischbetrieb",
-      "products": [
-        "FV",
-        "RV",
-        "GV"
-      ],
-      "variants": [
-        {
-          "id": "KM1_FV_STOP",
-          "distribution": [
-            {
-              "product": "FV",
-              "share": 0.4
-            },
-            {
-              "product": "RV",
-              "share": 0.5
-            },
-            {
-              "product": "GV",
-              "share": 0.1
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "KM1_FV_STOP.4",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 1
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_STOP.5",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_STOP.6",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_STOP.7",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_STOP.8",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_STOP.9",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_STOP.10",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_STOP.11",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_STOP.12",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "KM1_FV_PASS",
-          "distribution": [
-            {
-              "product": "FV",
-              "share": 0.4
-            },
-            {
-              "product": "RV",
-              "share": 0.5
-            },
-            {
-              "product": "GV",
-              "share": 0.1
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "KM1_FV_PASS.4",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_PASS.5",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_PASS.6",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_PASS.7",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_PASS.8",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_PASS.9",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_PASS.10",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_PASS.11",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "KM1_FV_PASS.12",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "KM2_FV_STOP",
-          "distribution": [
-            {
-              "product": "FV",
-              "share": 0.2
-            },
-            {
-              "product": "RV",
-              "share": 0.6
-            },
-            {
-              "product": "GV",
-              "share": 0.2
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "KM2_FV_STOP.4",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_STOP.5",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_STOP.6",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_STOP.7",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_STOP.8",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_STOP.9",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_STOP.10",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_STOP.11",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 5
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_STOP.12",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 5
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "KM2_FV_PASS",
-          "distribution": [
-            {
-              "product": "FV",
-              "share": 0.2
-            },
-            {
-              "product": "RV",
-              "share": 0.6
-            },
-            {
-              "product": "GV",
-              "share": 0.2
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "KM2_FV_PASS.4",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_PASS.5",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_PASS.6",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_PASS.7",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_PASS.8",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_PASS.9",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_PASS.10",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_PASS.11",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 5
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "KM2_FV_PASS.12",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LR",
-                  "amount": 5
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            }
-          ]
-        }
-      ]
+  "products": {
+    "FV": {
+      "description": "Fernverkehr (IC, EC, IPV)",
+      "minHeadway": 120
     },
-    {
-      "name": "R",
-      "description": "Restnetz",
-      "products": [
-        "RV",
-        "GV"
-      ],
-      "variants": [
-        {
-          "id": "R1",
-          "distribution": [
-            {
-              "product": "RV",
-              "share": 0.8
-            },
-            {
-              "product": "GV",
-              "share": 0.2
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "R1.4",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "R1.5",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "R1.6",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "R1.7",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "R1.8",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 5
-                }
-              ]
-            },
-            {
-              "id": "R1.9",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 5
-                }
-              ]
-            },
-            {
-              "id": "R1.10",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 6
-                }
-              ]
-            },
-            {
-              "id": "R1.11",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 5
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 6
-                }
-              ]
-            },
-            {
-              "id": "R1.12",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 5
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 7
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "R2",
-          "distribution": [
-            {
-              "product": "RV",
-              "share": 0.9
-            },
-            {
-              "product": "GV",
-              "share": 0.1
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "R2.4",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "R2.5",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                }
-              ]
-            },
-            {
-              "id": "R2.6",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "R2.7",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 3
-                }
-              ]
-            },
-            {
-              "id": "R2.8",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "R2.9",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 5
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "R2.10",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 5
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 5
-                }
-              ]
-            },
-            {
-              "id": "R2.11",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 5
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 6
-                }
-              ]
-            },
-            {
-              "id": "R2.12",
-              "trainVolumes": [
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 6
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 6
-                }
-              ]
-            }
-          ]
-        }
-      ]
+    "RV": {
+      "description": "Regionalverkehr (IR, RE, S-Bahn)",
+      "minHeadway": 90
     },
-    {
-      "name": "M",
-      "description": "Metrobetrieb",
-      "products": [
-        "RV"
-      ],
-      "variants": [
-        {
-          "id": "M1",
-          "distribution": [
-            {
-              "product": "RV",
-              "share": 1.0
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "M1.4",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "M1.5",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 5
-                }
-              ]
-            },
-            {
-              "id": "M1.6",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 6
-                }
-              ]
-            },
-            {
-              "id": "M1.7",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 7
-                }
-              ]
-            },
-            {
-              "id": "M1.8",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 8
-                }
-              ]
-            },
-            {
-              "id": "M1.9",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 9
-                }
-              ]
-            },
-            {
-              "id": "M1.10",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 10
-                }
-              ]
-            },
-            {
-              "id": "M1.11",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 11
-                }
-              ]
-            },
-            {
-              "id": "M1.12",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 12
-                }
-              ]
-            }
-          ]
-        }
-      ]
+    "GV": {
+      "description": "Güterverkehr",
+      "minHeadway": 180
     }
-  ]
+  },
+  "flows": {
+    "LMR": {
+      "description": "Verkehrsstrom mit Halt in bei M (L-M-R)",
+      "routes": {
+        "FV": {
+          "forward": "FV_LMR"
+        },
+        "RV": {
+          "forward": "RV_LMR"
+        }
+      }
+    },
+    "LR": {
+      "description": "Verkehrsstrom ohne Halt bei M (L-R)",
+      "routes": {
+        "FV": {
+          "forward": "FV_LR"
+        },
+        "GV": {
+          "forward": "GV_LR"
+        }
+      }
+    }
+  },
+  "patterns": {
+    "STANDARD": {
+      "description": "RV hält; GV direkt",
+      "shares": {
+        "RV": {
+          "LMR": 1.0
+        },
+        "GV": {
+          "LR": 1.0
+        }
+      }
+    },
+    "FV_PASS": {
+      "description": "FV direkt; RV hält; GV direkt",
+      "shares": {
+        "FV": {
+          "LR": 1.0
+        },
+        "RV": {
+          "LMR": 1.0
+        },
+        "GV": {
+          "LR": 1.0
+        }
+      }
+    },
+    "FV_STOP": {
+      "description": "FV hält; RV hält; GV direkt",
+      "shares": {
+        "FV": {
+          "LMR": 1.0
+        },
+        "RV": {
+          "LMR": 1.0
+        },
+        "GV": {
+          "LR": 1.0
+        }
+      }
+    }
+  },
+  "modes": {
+    "KM1": {
+      "description": "Kernnetz-Mischbetrieb Standard (40/50/10)",
+      "patterns": [
+        "FV_PASS",
+        "FV_STOP"
+      ],
+      "shares": {
+        "FV": 0.4,
+        "RV": 0.5,
+        "GV": 0.1
+      }
+    },
+    "KM2": {
+      "description": "Kernnetz-Mischbetrieb RV-Fokus (20/60/20)",
+      "patterns": [
+        "FV_PASS",
+        "FV_STOP"
+      ],
+      "shares": {
+        "FV": 0.2,
+        "RV": 0.6,
+        "GV": 0.2
+      }
+    },
+    "R1": {
+      "description": "Restnetz Standard (0/80/20)",
+      "patterns": [
+        "STANDARD"
+      ],
+      "shares": {
+        "RV": 0.8,
+        "GV": 0.2
+      }
+    },
+    "R2": {
+      "description": "Restnetz Regio-Fokus (0/90/10)",
+      "patterns": [
+        "STANDARD"
+      ],
+      "shares": {
+        "RV": 0.9,
+        "GV": 0.1
+      }
+    },
+    "M1": {
+      "description": "Metrobetrieb (100% RV)",
+      "patterns": [
+        "STANDARD"
+      ],
+      "shares": {
+        "RV": 1.0
+      }
+    }
+  }
 }

@@ -19,9 +19,8 @@ The simulation is structured around these three key concepts, from general to sp
   resources) and a template transit schedule (routes and stops), but does not contain specific departure times on the
   routes. It is defined by a set of MATSim XML files (`network.xml`, `schedule.xml`, and `vehicles.xml`).
 * **Operational Plan**: A generic timetable (`Mengengerüst`) that specifies the desired train volumes. It defines how
-  many trains of each product type (e.g., FV, RV, GV) should run on specific, pre-defined transit routes within a given
-  period. It is provided as a JSON file with hierarchical structure that allows for defining different operational
-  concepts, variants, and sub-variants.
+  many trains of each product type (e.g., FV, RV, GV) should run on specific, pre-defined traffic flows (mapped to
+  MATSim routes) within a given period. It is provided as a JSON file with hierarchical structure.
 
 ## Simulation Pipeline
 
@@ -87,61 +86,96 @@ graph LR
 
 ## Operational Plan Structure
 
+The Operational Plan is built using the following concepts:
+
+* **Traffic Flow**: A logical connection between two points in the network (e.g., "Trunk A-B"). The Flow maps this
+  abstract concept to the physical **Route IDs** (`forward` and `reverse`) defined per product in the Building Block's
+  schedule.
+* **Flow Pattern**: Defines the distribution of a product on flows. For example, a `BALANCED` pattern might distribute
+  traffic 50/50 between two branches, while a `TRUNK_ONLY` pattern routes everything onto the main line.
+* **Operational Mode**: Defines the product mix (e.g., "40% Intercity, 50% Regional, 10% Cargo") and the associated flow
+  patterns. For each combination of product mix and flow pattern, a **scenario** will be generated and simulated.
+* **Train Volumes**: The simulation automatically scales the total traffic volume from a minimum to a maximum trains per
+  period.
+
+JSON structure:
+
 ```json
 {
-  "trainVolumePeriod": 1800,
-  "minimumHeadway": {
-    "FV": 120,
-    "RV": 90,
-    "GV": 180
+  "trainVolumes": {
+    "period": 1800,
+    "min": 4,
+    "max": 12,
+    "step": 1,
+    "bidirectional": false
   },
-  "operationModes": [
-    {
-      "name": "KM",
-      "description": "Kernnetz-Mischbetrieb",
-      "variants": [
-        {
-          "id": "KM1",
-          "distribution": [
-            {
-              "product": "FV",
-              "share": 0.4
-            },
-            {
-              "product": "RV",
-              "share": 0.5
-            },
-            {
-              "product": "GV",
-              "share": 0.1
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "KM1.4",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "route": "FV_LMR",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "route": "RV_LMR",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "route": "GV_LR",
-                  "amount": 1
-                }
-              ]
-            }
-          ]
-        }
-      ]
+  "products": {
+    "FV": {
+      "description": "Fernverkehr",
+      "minHeadway": 120
+    },
+    "RV": {
+      "description": "Regionalverkehr",
+      "minHeadway": 90
+    },
+    "GV": {
+      "description": "Güterverkehr",
+      "minHeadway": 180
     }
-  ]
+  },
+  "flows": {
+    "LMR": {
+      "description": "Verkehrsstrom mit Halt in bei M (L-M-R)",
+      "routes": {
+        "FV": {
+          "forward": "FV_LMR"
+        },
+        "RV": {
+          "forward": "RV_LMR"
+        }
+      }
+    },
+    "LR": {
+      "description": "Verkehrsstrom ohne Halt bei M (L-R)",
+      "routes": {
+        "FV": {
+          "forward": "FV_LR"
+        },
+        "GV": {
+          "forward": "GV_LR"
+        }
+      }
+    }
+  },
+  "patterns": {
+    "STANDARD": {
+      "description": "Regelbetrieb: RV hält (LMR); GV/FV direkt (LR)",
+      "shares": {
+        "RV": {
+          "LMR": 1.0
+        },
+        "GV": {
+          "LR": 1.0
+        },
+        "FV": {
+          "LR": 1.0
+        }
+      }
+    }
+  },
+  "modes": {
+    "KM1": {
+      "description": "Kernnetz-Mischbetrieb Standard (40/50/10)",
+      "patterns": [
+        "STANDARD"
+      ],
+      "shares": {
+        "FV": 0.4,
+        "RV": 0.5,
+        "GV": 0.1
+      }
+    }
+  }
 }
 ```
 
