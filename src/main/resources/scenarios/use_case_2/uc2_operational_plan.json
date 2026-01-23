@@ -91,31 +91,19 @@
     }
   },
   "modes": {
-    "KM": {
-      "description": "Kernnetz-Mischbetrieb",
-      "patterns": [
-        "BALANCED",
-        "TRUNK"
-      ],
-      "shares": {
-        "FV": 0.4,
-        "RV": 0.5,
-        "GV": 0.1
-      }
-    },
     "R": {
-      "description": "Restnetz",
+      "description": "Restnetz-Mischverkehr (Worst-Case). Interaktion von Fernverkehr und Güterverkehr bei hohen Geschwindigkeitsdifferenzen. (Ref: Lugano)",
       "patterns": [
         "BALANCED",
         "TRUNK"
       ],
       "shares": {
-        "RV": 0.8,
-        "GV": 0.2
+        "FV": 0.5,
+        "GV": 0.5
       }
     },
     "M": {
-      "description": "Metrobetrieb isoliert",
+      "description": "Metrobetrieb isoliert (S-Bahn Charakter). Reiner Regionalverkehr, gleichmässige Dynamik und hohe Frequenz. (Ref: S-Bahn Zürich)",
       "patterns": [
         "BALANCED",
         "TRUNK"

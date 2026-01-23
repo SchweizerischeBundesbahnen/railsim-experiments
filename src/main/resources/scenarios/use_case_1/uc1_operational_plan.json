@@ -22,7 +22,7 @@
   },
   "flows": {
     "LMR": {
-      "description": "Verkehrsstrom mit Halt in bei M (L-M-R)",
+      "description": "Verkehrsstrom mit Halt bei M (L-M-R)",
       "routes": {
         "FV": {
           "forward": "FV_LMR"
@@ -86,52 +86,30 @@
     }
   },
   "modes": {
-    "KM1": {
-      "description": "Kernnetz-Mischbetrieb Standard (40/50/10)",
+    "KM": {
+      "description": "Kernnetz-Mischbetrieb (hohe Heterogenität). Mix aus haltendem/durchfahrendem FV, RV und GV. (Ref: Lausanne–Genf, Heitersberg)",
       "patterns": [
         "FV_PASS",
         "FV_STOP"
       ],
       "shares": {
         "FV": 0.4,
-        "RV": 0.5,
-        "GV": 0.1
+        "RV": 0.4,
+        "GV": 0.2
       }
     },
-    "KM2": {
-      "description": "Kernnetz-Mischbetrieb RV-Fokus (20/60/20)",
+    "R": {
+      "description": "Restnetz-Mischverkehr (Worst-Case). Interaktion von haltendem Fernverkehr und durchfahrendem Güterverkehr bei hohen Geschwindigkeitsdifferenzen. (Ref: Lugano)",
       "patterns": [
-        "FV_PASS",
         "FV_STOP"
       ],
       "shares": {
-        "FV": 0.2,
-        "RV": 0.6,
-        "GV": 0.2
+        "FV": 0.5,
+        "GV": 0.5
       }
     },
-    "R1": {
-      "description": "Restnetz Standard (0/80/20)",
-      "patterns": [
-        "STANDARD"
-      ],
-      "shares": {
-        "RV": 0.8,
-        "GV": 0.2
-      }
-    },
-    "R2": {
-      "description": "Restnetz Regio-Fokus (0/90/10)",
-      "patterns": [
-        "STANDARD"
-      ],
-      "shares": {
-        "RV": 0.9,
-        "GV": 0.1
-      }
-    },
-    "M1": {
-      "description": "Metrobetrieb (100% RV)",
+    "M": {
+      "description": "Metrobetrieb isoliert (S-Bahn Charakter). Reiner Regionalverkehr, gleichmässige Dynamik und hohe Frequenz. (Ref: S-Bahn Zürich)",
       "patterns": [
         "STANDARD"
       ],
