@@ -74,7 +74,7 @@ public class RunSummaryWriter {
                 // multi-level comparator for sorting
                 .sorted(Comparator
                         // 1. sub-variant ID (alphabetical)
-                        .comparing((ReportableResult res) -> res.result().getJob().getSubVariant().getId())
+                        .comparing((ReportableResult res) -> res.result().getJob().getFlowPattern().getId())
                         // 2. the number of stuck trains (ascending)
                         .thenComparingInt(res -> res.delayReport().getTrainsStuck())
                         // 3. total destination delay (ascending)
@@ -105,8 +105,8 @@ public class RunSummaryWriter {
     @RequiredArgsConstructor
     private enum Column {
         RUN_ID("run_id", res -> res.result().getJob().getRunId()),
-        VARIANT("variant_id", res -> res.result().getJob().getVariant().getId()),
-        SUBVARIANT("subvariant_id", res -> res.result().getJob().getSubVariant().getId()),
+        VARIANT("variant_id", res -> res.result().getJob().getProductMix().getId()),
+        SUBVARIANT("subvariant_id", res -> res.result().getJob().getFlowPattern().getId()),
         SAMPLE("sample", res -> String.valueOf(res.result().getJob().getSample())),
         TOTAL_DELAY_AT_DESTINATION("total_delay_at_destination",
                 res -> String.format("%.2f", sumDestinationDelays(res.delayReport()))),

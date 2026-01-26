@@ -1,5 +1,5 @@
 {
-  "trainVolumes": {
+  "volumes": {
     "period": 1800,
     "min": 4,
     "max": 12,
@@ -85,13 +85,9 @@
       }
     }
   },
-  "modes": {
+  "mixes": {
     "KM": {
-      "description": "Kernnetz-Mischbetrieb (hohe Heterogenität). Mix aus haltendem/durchfahrendem FV, RV und GV. (Ref: Lausanne–Genf, Heitersberg)",
-      "patterns": [
-        "FV_PASS",
-        "FV_STOP"
-      ],
+      "description": "Kernnetz-Mischbetrieb (Ref: Lausanne–Genf, Heitersberg)",
       "shares": {
         "FV": 0.4,
         "RV": 0.4,
@@ -99,23 +95,38 @@
       }
     },
     "R": {
-      "description": "Restnetz-Mischverkehr (Worst-Case). Interaktion von haltendem Fernverkehr und durchfahrendem Güterverkehr bei hohen Geschwindigkeitsdifferenzen. (Ref: Lugano)",
-      "patterns": [
-        "FV_STOP"
-      ],
+      "description": "Restnetz-Mischverkehr (Ref: Lugano)",
       "shares": {
         "FV": 0.5,
         "GV": 0.5
       }
     },
     "M": {
-      "description": "Metrobetrieb isoliert (S-Bahn Charakter). Reiner Regionalverkehr, gleichmässige Dynamik und hohe Frequenz. (Ref: S-Bahn Zürich)",
-      "patterns": [
-        "STANDARD"
-      ],
+      "description": "Metrobetrieb isoliert (Ref: S-Bahn Zürich)",
       "shares": {
         "RV": 1.0
       }
     }
-  }
+  },
+  "modes": [
+    {
+      "mix": "KM",
+      "patterns": [
+        "FV_PASS",
+        "FV_STOP"
+      ]
+    },
+    {
+      "mix": "R",
+      "patterns": [
+        "FV_STOP"
+      ]
+    },
+    {
+      "mix": "M",
+      "patterns": [
+        "STANDARD"
+      ]
+    }
+  ]
 }

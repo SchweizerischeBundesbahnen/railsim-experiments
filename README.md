@@ -2,7 +2,7 @@
 
 This project provides a configurable command-line tool for running railway simulations with `railsim` (a MATSim
 contrib). It is designed to analyze and compare the performance of different infrastructure layouts
-(**Building Blocks**) under consistent traffic scenarios (**Operational Plans**).
+(**Building Blocks**) under consistent traffic operatingModes (**Operational Plans**).
 
 The project is structured around **Use Cases**. A Use Case groups a set of related Building Blocks and defines a single
 Operational Plan compatible with all of them, ensuring a consistent basis for comparison.
@@ -15,7 +15,7 @@ The simulation is structured around these three key concepts, from general to sp
   is compatible with every Building Block within it. This ensures consistent operational logic across different
   infrastructure variations. For example, all train lines (for products like FV, RV, GV) defined in the plan must follow
   the same fundamental sequence of potential stops, even if individual trains don't service every stop.
-* **Building Block**: A specific infrastructure scenario. It defines the physical railway network (tracks and block
+* **Building Block**: A specific infrastructure operatingMode. It defines the physical railway network (tracks and block
   resources) and a template transit schedule (routes and stops), but does not contain specific departure times on the
   routes. It is defined by a set of MATSim XML files (`network.xml`, `schedule.xml`, and `vehicles.xml`).
 * **Operational Plan**: A generic timetable (`Mengengerüst`) that specifies the desired train volumes. It defines how
@@ -94,7 +94,7 @@ The Operational Plan is built using the following concepts:
 * **Flow Pattern**: Defines the distribution of a product on flows. For example, a `BALANCED` pattern might distribute
   traffic 50/50 between two branches, while a `TRUNK_ONLY` pattern routes everything onto the main line.
 * **Operational Mode**: Defines the product mix (e.g., "40% Intercity, 50% Regional, 10% Cargo") and the associated flow
-  patterns. For each combination of product mix and flow pattern, a **scenario** will be generated and simulated.
+  patterns. For each combination of product mix and flow pattern, a **operatingMode** will be generated and simulated.
 * **Train Volumes**: The simulation automatically scales the total traffic volume from a minimum to a maximum trains per
   period.
 

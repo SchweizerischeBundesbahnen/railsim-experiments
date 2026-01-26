@@ -10,8 +10,8 @@ import org.matsim.core.controler.Controller;
 import org.matsim.core.controler.ControllerUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.project.scenario.BuildingBlock;
-import org.matsim.project.scenario.plan.SubVariant;
-import org.matsim.project.scenario.plan.Variant;
+import org.matsim.project.scenario.plan.FlowPattern;
+import org.matsim.project.scenario.plan.ProductMix;
 import org.matsim.project.utils.RailsimConfigHelper;
 
 import java.nio.file.Path;
@@ -23,21 +23,21 @@ import java.nio.file.Path;
 public class RailsimSimulationJob implements Runnable {
 
     private final Path configFilePath;
-    private final Variant variant;
     private final BuildingBlock buildingBlock;
-    private final SubVariant subVariant;
+    private final ProductMix productMix;
+    private final FlowPattern flowPattern;
     private final int sample;
 
     private final String runId;
     private final Path outputDirectory;
     private final Config config;
 
-    public RailsimSimulationJob(Path configFilePath, BuildingBlock buildingBlock, Variant variant,
-                                SubVariant subVariant, int sample) {
+    public RailsimSimulationJob(Path configFilePath, BuildingBlock buildingBlock, ProductMix productMix,
+                                FlowPattern flowPattern, int sample) {
         this.configFilePath = configFilePath;
         this.buildingBlock = buildingBlock;
-        this.variant = variant;
-        this.subVariant = subVariant;
+        this.productMix = productMix;
+        this.flowPattern = flowPattern;
         this.sample = sample;
 
         this.config = ConfigUtils.loadConfig(configFilePath.toString());

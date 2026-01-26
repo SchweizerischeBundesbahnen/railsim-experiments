@@ -27,7 +27,8 @@ import java.util.stream.Collectors;
 public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHandler, VehicleDepartsAtFacilityEventHandler, TransitDriverStartsEventHandler, EventHandler {
 
     private final Map<Id<Vehicle>, VehicleState> vehicleStates = new HashMap<>();
-    private final Map<Id<Departure>, Map<Id<TransitStopFacility>, StopEventData>> departureStopEvents = new LinkedHashMap<>();
+    private final Map<Id<Departure>, Map<Id<TransitStopFacility>, StopEventData>> departureStopEvents =
+            new LinkedHashMap<>();
     private final Set<Id<Vehicle>> departedTrains = new HashSet<>();
     private final Set<Id<Vehicle>> arrivedTrains = new HashSet<>();
 
@@ -152,9 +153,9 @@ public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHand
 
         // get or create the map of stop events for this departure and the data object for the stop
         int totalStops = this.routes.get(state.routeId()).getStops().size();
-        return Optional.of(departureStopEvents.computeIfAbsent(state.departureId(), k -> new LinkedHashMap<>())
+        return Optional.of(departureStopEvents.computeIfAbsent(state.departureId(), _ -> new LinkedHashMap<>())
                 .computeIfAbsent(facilityId,
-                        k -> new StopEventData(stopInfo.index(), totalStops, stopInfo.stop(), state.departureTime())));
+                        _ -> new StopEventData(stopInfo.index(), totalStops, stopInfo.stop(), state.departureTime())));
     }
 
     @Override

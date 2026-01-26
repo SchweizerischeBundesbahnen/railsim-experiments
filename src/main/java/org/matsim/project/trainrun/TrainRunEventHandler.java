@@ -31,9 +31,11 @@ public class TrainRunEventHandler implements TransitDriverStartsEventHandler, Ve
     @Override
     public void handleEvent(VehicleArrivesAtFacilityEvent event) {
         Id<Departure> departureId = vehicleToDeparture.get(event.getVehicleId());
-        if (departureId == null) return;
+        if (departureId == null) {
+            return;
+        }
 
-        arrivalTimesPerDeparture.computeIfAbsent(departureId, d -> new LinkedHashMap<>())
+        arrivalTimesPerDeparture.computeIfAbsent(departureId, _ -> new LinkedHashMap<>())
                 .put(event.getFacilityId(), event.getTime());
     }
 

@@ -1,5 +1,5 @@
 {
-  "trainVolumes": {
+  "volumes": {
     "period": 1800,
     "min": 4,
     "max": 12,
@@ -90,27 +90,35 @@
       }
     }
   },
-  "modes": {
+  "mixes": {
     "R": {
-      "description": "Restnetz-Mischverkehr (Worst-Case). Interaktion von Fernverkehr und Güterverkehr bei hohen Geschwindigkeitsdifferenzen. (Ref: Lugano)",
-      "patterns": [
-        "BALANCED",
-        "TRUNK"
-      ],
+      "description": "Restnetz-Mischverkehr (Ref: Lugano)",
       "shares": {
         "FV": 0.5,
         "GV": 0.5
       }
     },
     "M": {
-      "description": "Metrobetrieb isoliert (S-Bahn Charakter). Reiner Regionalverkehr, gleichmässige Dynamik und hohe Frequenz. (Ref: S-Bahn Zürich)",
-      "patterns": [
-        "BALANCED",
-        "TRUNK"
-      ],
+      "description": "Metrobetrieb isoliert (Ref: S-Bahn Zürich)",
       "shares": {
         "RV": 1.0
       }
     }
-  }
+  },
+  "modes": [
+    {
+      "mix": "R",
+      "patterns": [
+        "BALANCED",
+        "TRUNK"
+      ]
+    },
+    {
+      "mix": "M",
+      "patterns": [
+        "BALANCED",
+        "TRUNK"
+      ]
+    }
+  ]
 }

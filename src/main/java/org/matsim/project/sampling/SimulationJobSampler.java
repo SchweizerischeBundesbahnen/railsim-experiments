@@ -7,10 +7,9 @@ import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.project.sampling.strategy.DepartureSamplingStrategy;
 import org.matsim.project.scenario.BuildingBlock;
-import org.matsim.project.scenario.plan.OperationMode;
+import org.matsim.project.scenario.plan.OperatingMode;
 import org.matsim.project.scenario.plan.OperationalPlan;
-import org.matsim.project.scenario.plan.SubVariant;
-import org.matsim.project.scenario.plan.Variant;
+import org.matsim.project.scenario.plan.TrainVolumes;
 import org.matsim.project.simulation.RailsimSimulationJob;
 import org.matsim.project.utils.RailsimConfigHelper;
 import org.matsim.project.utils.ResourceLoader;
@@ -21,7 +20,6 @@ import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.IntStream;
 
@@ -35,78 +33,83 @@ public class SimulationJobSampler {
     private final BuildingBlock buildingBlock;
     private final OperationalPlan operationalPlan;
 
-    public List<RailsimSimulationJob> sample(int nSamplesPerSubvariant, int simulationTime,
+    /**
+     * Samples simulation jobs by iterating over all Operating Modes, scaling through the defined
+     * train volume range, and creating multiple random samples per configuration.
+     */
+    public List<RailsimSimulationJob> sample(int samplesPerVolumeLevel, int simulationTime,
                                              DepartureSamplingStrategy strategy, Path scheduleSamplingOutputFolderPath,
                                              Path simulationJobConfigOutputFolderPath,
                                              Path simulationRunOutputFolderPath) {
 
-        final int trainVolumePeriod = operationalPlan.getTrainVolumePeriod();
+        final TrainVolumes volumesConfig = operationalPlan.getTrainVolumes();
+        final int trainVolumePeriod = volumesConfig.getPeriod();
 
         // check for even multiple of the sampling period
         if (simulationTime % trainVolumePeriod != 0) {
-            log.warn(
-                    "For building block '{}': The simulation time ({}s) is not an even multiple of the sampling period ({}s). The last sampling window will be incomplete, which may result in fewer departures than planned for that interval.",
+            log.warn("For building block '{}': Simulation time ({}s) is not a multiple of the period ({}s).",
                     buildingBlock.name(), simulationTime, trainVolumePeriod);
         }
 
-        // flatten the nested structure into a single list of tasks.
-        List<SubVariantTask> tasks = new ArrayList<>();
-        for (OperationMode opMode : operationalPlan.getOperationModes()) {
-            for (Variant variant : opMode.getVariants()) {
-                for (SubVariant subVariant : variant.getSubVariants()) {
-                    tasks.add(new SubVariantTask(variant, subVariant));
-                }
-            }
-        }
+        log.info("Starting parallel sampling for building block: {}", buildingBlock.name());
+        return operationalPlan.getOperatingModes().parallelStream().flatMap(operatingMode -> {
 
-        log.info("Starting parallel sampling of {} jobs for {} sub-variants...", tasks.size() * nSamplesPerSubvariant,
-                tasks.size());
+            // scale volume (trains per period) of configured range
+            return IntStream.iterate(volumesConfig.getMin(), v -> v <= volumesConfig.getMax(),
+                    v -> v + volumesConfig.getStep()).boxed().flatMap(trainsPerPeriod -> {
 
-        // process the list of tasks in parallel
-        return tasks.parallelStream().flatMap(task -> {
-            long taskSeed = seed + task.subVariant.getId().hashCode();
+                // draw random samples for this specific operating mode and trains per period
+                return IntStream.rangeClosed(1, samplesPerVolumeLevel).mapToObj(sampleIndex -> {
+                    try {
+                        // unique seed for this specific combination
+                        long taskSeed = seed + operatingMode.getId().hashCode() + trainsPerPeriod + sampleIndex;
 
-            StatefulScheduleSampler sampler = new StatefulScheduleSampler(taskSeed, templateScenario, task.subVariant,
-                    trainVolumePeriod, simulationTime);
+                        // initialize the sampler for this specific volume level
+                        StatefulScheduleSampler sampler =
+                                new StatefulScheduleSampler(taskSeed, templateScenario, operatingMode,
+                                        trainVolumePeriod, trainsPerPeriod, simulationTime,
+                                        volumesConfig.isBidirectional());
 
-            return IntStream.rangeClosed(1, nSamplesPerSubvariant).mapToObj(sampleIndex -> {
-                try {
-                    return createJobForSample(sampleIndex, task.variant, task.subVariant, sampler, strategy,
-                            scheduleSamplingOutputFolderPath, simulationJobConfigOutputFolderPath,
-                            simulationRunOutputFolderPath);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
+                        return createJobForSample(sampleIndex, trainsPerPeriod, operatingMode, sampler, strategy,
+                                scheduleSamplingOutputFolderPath, simulationJobConfigOutputFolderPath,
+                                simulationRunOutputFolderPath);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
             });
         }).toList();
     }
 
-    private RailsimSimulationJob createJobForSample(int sampleIndex, Variant variant, SubVariant subVariant,
+    private RailsimSimulationJob createJobForSample(int sampleIndex, int trainsPerPeriod, OperatingMode mode,
                                                     StatefulScheduleSampler sampler, DepartureSamplingStrategy strategy,
                                                     Path scheduleSamplingOutputFolderPath,
                                                     Path simulationJobConfigOutputFolderPath,
                                                     Path simulationRunOutputFolderPath) throws IOException {
 
-        final String runId = String.format("%s_%s_sample_%d", buildingBlock.name().toLowerCase(),
-                subVariant.getId().toLowerCase(), sampleIndex);
+        // unique identifier for this specific product mix + pattern + volume combination (= scenario)
+        String scenarioId = String.format("%s.%d", mode.getId(), trainsPerPeriod);
+
+        // unique identifier for the specific random sample
+        final String runId =
+                String.format("%s_%s_sample_%d", buildingBlock.name().toLowerCase(), scenarioId, sampleIndex);
 
         log.debug("Sampling job: {}", runId);
-
         StatefulScheduleSampler.Sample sample = sampler.sample(strategy);
 
-        Path sampleFilesPath = scheduleSamplingOutputFolderPath.resolve(subVariant.getId().toLowerCase())
-                .resolve("sample_" + sampleIndex);
+        // write sampled schedule and vehicles
+        Path sampleFilesPath = scheduleSamplingOutputFolderPath.resolve(scenarioId).resolve("sample_" + sampleIndex);
         Files.createDirectories(sampleFilesPath);
         Path schedulePath = sampleFilesPath.resolve("schedule.xml.gz");
         new TransitScheduleWriter(sample.schedule()).writeFile(schedulePath.toString());
         Path vehiclePath = sampleFilesPath.resolve("vehicles.xml.gz");
         new MatsimVehicleWriter(sample.vehicles()).writeFile(vehiclePath.toString());
 
-        Path runOutputPath = simulationRunOutputFolderPath.resolve(subVariant.getId().toLowerCase()).resolve(runId);
-        Path configFilePath = simulationJobConfigOutputFolderPath.resolve(subVariant.getId().toLowerCase())
-                .resolve(runId + ".config.xml");
+        Path runOutputPath = simulationRunOutputFolderPath.resolve(scenarioId).resolve(runId);
+        Path configFilePath = simulationJobConfigOutputFolderPath.resolve(scenarioId).resolve(runId + ".config.xml");
         Files.createDirectories(configFilePath.getParent());
 
+        // prepare matsim config for run
         Config config = ConfigUtils.loadConfig(templateConfigFileInputPath.toString());
         config.controller().setRunId(runId);
         config.controller().setOutputDirectory(runOutputPath.toString());
@@ -119,9 +122,7 @@ public class SimulationJobSampler {
 
         ConfigUtils.writeConfig(config, configFilePath.toString());
 
-        return new RailsimSimulationJob(configFilePath, buildingBlock, variant, subVariant, sampleIndex);
-    }
-
-    private record SubVariantTask(Variant variant, SubVariant subVariant) {
+        return new RailsimSimulationJob(configFilePath, buildingBlock, mode.getProductMix(), mode.getFlowPattern(),
+                sampleIndex);
     }
 }
