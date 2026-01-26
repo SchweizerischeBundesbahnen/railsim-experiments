@@ -30,16 +30,12 @@ public class MinimumHeadwayEventHandler implements LinkEnterEventHandler, Transi
     private final Set<Id<Link>> entryLinks;
     private final Map<Id<Vehicle>, CurrentVehicleInfo> currentVehicles = new HashMap<>();
     private final Vehicles vehicles;
-
     @Getter
     private final List<HeadwayInfo> headwayEvents = new ArrayList<>();
-
-    private final OperationalPlan operationalPlan;
     private final Map<Id<VehicleType>, Product> vehicleTypeToProductMap;
 
     public MinimumHeadwayEventHandler(Scenario scenario, OperationalPlan operationalPlan) {
         this.vehicles = scenario.getTransitVehicles();
-        this.operationalPlan = operationalPlan;
         this.entryLinks = scenario.getNetwork()
                 .getLinks()
                 .values()
