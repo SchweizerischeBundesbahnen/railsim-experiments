@@ -78,8 +78,7 @@ public class MinimumHeadwayAnalysis implements PostProcessingTask<MinimumHeadway
 
         // write analysis results to file
         HeadwayReport report = new HeadwayReport(handler.getHeadwayEvents());
-        Path headwayOutputPath = this.analysisOutputPath.resolve(job.getFlowPattern().getId().toLowerCase())
-                .resolve(job.getRunId());
+        Path headwayOutputPath = job.getOutputMirrorPath(analysisOutputPath);
         Files.createDirectories(headwayOutputPath);
         new MinimumHeadwayWriter(job, report).write(headwayOutputPath);
 
