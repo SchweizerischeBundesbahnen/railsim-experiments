@@ -8,11 +8,11 @@
   },
   "products": {
     "FV": {
-      "description": "Fernverkehr (IC, EC, IPV)",
+      "description": "Fernverkehr",
       "minHeadway": 120
     },
     "RV": {
-      "description": "Regionalverkehr (IR, RE, S-Bahn)",
+      "description": "Regionalverkehr",
       "minHeadway": 90
     },
     "GV": {

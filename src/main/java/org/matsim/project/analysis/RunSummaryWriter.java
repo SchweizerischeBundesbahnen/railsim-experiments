@@ -30,7 +30,7 @@ public class RunSummaryWriter {
     private final List<RailsimSimulationResult> results;
 
     // calculate the sum of arrival delays for only the final stop of each train run
-    private static double sumDestinationDelays(TrainDelayAnalysis.DelayReport report) {
+    private static double sumDestinationDelays(TrainDelayAnalysis.DelayReport report, int from, int to) {
         // group all stop events by their vehicle ID to trace individual train runs
         Map<Object, List<TrainDelayAnalysis.DetailedStopInfo>> trainRuns = report.getDetailedData()
                 .stream()
@@ -39,6 +39,10 @@ public class RunSummaryWriter {
         // for each train run, find the last stop and sum its arrival delay
         return trainRuns.values()
                 .stream()
+                .filter(journey -> journey.stream()
+                        .min(Comparator.comparingInt(TrainDelayAnalysis.DetailedStopInfo::stopSequence))
+                        .map(firstStop -> firstStop.plannedDeparture() >= from && firstStop.plannedDeparture() <= to)
+                        .orElse(false))
                 .mapToDouble(journey -> journey.stream()
                         .max(Comparator.comparingInt(TrainDelayAnalysis.DetailedStopInfo::stopSequence))
                         .map(TrainDelayAnalysis.DetailedStopInfo::arrivalDelay)
@@ -78,7 +82,7 @@ public class RunSummaryWriter {
                         // 2. the number of stuck trains (ascending)
                         .thenComparingInt(res -> res.delayReport().getTrainsStuck())
                         // 3. total destination delay (ascending)
-                        .thenComparingDouble(res -> sumDestinationDelays(res.delayReport()))
+                        .thenComparingDouble(res -> sumDestinationDelays(res.delayReport(), 3600, 7200))
                         .thenComparingDouble(res -> sumTailToHeadViolations(res.headwayReport()))
                         .thenComparingDouble(res -> sumHeadToHeadViolations(res.headwayReport()))).toList();
 
@@ -111,7 +115,9 @@ public class RunSummaryWriter {
         VOLUME("train_volume", res -> String.valueOf(res.result().getJob().getTrainVolume())),
         SAMPLE("sample_index", res -> String.valueOf(res.result().getJob().getSampleIndex())),
         TOTAL_DELAY_AT_DESTINATION("total_delay_at_destination",
-                res -> String.format("%.2f", sumDestinationDelays(res.delayReport()))),
+                res -> String.format("%.2f", sumDestinationDelays(res.delayReport(), 0, Integer.MAX_VALUE))),
+        MID_HOUR_DELAY_AT_DESTINATION("mid_hour_delay_at_destination",
+                res -> String.format("%.2f", sumDestinationDelays(res.delayReport(), 3600, 7200))),
 
         TOTAL_HEADWAY_VIOLATION_TAIL_TO_HEAD("total_headway_violation_tail_to_head",
                 res -> String.format("%.2f", sumTailToHeadViolations(res.headwayReport()))),
