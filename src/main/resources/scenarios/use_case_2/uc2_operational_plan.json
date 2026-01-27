@@ -1,725 +1,123 @@
 {
-  "operationalPlan": [
-    {
-      "name": "KM",
-      "description": "Kernnetz-Mischbetrieb",
-      "products": [
-        "FV",
-        "RV",
-        "GV"
-      ],
-      "variants": [
-        {
-          "id": "KM1",
-          "distribution": [
-            {
-              "product": "FV",
-              "share": 0.4
-            },
-            {
-              "product": "RV",
-              "share": 0.5
-            },
-            {
-              "product": "GV",
-              "share": 0.1
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "KM1.1",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                }
-              ]
-            },
-            {
-              "id": "KM1.2",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM1.3",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 6
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 6
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                }
-              ]
-            }
-          ]
+  "volumes": {
+    "period": 1800,
+    "min": 4,
+    "max": 12,
+    "step": 1,
+    "bidirectional": true
+  },
+  "products": {
+    "FV": {
+      "description": "Fernverkehr",
+      "minHeadway": 120
+    },
+    "RV": {
+      "description": "Regionalverkehr",
+      "minHeadway": 90
+    },
+    "GV": {
+      "description": "Güterverkehr",
+      "minHeadway": 180
+    }
+  },
+  "flows": {
+    "A_B": {
+      "description": "Hauptast (Trunk)",
+      "routes": {
+        "FV": {
+          "forward": "FV_AB",
+          "reverse": "FV_BA"
         },
-        {
-          "id": "KM2",
-          "distribution": [
-            {
-              "product": "FV",
-              "share": 0.2
-            },
-            {
-              "product": "RV",
-              "share": 0.6
-            },
-            {
-              "product": "GV",
-              "share": 0.2
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "KM2.1",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM2.2",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 5
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 5
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM2.3",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 8
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 4
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                }
-              ]
-            }
-          ]
+        "RV": {
+          "forward": "RV_AB",
+          "reverse": "RV_BA"
         },
-        {
-          "id": "KM3",
-          "distribution": [
-            {
-              "product": "FV",
-              "share": 0.3
-            },
-            {
-              "product": "RV",
-              "share": 0.5
-            },
-            {
-              "product": "GV",
-              "share": 0.2
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "KM3.1",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM3.2",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 3
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "KM3.3",
-              "trainVolumes": [
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 6
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 4
-                },
-                {
-                  "product": "FV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                }
-              ]
-            }
-          ]
+        "GV": {
+          "forward": "GV_AB",
+          "reverse": "GV_BA"
         }
+      }
+    },
+    "A_C": {
+      "description": "Nebenast (Branch)",
+      "routes": {
+        "FV": {
+          "forward": "FV_AC",
+          "reverse": "FV_CA"
+        },
+        "RV": {
+          "forward": "RV_AC",
+          "reverse": "RV_CA"
+        },
+        "GV": {
+          "forward": "GV_AC",
+          "reverse": "GV_CA"
+        }
+      }
+    }
+  },
+  "patterns": {
+    "BALANCED": {
+      "description": "Produkte gleichmässig auf Haupt- und Nebenast verteilt",
+      "shares": {
+        "FV": {
+          "A_B": 0.5,
+          "A_C": 0.5
+        },
+        "RV": {
+          "A_B": 0.5,
+          "A_C": 0.5
+        },
+        "GV": {
+          "A_B": 0.5,
+          "A_C": 0.5
+        }
+      }
+    },
+    "TRUNK": {
+      "description": "Fokus auf Hauptast; der Nebenast (A–C) wird ausschließlich von einem begrenzten RV-Anteil genutzt",
+      "shares": {
+        "FV": {
+          "A_B": 1.0
+        },
+        "RV": {
+          "A_B": 0.8,
+          "A_C": 0.2
+        },
+        "GV": {
+          "A_B": 1.0
+        }
+      }
+    }
+  },
+  "mixes": {
+    "R": {
+      "description": "Restnetz-Mischverkehr (Ref: Lugano)",
+      "shares": {
+        "FV": 0.5,
+        "GV": 0.5
+      }
+    },
+    "M": {
+      "description": "Metrobetrieb isoliert (Ref: S-Bahn Zürich)",
+      "shares": {
+        "RV": 1.0
+      }
+    }
+  },
+  "modes": [
+    {
+      "mix": "R",
+      "patterns": [
+        "BALANCED",
+        "TRUNK"
       ]
     },
     {
-      "name": "R",
-      "description": "Restnetz",
-      "products": [
-        "RV",
-        "GV"
-      ],
-      "variants": [
-        {
-          "id": "R1",
-          "distribution": [
-            {
-              "product": "RV",
-              "share": 0.8
-            },
-            {
-              "product": "GV",
-              "share": 0.2
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "R1.1",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "R1.2",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 7
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 6
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "R1.3",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 10
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                }
-              ]
-            }
-          ]
-        },
-        {
-          "id": "R2",
-          "distribution": [
-            {
-              "product": "RV",
-              "share": 0.9
-            },
-            {
-              "product": "GV",
-              "share": 0.1
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "R2.1",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 4
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 3
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                }
-              ]
-            },
-            {
-              "id": "R2.2",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 7
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 1
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 7
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 1
-                }
-              ]
-            },
-            {
-              "id": "R2.3",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 12
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 2
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                },
-                {
-                  "product": "GV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 0
-                }
-              ]
-            }
-          ]
-        }
-      ]
-    },
-    {
-      "name": "M",
-      "description": "Metrobetrieb",
-      "products": [
-        "RV"
-      ],
-      "variants": [
-        {
-          "id": "M1",
-          "distribution": [
-            {
-              "product": "RV",
-              "share": 1.0
-            }
-          ],
-          "subVariants": [
-            {
-              "id": "M1.1",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 4
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 4
-                }
-              ]
-            },
-            {
-              "id": "M1.2",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 8
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 8
-                }
-              ]
-            },
-            {
-              "id": "M1.3",
-              "trainVolumes": [
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "B",
-                  "amount": 14
-                },
-                {
-                  "product": "RV",
-                  "fromStop": "A",
-                  "toStop": "C",
-                  "amount": 2
-                }
-              ]
-            }
-          ]
-        }
+      "mix": "M",
+      "patterns": [
+        "BALANCED",
+        "TRUNK"
       ]
     }
   ]

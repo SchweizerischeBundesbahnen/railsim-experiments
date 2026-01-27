@@ -30,7 +30,7 @@ public class RunSummaryWriter {
     private final List<RailsimSimulationResult> results;
 
     // calculate the sum of arrival delays for only the final stop of each train run
-    private static double sumDestinationDelays(TrainDelayAnalysis.DelayReport report) {
+    private static double sumDestinationDelays(TrainDelayAnalysis.DelayReport report, int from, int to) {
         // group all stop events by their vehicle ID to trace individual train runs
         Map<Object, List<TrainDelayAnalysis.DetailedStopInfo>> trainRuns = report.getDetailedData()
                 .stream()
@@ -39,6 +39,10 @@ public class RunSummaryWriter {
         // for each train run, find the last stop and sum its arrival delay
         return trainRuns.values()
                 .stream()
+                .filter(journey -> journey.stream()
+                        .min(Comparator.comparingInt(TrainDelayAnalysis.DetailedStopInfo::stopSequence))
+                        .map(firstStop -> firstStop.plannedDeparture() >= from && firstStop.plannedDeparture() <= to)
+                        .orElse(false))
                 .mapToDouble(journey -> journey.stream()
                         .max(Comparator.comparingInt(TrainDelayAnalysis.DetailedStopInfo::stopSequence))
                         .map(TrainDelayAnalysis.DetailedStopInfo::arrivalDelay)
@@ -63,22 +67,22 @@ public class RunSummaryWriter {
                 .filter(result -> result.getStatus() == RailsimSimulationResult.Status.SUCCESS)
                 // unpack all required reports into the new sortable record
                 .map(result -> {
-                    Optional<TrainDelayAnalysis.DelayReport> delayOpt = result.getPostProcessingResult(
-                            TrainDelayAnalysis.DelayReport.class);
-                    Optional<MinimumHeadwayAnalysis.HeadwayReport> headwayOpt = result.getPostProcessingResult(
-                            MinimumHeadwayAnalysis.HeadwayReport.class);
+                    Optional<TrainDelayAnalysis.DelayReport> delayOpt =
+                            result.getPostProcessingResult(TrainDelayAnalysis.DelayReport.class);
+                    Optional<MinimumHeadwayAnalysis.HeadwayReport> headwayOpt =
+                            result.getPostProcessingResult(MinimumHeadwayAnalysis.HeadwayReport.class);
                     return new ReportableResult(result, delayOpt.orElse(null), headwayOpt.orElse(null));
                 })
                 // filter out any results where essential reports might be missing
                 .filter(res -> res.delayReport() != null)
                 // multi-level comparator for sorting
                 .sorted(Comparator
-                        // 1. sub-variant ID (alphabetical)
-                        .comparing((ReportableResult res) -> res.result().getJob().getSubVariant().getId())
+                        // 1. operating mode (alphabetical)
+                        .comparing((ReportableResult res) -> res.result().getJob().getOperatingMode().getId())
                         // 2. the number of stuck trains (ascending)
                         .thenComparingInt(res -> res.delayReport().getTrainsStuck())
                         // 3. total destination delay (ascending)
-                        .thenComparingDouble(res -> sumDestinationDelays(res.delayReport()))
+                        .thenComparingDouble(res -> sumDestinationDelays(res.delayReport(), 3600, 7200))
                         .thenComparingDouble(res -> sumTailToHeadViolations(res.headwayReport()))
                         .thenComparingDouble(res -> sumHeadToHeadViolations(res.headwayReport()))).toList();
 
@@ -105,11 +109,15 @@ public class RunSummaryWriter {
     @RequiredArgsConstructor
     private enum Column {
         RUN_ID("run_id", res -> res.result().getJob().getRunId()),
-        VARIANT("variant_id", res -> res.result().getJob().getVariant().getId()),
-        SUBVARIANT("subvariant_id", res -> res.result().getJob().getSubVariant().getId()),
-        SAMPLE("sample", res -> String.valueOf(res.result().getJob().getSample())),
+        OPERATING_MODE_ID("operating_mode", res -> res.result().getJob().getOperatingMode().getId()),
+        PRODUCT_MIX("product_mix", res -> res.result().getJob().getOperatingMode().getProductMix().getId()),
+        FLOW_PATTERN("flow_pattern", res -> res.result().getJob().getOperatingMode().getFlowPattern().getId()),
+        VOLUME("train_volume", res -> String.valueOf(res.result().getJob().getTrainVolume())),
+        SAMPLE("sample_index", res -> String.valueOf(res.result().getJob().getSampleIndex())),
         TOTAL_DELAY_AT_DESTINATION("total_delay_at_destination",
-                res -> String.format("%.2f", sumDestinationDelays(res.delayReport()))),
+                res -> String.format("%.2f", sumDestinationDelays(res.delayReport(), 0, Integer.MAX_VALUE))),
+        MID_HOUR_DELAY_AT_DESTINATION("mid_hour_delay_at_destination",
+                res -> String.format("%.2f", sumDestinationDelays(res.delayReport(), 3600, 7200))),
 
         TOTAL_HEADWAY_VIOLATION_TAIL_TO_HEAD("total_headway_violation_tail_to_head",
                 res -> String.format("%.2f", sumTailToHeadViolations(res.headwayReport()))),

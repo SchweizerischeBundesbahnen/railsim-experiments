@@ -13,7 +13,7 @@ import org.matsim.api.core.v01.events.handler.TransitDriverStartsEventHandler;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.core.events.handler.BasicEventHandler;
 import org.matsim.project.scenario.plan.OperationalPlan;
-import org.matsim.project.scenario.plan.ProductType;
+import org.matsim.project.scenario.plan.Product;
 import org.matsim.pt.transitSchedule.api.Departure;
 import org.matsim.pt.transitSchedule.api.TransitRoute;
 import org.matsim.vehicles.Vehicle;
@@ -30,16 +30,12 @@ public class MinimumHeadwayEventHandler implements LinkEnterEventHandler, Transi
     private final Set<Id<Link>> entryLinks;
     private final Map<Id<Vehicle>, CurrentVehicleInfo> currentVehicles = new HashMap<>();
     private final Vehicles vehicles;
-
     @Getter
     private final List<HeadwayInfo> headwayEvents = new ArrayList<>();
-
-    private final OperationalPlan operationalPlan;
-    private final Map<Id<VehicleType>, ProductType> vehicleTypeToProductMap;
+    private final Map<Id<VehicleType>, Product> vehicleTypeToProductMap;
 
     public MinimumHeadwayEventHandler(Scenario scenario, OperationalPlan operationalPlan) {
         this.vehicles = scenario.getTransitVehicles();
-        this.operationalPlan = operationalPlan;
         this.entryLinks = scenario.getNetwork()
                 .getLinks()
                 .values()
@@ -50,8 +46,8 @@ public class MinimumHeadwayEventHandler implements LinkEnterEventHandler, Transi
                 .collect(Collectors.toSet());
 
         this.vehicleTypeToProductMap = new HashMap<>();
-        for (ProductType pt : ProductType.values()) {
-            this.vehicleTypeToProductMap.put(Id.create(pt.name(), VehicleType.class), pt);
+        for (Product products : operationalPlan.getProducts().values()) {
+            this.vehicleTypeToProductMap.put(Id.create(products.getId(), VehicleType.class), products);
         }
     }
 
@@ -104,9 +100,9 @@ public class MinimumHeadwayEventHandler implements LinkEnterEventHandler, Transi
         }
 
         double minHeadway = Double.NaN;
-        ProductType previousProductType = vehicleTypeToProductMap.get(previousVehicle.vehicleTypeId());
-        if (previousProductType != null) {
-            minHeadway = operationalPlan.getMinimumHeadway().getOrDefault(previousProductType, 0);
+        Product previousProduct = vehicleTypeToProductMap.get(previousVehicle.vehicleTypeId());
+        if (previousProduct != null) {
+            minHeadway = previousProduct.getMinHeadway();
         }
 
         double headwayHeadToHead = event.getTime() - previousVehicle.enterTime();

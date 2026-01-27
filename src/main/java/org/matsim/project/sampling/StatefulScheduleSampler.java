@@ -5,8 +5,8 @@ import lombok.extern.log4j.Log4j2;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.project.sampling.strategy.DepartureSamplingStrategy;
-import org.matsim.project.scenario.plan.SubVariant;
-import org.matsim.project.scenario.plan.TrainVolume;
+import org.matsim.project.scenario.plan.OperatingMode;
+import org.matsim.project.scenario.plan.Product;
 import org.matsim.pt.transitSchedule.api.*;
 import org.matsim.vehicles.*;
 
@@ -18,49 +18,30 @@ public class StatefulScheduleSampler {
 
     private final Random random;
     private final Scenario scenario;
-    private final SubVariant subVariant;
+    private final OperatingMode operatingMode;
     private final int samplingPeriod;
+    private final int trainsPerPeriod;
     private final int simulationTime;
+    private final boolean isBidirectional;
 
     private final Map<Id<TransitRoute>, Id<VehicleType>> routeVehicleType = new HashMap<>();
 
-    public StatefulScheduleSampler(long seed, Scenario scenario, SubVariant subVariant, int samplingPeriod,
-                                   int simulationTime) {
+    public StatefulScheduleSampler(long seed, Scenario scenario, OperatingMode operatingMode, int samplingPeriod,
+                                   int trainsPerPeriod, int simulationTime, boolean isBidirectional) {
         this.random = new Random(seed);
         this.scenario = scenario;
-        this.subVariant = subVariant;
+        this.operatingMode = operatingMode;
         this.samplingPeriod = samplingPeriod;
+        this.trainsPerPeriod = trainsPerPeriod;
         this.simulationTime = simulationTime;
+        this.isBidirectional = isBidirectional;
 
-        // assign unique vehicle type to route
-        for (TransitLine transitLine : scenario.getTransitSchedule().getTransitLines().values()) {
-            for (TransitRoute transitRoute : transitLine.getRoutes().values()) {
-                // set of all vehicle types of all departures
-                Set<Id<VehicleType>> vehicleTypeIds = new HashSet<>();
-                transitRoute.getDepartures()
-                        .values()
-                        .forEach(departure -> vehicleTypeIds.add(scenario.getTransitVehicles()
-                                .getVehicles()
-                                .get(departure.getVehicleId())
-                                .getType()
-                                .getId()));
-
-                if (vehicleTypeIds.size() != 1) {
-                    throw new IllegalStateException(
-                            String.format("Route %s has not unique or no vehicle types %s on departures ",
-                                    transitRoute.getId().toString(), vehicleTypeIds));
-                }
-
-                routeVehicleType.put(transitRoute.getId(), vehicleTypeIds.iterator().next());
-            }
-        }
+        // initialize route-to-vehicle-type mapping from template
+        cacheRouteVehicleTypes();
     }
 
     /**
      * Generates a new transit schedule with sampled departures.
-     *
-     * @param samplingStrategy The strategy to use for generating departure times (e.g., random, even interval).
-     * @return A new, completely separate {@link TransitSchedule} instance.
      */
     public Sample sample(DepartureSamplingStrategy samplingStrategy) {
         final TransitSchedule templateSchedule = this.scenario.getTransitSchedule();
@@ -69,20 +50,42 @@ public class StatefulScheduleSampler {
         TransitSchedule newSchedule = scenario.getTransitSchedule().getFactory().createTransitSchedule();
         templateSchedule.getFacilities().values().forEach(newSchedule::addStopFacility);
 
-        // no need to deep copy since transit vehicles types stay the same
+        // no need to deep copy, since transit vehicles types stay the same
         Vehicles newVehicles = VehicleUtils.createVehiclesContainer();
         this.scenario.getTransitVehicles().getVehicleTypes().values().forEach(newVehicles::addVehicleType);
 
-        for (TrainVolume trainVolume : subVariant.getTrainVolumes()) {
-            Match match = findMatchingRoute(trainVolume);
-            addTransitRoute(newSchedule, newVehicles, match, samplingStrategy);
+        // distribute total volume across products and flows
+        TrainVolumeDiscretizer distributor = new TrainVolumeDiscretizer(this.random);
+        List<TrainVolumeDiscretizer.TrainVolume> distributedVolumes =
+                distributor.discretize(this.trainsPerPeriod, this.operatingMode);
+
+        // convert distributed volumes into actual transit routes
+        for (TrainVolumeDiscretizer.TrainVolume volume : distributedVolumes) {
+
+            // forward direction
+            Match forwardMatch = findMatchingRoute(volume.product(), volume.routeMapping().getForwardRouteId());
+            addTransitRoute(newSchedule, newVehicles, forwardMatch, samplingStrategy, volume.amount(), "fwd");
+
+            // reverse direction if plan is bidirectional
+            if (isBidirectional) {
+                String reverseId = volume.routeMapping().getReverseRouteId();
+
+                if (reverseId == null || reverseId.isBlank()) {
+                    throw new IllegalStateException(
+                            "Bidirectional mode enabled but no reverse route defined for product " + volume.product()
+                                    .getId());
+                }
+
+                Match reverseMatch = findMatchingRoute(volume.product(), reverseId);
+                addTransitRoute(newSchedule, newVehicles, reverseMatch, samplingStrategy, volume.amount(), "rev");
+            }
         }
 
         return new Sample(newSchedule, newVehicles);
     }
 
     private void addTransitRoute(TransitSchedule schedule, Vehicles vehicles, Match match,
-                                 DepartureSamplingStrategy samplingStrategy) {
+                                 DepartureSamplingStrategy samplingStrategy, int amount, String directionSuffix) {
 
         TransitScheduleFactory sf = schedule.getFactory();
         VehiclesFactory vf = vehicles.getFactory();
@@ -94,71 +97,82 @@ public class StatefulScheduleSampler {
             schedule.addTransitLine(newLine);
         }
 
+        // create route (fwd/rev) and sample departures
+        Id<TransitRoute> scopedRouteId =
+                Id.create(match.transitRoute.getId().toString() + "_" + directionSuffix, TransitRoute.class);
+
         // ensure a route is never added twice
         if (newLine.getRoutes().containsKey(match.transitRoute.getId())) {
             throw new RuntimeException("Duplicate route id " + match.transitRoute.getId());
         }
 
-        // create route and sample departures
-        TransitRoute newRoute = sf.createTransitRoute(match.transitRoute.getId(), match.transitRoute.getRoute(),
-                match.transitRoute.getStops(), match.transitRoute.getTransportMode());
+        TransitRoute newRoute =
+                sf.createTransitRoute(scopedRouteId, match.transitRoute.getRoute(), match.transitRoute.getStops(),
+                        match.transitRoute.getTransportMode());
 
-        // sample departure times and add departures
-        List<Double> departureTimes = samplingStrategy.sampleDepartures(match.trainVolume.getAmount(),
-                this.samplingPeriod, this.simulationTime, random);
-        int i = 1;
-        for (double departureTime : departureTimes) {
-            Id<Vehicle> vehicleId = Id.create("train_" + match.vehicleType.getId() + "_" + i, Vehicle.class);
+        // Sample departure times
+        List<Double> departureTimes =
+                samplingStrategy.sampleDepartures(amount, this.samplingPeriod, this.simulationTime, random);
+
+        for (int i = 0; i < departureTimes.size(); i++) {
+            double time = departureTimes.get(i);
+
+            // Create unique vehicle
+            Id<Vehicle> vehicleId = Id.create("veh_" + scopedRouteId + "_" + i, Vehicle.class);
             Vehicle vehicle = vf.createVehicle(vehicleId, match.vehicleType);
             vehicles.addVehicle(vehicle);
 
-            Id<Departure> departureId = Id.create(match.transitRoute.getId() + "_dep_" + i, Departure.class);
-            Departure departure = sf.createDeparture(departureId, departureTime);
+            // Create departure
+            Id<Departure> depId = Id.create("dep_" + scopedRouteId + "_" + i, Departure.class);
+            Departure departure = sf.createDeparture(depId, time);
             departure.setVehicleId(vehicleId);
-
             newRoute.addDeparture(departure);
-            i++;
         }
 
         newLine.addRoute(newRoute);
     }
 
-    /**
-     * Finds a transit route in the template schedule that matches the product type and route ID.
-     */
-    private Match findMatchingRoute(TrainVolume trainVolume) {
-        Id<TransitLine> lineId = Id.create(trainVolume.getProduct().name(), TransitLine.class);
-        TransitLine transitLine = scenario.getTransitSchedule().getTransitLines().get(lineId);
+    private Match findMatchingRoute(Product product, String routeIdStr) {
+        Id<TransitLine> lineId = Id.create(product.getId(), TransitLine.class);
+        TransitLine line = scenario.getTransitSchedule().getTransitLines().get(lineId);
 
-        if (transitLine == null) {
-            throw new IllegalStateException(String.format(
-                    "Configuration error in sub-variant '%s': No matching transit line found for product '%s' defined in train volume: %s",
-                    subVariant.getId(), trainVolume.getProduct(), trainVolume));
+        if (line == null) {
+            throw new IllegalStateException("Template schedule missing TransitLine: " + lineId);
         }
 
-        Id<TransitRoute> routeId = Id.create(trainVolume.getRoute(), TransitRoute.class);
-        TransitRoute transitRoute = transitLine.getRoutes().get(routeId);
+        Id<TransitRoute> routeId = Id.create(routeIdStr, TransitRoute.class);
+        TransitRoute route = line.getRoutes().get(routeId);
 
-        if (transitRoute == null) {
-            throw new IllegalStateException(String.format(
-                    "Configuration error in sub-variant '%s': No matching transit route '%s' found in transit line '%s' for train volume: %s",
-                    subVariant.getId(), trainVolume.getRoute(), lineId, trainVolume));
+        if (route == null) {
+            throw new IllegalStateException(String.format("Template line '%s' missing route '%s'", lineId, routeId));
         }
 
-        Id<VehicleType> vehicleTypeId = routeVehicleType.get(transitRoute.getId());
-        log.debug("Found match for sub-variant {}: TrainVolume({} -> {}) uses route {} with vehicle type {}",
-                subVariant.getId(), trainVolume.getProduct(), trainVolume.getRoute(), transitRoute.getId(),
-                vehicleTypeId);
+        Id<VehicleType> vtId = routeVehicleType.get(route.getId());
+        VehicleType vType = scenario.getTransitVehicles().getVehicleTypes().get(vtId);
 
-        VehicleType vehicleType = scenario.getTransitVehicles().getVehicleTypes().get(vehicleTypeId);
-        return new Match(transitLine, transitRoute, vehicleType, trainVolume);
+        return new Match(line, route, vType);
     }
 
-    private record Match(TransitLine transitLine, TransitRoute transitRoute, VehicleType vehicleType,
-                         TrainVolume trainVolume) {
+    private void cacheRouteVehicleTypes() {
+        for (TransitLine line : scenario.getTransitSchedule().getTransitLines().values()) {
+            for (TransitRoute route : line.getRoutes().values()) {
+                Set<Id<VehicleType>> vTypes = new HashSet<>();
+                route.getDepartures().values().forEach(dep -> {
+                    Vehicle v = scenario.getTransitVehicles().getVehicles().get(dep.getVehicleId());
+                    vTypes.add(v.getType().getId());
+                });
+
+                if (vTypes.size() != 1) {
+                    throw new IllegalStateException("Route " + route.getId() + " must have exactly one vehicle type.");
+                }
+                routeVehicleType.put(route.getId(), vTypes.iterator().next());
+            }
+        }
+    }
+
+    private record Match(TransitLine transitLine, TransitRoute transitRoute, VehicleType vehicleType) {
     }
 
     public record Sample(TransitSchedule schedule, Vehicles vehicles) {
     }
-
 }

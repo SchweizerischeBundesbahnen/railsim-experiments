@@ -64,8 +64,8 @@ public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis
 
         // event analysis
         log.debug("Processing events for run {}.", config.controller().getRunId());
-        TrainDelayEventHandler handler = new TrainDelayEventHandler(scenario.getTransitSchedule(),
-                scenario.getTransitVehicles());
+        TrainDelayEventHandler handler =
+                new TrainDelayEventHandler(scenario.getTransitSchedule(), scenario.getTransitVehicles());
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(handler);
         new MatsimEventsReader(eventsManager).readFile(eventsFile.toString());
@@ -74,8 +74,7 @@ public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis
         // write analysis results to file
         DelayReport report = new DelayReport(handler.getStopEvents(), handler.getDepartedTrains().size(),
                 handler.getArrivedTrains().size());
-        Path trainDelayOutputPath = this.analysisOutputPath.resolve(job.getSubVariant().getId().toLowerCase())
-                .resolve(job.getRunId());
+        Path trainDelayOutputPath = job.getOutputMirrorPath(analysisOutputPath);
         Files.createDirectories(trainDelayOutputPath);
         new TrainDelayWriter(job, report).write(trainDelayOutputPath);
 

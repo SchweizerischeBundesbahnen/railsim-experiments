@@ -1,19 +1,18 @@
 package org.matsim.project.scenario.plan;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-import lombok.Data;
+import lombok.Builder;
+import lombok.Value;
 
 import java.util.List;
 import java.util.Map;
 
-@Data
+@Value
+@Builder
 public class OperationalPlan {
-    @JsonProperty("trainVolumePeriod")
-    private int trainVolumePeriod;
-
-    @JsonProperty("minimumHeadway")
-    private Map<ProductType, Integer> minimumHeadway;
-
-    @JsonProperty("operationModes")
-    private List<OperationMode> operationModes;
+    TrainVolumes trainVolumes;
+    Map<String, Product> products;
+    Map<String, TrafficFlow> trafficFlows;
+    Map<String, FlowPattern> flowPatterns;
+    Map<String, ProductMix> productMixes;
+    List<OperatingMode> operatingModes;
 }

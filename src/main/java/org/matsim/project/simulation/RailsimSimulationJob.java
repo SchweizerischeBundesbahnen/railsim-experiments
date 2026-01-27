@@ -10,8 +10,7 @@ import org.matsim.core.controler.Controller;
 import org.matsim.core.controler.ControllerUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.project.scenario.BuildingBlock;
-import org.matsim.project.scenario.plan.SubVariant;
-import org.matsim.project.scenario.plan.Variant;
+import org.matsim.project.scenario.plan.OperatingMode;
 import org.matsim.project.utils.RailsimConfigHelper;
 
 import java.nio.file.Path;
@@ -23,22 +22,22 @@ import java.nio.file.Path;
 public class RailsimSimulationJob implements Runnable {
 
     private final Path configFilePath;
-    private final Variant variant;
+    private final OperatingMode operatingMode;
     private final BuildingBlock buildingBlock;
-    private final SubVariant subVariant;
-    private final int sample;
+    private final int trainVolume;
+    private final int sampleIndex;
 
     private final String runId;
     private final Path outputDirectory;
     private final Config config;
 
-    public RailsimSimulationJob(Path configFilePath, BuildingBlock buildingBlock, Variant variant,
-                                SubVariant subVariant, int sample) {
+    public RailsimSimulationJob(Path configFilePath, BuildingBlock buildingBlock, OperatingMode operatingMode,
+                                int trainVolume, int sampleIndex) {
         this.configFilePath = configFilePath;
         this.buildingBlock = buildingBlock;
-        this.variant = variant;
-        this.subVariant = subVariant;
-        this.sample = sample;
+        this.operatingMode = operatingMode;
+        this.trainVolume = trainVolume;
+        this.sampleIndex = sampleIndex;
 
         this.config = ConfigUtils.loadConfig(configFilePath.toString());
         this.runId = config.controller().getRunId();
@@ -53,5 +52,31 @@ public class RailsimSimulationJob implements Runnable {
         controller.configureQSimComponents(c -> new RailsimQSimModule().configure(c));
         controller.run();
         RailsimConfigHelper.writeStaticOutputFiles(controller);
+    }
+
+    public Path getOutputMirrorPath(Path path) {
+        Path suffix = getOutputSuffixRelativeTo(path);
+        return path.toAbsolutePath().normalize().resolve(suffix).normalize();
+    }
+
+    /**
+     * Returns the suffix of this job's output directory after the last common ancestor with the given base.
+     * The returned Path is relative (no root) and can be resolved against any target directory.
+     */
+    private Path getOutputSuffixRelativeTo(Path base) {
+        Path baseAbs = base.toAbsolutePath().normalize();
+        Path outAbs = this.outputDirectory.toAbsolutePath().normalize();
+
+        int baseCount = baseAbs.getNameCount();
+        int outCount = outAbs.getNameCount();
+
+        // find common prefix length
+        int common = 0;
+        int max = Math.min(baseCount, outCount);
+        while (common < max && baseAbs.getName(common).equals(outAbs.getName(common))) {
+            common++;
+        }
+
+        return outAbs.subpath(common + 1, outCount);
     }
 }

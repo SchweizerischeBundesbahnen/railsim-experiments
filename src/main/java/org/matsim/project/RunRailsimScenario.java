@@ -34,7 +34,7 @@ public class RunRailsimScenario implements Callable<Integer> {
     @CommandLine.Option(names = {"--overwrite"}, description = "Overwrite output directory if it exists", defaultValue = "false")
     private boolean overwriteOutput;
 
-    public static void main(String[] args) {
+    static void main(String[] args) {
         int exitCode = new CommandLine(new RunRailsimScenario()).execute(args);
         System.exit(exitCode);
     }

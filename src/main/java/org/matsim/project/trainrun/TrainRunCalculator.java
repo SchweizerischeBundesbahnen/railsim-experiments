@@ -266,7 +266,8 @@ public final class TrainRunCalculator {
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(eventHandler);
         new MatsimEventsReader(eventsManager).readFile(eventsFile.toString());
-        Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes = eventHandler.getArrivalTimesPerDeparture();
+        Map<Id<Departure>, Map<Id<TransitStopFacility>, Double>> arrivalTimes =
+                eventHandler.getArrivalTimesPerDeparture();
 
         // Update schedule in-place
         log.info("Updating transit schedule with calculated travel times...");
