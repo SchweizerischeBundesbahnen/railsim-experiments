@@ -2,6 +2,62 @@
 
 # --- 1. Reader Functions ---
 
+create_temp_copy <- function(tmp, target) {
+  # stopifnot(file.exists(target))
+  
+  # Thread-sicherer Temp-Ordner
+  tmp_dir <- file.path(
+    normalizePath(tmp, winslash = "\\", mustWork = FALSE),
+    paste0("tmp_", Sys.getpid(), "_", as.integer(Sys.time()))
+  )
+  dir.create(tmp_dir, recursive = TRUE, showWarnings = FALSE)
+  
+  # Datei und Ordner für robocopy vorbereiten
+  target_dir  <- dirname(target)
+  file_name   <- basename(target)
+  
+  # robocopy Parameter:
+  # /NFL /NDL = keine Logs, /NJH /NJS = keine Header/Statistik
+  # /COPY:DAT = Daten, Attribute, Zeit
+  # /IS /IT = sicherstellen dass Dateien auch bei Identität kopiert werden
+  tmp_dir_win <- gsub("/", "\\\\", tmp_dir)
+  target_dir_win <- gsub("/", "\\\\", target_dir)
+  
+  cmd <- sprintf(
+    'robocopy "%s" "%s" "%s" /NFL /NDL /NJH /NJS /COPY:DAT /IS /IT',
+    target_dir_win,
+    tmp_dir_win,
+    file_name
+  )
+  
+  rc <- shell(cmd, intern = TRUE, wait = TRUE)
+  
+  # Prüfen, ob kopiert wurde
+  local_file <- file.path(tmp_dir, file_name)
+  if (!file.exists(local_file)) stop("Temp copy failed: ", target)
+  
+  local_file
+}
+
+
+remove_temp_copy <- function(temp_file) {
+  temp_dir <- dirname(temp_file)
+  
+  if (dir.exists(temp_dir)) {
+    unlink(temp_dir, recursive = TRUE)
+  }
+  
+  invisible(!dir.exists(temp_dir))
+}
+# tmp_file <- create_temp_copy(
+#   tmp    = "C:/temp",
+#   target = "//server/share/very/long/path/to/data/file.csv"
+# )
+# dt <- data.table::fread(tmp_file)
+# remove_temp_copy(tmp_file)
+
+
+
 read_trainState_file <- function(trainStatesFile){
   if (!file.exists(trainStatesFile)) stop("Train states file not found at: ", trainStatesFile)
   message("Reading train states from: ", trainStatesFile)
@@ -127,8 +183,14 @@ save_interactive_widget <- function(widget, target_file) {
 weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A13783/04_projects/42_gzb_railsim/output_20251030_ik/", 
                              usecase       = "uc_1", 
                              buildingBlock = "uc1_bb2", 
-                             subvariant    = "km1.1", 
-                             sample        = "1"){
+                             operating_mode = "KM_FV_PASS",
+                             volume = "12",
+                             #subvariant    = "km1.1", 
+                             sample        = "1", 
+                             line_colors = NULL #a named Vector like c("FV_AB" = "red", "FV_BC" = "#1b9e77")
+                             ){
+  
+  operating_mode <- tolower(operating_mode)
   
   # Remove any trailing slash or backslash at the end of baseDirectory
   baseDirectory <- sub("[/\\\\]+$", "", baseDirectory)
@@ -138,19 +200,21 @@ weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A1
                                  usecase, 
                                  buildingBlock, 
                                  "04_simulation_run_output", 
-                                 subvariant, 
-                                 paste0(buildingBlock, "_", subvariant, "_sample_", sample)
+                                 operating_mode,
+                                 paste0("volume_", volume),
+                                 #subvariant, 
+                                 paste0(buildingBlock, "_", operating_mode, "_volume_", volume, "_sample_", sample)
   )
   
   # Full path to the train states CSV file
   trainStatesFile <- file.path(simulationRunPath,
                                "ITERS",
                                "it.0",
-                               paste0(buildingBlock, "_", subvariant, "_sample_", sample, ".0.railsimTrainStates.csv.gz")
+                               paste0(buildingBlock, "_", operating_mode, "_volume_", volume, "_sample_", sample, ".0.railsimTrainStates.csv.gz")
   )
   # Full path to the transit schedule XML file
   transitScheduleFile <- file.path(simulationRunPath,
-                                   paste0(buildingBlock, "_", subvariant, "_sample_", sample, ".output_transitSchedule.xml.gz")
+                                   paste0(buildingBlock, "_", operating_mode, "_volume_", volume, "_sample_", sample, ".output_transitSchedule.xml.gz")
   )
   
   
@@ -158,8 +222,22 @@ weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A1
   # --- 2. Load and Process Simulation Data ---
   
   
-  train_data <- read_trainState_file(trainStatesFile)
-  schedule_xml <- read_transitSchedule_file(transitScheduleFile)
+  maxlen <- 240
+  if (nchar(trainStatesFile) > maxlen || nchar(transitScheduleFile) > maxlen){
+    tmp_trainStatesFile <- create_temp_copy(tmp = "C:/temp", target = trainStatesFile)
+    tmp_transitScheduleFile <- create_temp_copy(tmp = "C:/temp", target = transitScheduleFile)
+    train_data <- read_trainState_file(tmp_trainStatesFile)
+    schedule_xml <- read_transitSchedule_file(tmp_transitScheduleFile)
+    remove_temp_copy(tmp_trainStatesFile)
+    remove_temp_copy(tmp_transitScheduleFile)
+    
+  } else {
+    train_data <- read_trainState_file(trainStatesFile)
+    schedule_xml <- read_transitSchedule_file(transitScheduleFile)
+  }
+  
+  
+  
   
   
   # --- 4. Parse Schedule for Stops and Theoretical Paths ---
@@ -194,10 +272,20 @@ weg_zeit_diagram <- function(baseDirectory = "//filer22l/K-UE220L/IFI/FTO/SAM.A1
     ) +
     
     # Theoretical (scheduled) train paths
-    geom_line(data = theoretical_schedule, aes(x = headX, y = time, group = vehicle, color = train_type), linetype = "dashed", linewidth = 0.7) +
+    geom_line(data = theoretical_schedule |> 
+                mutate(train_line = sub("^[^_]*_(.*)_[^_]*$", "\\1", train_type)),
+              aes(x = headX, y = time, group = vehicle, color = train_line), linetype = "dashed", linewidth = 0.7) +
     
     # Actual (simulated) train paths
-    geom_line(data = train_data, aes(x = headX, y = time, group = vehicle, color = train_type), linetype = "solid", linewidth = 0.8) +
+    geom_line(data = train_data |> 
+                mutate(train_line = sub("^[^_]*_(.*)_[^_]*$", "\\1", train_type)),
+              aes(x = headX, y = time, group = vehicle, color = train_line), linetype = "solid", linewidth = 0.8) +
+    
+    (if(is.null(line_colors)){
+      scale_color_brewer(palette = "Set2")
+    } else {
+      scale_color_manual(values = line_colors)
+    }) +
     
     # Simplify the x-axis scale
     scale_x_continuous(name = "Position (meters)") +
