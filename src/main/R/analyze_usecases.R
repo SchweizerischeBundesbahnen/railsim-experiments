@@ -13,6 +13,7 @@ library(tidyverse)
 library(ggplot2)
 library(xml2)
 library(lubridate)
+library(scales)
 
 # Load uitls
 utilsDir <- rstudioapi::getSourceEditorContext()$path |> dirname()
@@ -22,11 +23,12 @@ source(file.path(utilsDir, "weg_zeit_diagramme_utils.R"))
 
 filer <- '//filer22l/K-UE220L/IFI/FTO/SAM.A13783/'
 
-run_id <- "output_20251030_ik"
-run_id <- "output_20251031_uc1_n100_th" 
-run_id <- "output_20251102_uc1_n100_mu"
-run_id <- "output_20251117_it2_n100"
-run_id <- "output_20260127_it3_n5"
+# run_id <- "output_20251030_ik"
+# run_id <- "output_20251031_uc1_n100_th" 
+# run_id <- "output_20251102_uc1_n100_mu"
+# run_id <- "output_20251117_it2_n100"
+# run_id <- "output_20260127_it3_n5"
+run_id <- "output_20260126_it3_n100"
 
 baseDirectory <- paste0(filer, "04_projects/42_gzb_railsim/", run_id, "/")
 
@@ -125,23 +127,23 @@ line_specs <- tibble(
   linewidth = rep(1, length(schedules))
 )
 
-# line specs for UC1 
-line_specs <- tibble(
-  om = str_to_upper(c("KM_FV_PASS", "KM_FV_STOP", "M_STANDARD", "R_FV_STOP")),
-  color = c(           "darkgreen", "green",      "darkgray",   "blue"),
-  linetype = rep("solid", length(operating_modes)),
-  linewidth = rep(1, length(operating_modes))
-)
-
-
-# line specs for UC2 
-line_specs <- tibble(
-  om = str_to_upper(c("M_BALANCED", "M_TRUNK", "R_BALANCED", "R_TRUNK")),
-  color = c(           "gray30", "gray66",      "blue",     "lightblue"),
-  linetype = rep("solid", length(operating_modes)),
-  linewidth = rep(1, length(operating_modes))
-)
-
+if(usecase == "uc_1"){
+  # line specs for UC1 
+  line_specs <- tibble(
+    om = str_to_upper(c("KM_FV_PASS", "KM_FV_STOP", "M_STANDARD", "R_FV_STOP")),
+    color = c(           "darkgreen", "green",      "darkgray",   "blue"),
+    linetype = rep("solid", length(operating_modes)),
+    linewidth = rep(1, length(operating_modes))
+  )
+} else if(usecase == "uc_2") {
+  # line specs for UC2 
+  line_specs <- tibble(
+    om = str_to_upper(c("M_BALANCED", "M_TRUNK", "R_BALANCED", "R_TRUNK")),
+    color = c(           "gray30", "gray66",      "blue",     "lightblue"),
+    linetype = rep("solid", length(operating_modes)),
+    linewidth = rep(1, length(operating_modes))
+  )
+}
 
 sample_sums_plot <- sample_sums |> 
   left_join(line_specs, by = c("operating_mode" = "om"))
@@ -291,15 +293,18 @@ plot_ecdf_variable <- function(
 #   title = paste0("ECDF Total Arrival Delay, (Run ID = ", config$run_id, ")")
 # )
 # p_ecdf_base
+
 p_ecdf_base <- plot_ecdf_variable(
   data = sample_sums_plot,
   var = total_delay_per_train,
   #var = mid_hour_delay_at_destination,
   x_label = "Arrival Delay",
-  title = paste0("ECDF Arrival Delay per Train (mid-hour), (Run ID = ", config$run_id, ")")
+  title = paste0("ECDF Arrival Delay per Train (mid-hour), (Run ID = ", config$run_id, ")"),
+  #x_lim = c(0,600)
 )
 p_ecdf_base
 
+# Comparison of Building Blocks
 p_ecdf_base <- plot_ecdf_variable(
   data = sample_sums_plot |> mutate(n_trains = as.factor(n_trains)),
   color = "building_block",
@@ -338,6 +343,53 @@ bb_to_filter <- "uc1_bb1"
 schedtype_to_filter <- "M1"
 
 sample_sums_plot_filtered <- sample_sums_plot |> filter(building_block == bb_to_filter & schedule_type == schedtype_to_filter)
+
+
+
+# --- SHOW AND SAVE WEG-ZEIT-DIAGRAMM FROM ONE SPECIFIC SAMPLE ---
+
+
+#  Weg-Zeit-Diagramm für ein Sample.
+
+line_colors <- c(
+  # for use_case_1
+  "FV_LR"  = "palegreen4",
+  "FV_LMR" = "palegreen2",
+  "RV_LMR" = "deepskyblue4",
+  "GV_LR" = "gray30",
+  
+  # for use_case_2
+  "FV_AB" = "palegreen4",
+  "FV_BA" = "palegreen4",
+  "FV_AC" = "palegreen2",
+  "FV_CA" = "palegreen2",
+  "GV_AB" = "gray30",
+  "GV_BA" = "gray30",
+  "GV_AC" = "gray70",
+  "GV_CA" = "gray70"
+)
+
+weg_zeit_diagram(baseDirectory = baseDirectory, 
+                 
+                 usecase = "uc_2",
+                 buildingBlock = "uc2_bb1",
+                 operating_mode = "R_BALANCED",
+                 volume = "12",
+                 sample = "074",
+                 
+                 # usecase = "uc_1",
+                 # buildingBlock = "uc1_bb1",
+                 # operating_mode = "R_FV_STOP",
+                 # volume = "09",
+                 # sample = "069",
+                 
+                 
+                 #line_colors = NULL
+                 line_color = line_colors
+                 )
+
+
+
 
 
 
@@ -422,20 +474,6 @@ plot_box_variable(
 #   subtitle = paste("Run ID:", config$run_id),
 #   logarithmic = TRUE
 # )
-
-
-
-# --- SHOW AND SAVE WEG-ZEIT-DIAGRAMM FROM ONE SPECIFIC SAMPLE ---
-
-
-#  Weg-Zeit-Diagramm für ein Sample.
-weg_zeit_diagram(baseDirectory = baseDirectory, 
-                 usecase = "uc_1", 
-                 buildingBlock = "uc1_bb2", 
-                 subvariant = "KM1_FV_STOP.12", 
-                 sample = "99")
-
-
 
 
 
@@ -602,15 +640,66 @@ quantile_table_plot <- ggplot(
   )
 quantile_table_plot
 
-
-quality_plot <- ggplot(
+p02_quantile_plot <- ggplot(
   schedule_stats_long |> 
-    filter(grepl("^prob_p", stat)),
+    filter(grepl("^qq_2%", stat)),
+  aes(
+    x = as.factor(n_trains),
+    y = operating_mode  
+  )) +
+  scale_y_discrete(limits = rev) +
+  geom_tile(aes(fill = value_pt), color = "gray50", linewidth = 0.5) + 
+  geom_text(aes(label = round(value_pt, 0)), size = 3) +  # Werte als Text
+  # Farbverlauf definieren:
+  # - Werte = 0 sollen grün sein
+  # - Werte > 0 bis 180 sollen von Gelb nach Rot verlaufen
+  scale_fill_gradientn(
+    name = "Delay [s]\n(2%-Quantile)",
+    colors = c("green", "yellow", "orange", "red", "darkred"), # Definieren Sie die Zwischenfarben
+    values = scales::rescale(c(0, 0.01, 90, 180, 600)), # Setzt die Positionen der Farben im Verlauf
+    limits = c(0, 600), # Stellen Sie sicher, dass die Skala bis 180 geht
+    oob = scales::squish, # Stellt sicher, dass Werte > 180 auf den Wert 180 (Rot) projiziert werden
+    na.value = "grey" # Für fehlende Werte
+  ) +
+  facet_wrap( ~ building_block, scales = "free_x", nrow = 1) +
+  theme_minimal(base_size = 12) +
+  labs(
+    x = "Trains per Hour",
+    y = "Operating Mode",
+    title = "2%-Quantiles for Delay per Train (in seconds)"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.text.y = element_text(face = "bold")
+  )
+p02_quantile_plot
+
+quality_line_plot <- ggplot(
+  schedule_stats_long |> 
+    #filter(grepl("^prob_p", stat)),  #alle probabilities 
+    filter(stat == "prob_p_00sec"),  #nur die Wahrscheinlichkeit für Delay == 0 Sec
   aes(x = as.factor(n_trains), 
       y = value_pt, #value_tt -> total (summed) arrival delay. value_pt -> arrival delay PER TRAIN
       group = stat,
       color = stat)) +
   geom_line() +
+  geom_hline(
+    yintercept = 0.02,
+    linetype = "dashed",
+    color = "grey80",
+    linewidth = .7,
+    alpha = .7
+  ) + 
+  annotate(
+    "text",
+    x = -Inf,
+    y = 0.02,
+    label = "2%",
+    hjust = -.5,
+    vjust = -0.3,
+    color = "grey50",
+    size = 3
+  ) +
   facet_grid(operating_mode ~ building_block, scales = "free_x") +
   theme_minimal(base_size = 12) +
   labs(
@@ -624,10 +713,64 @@ quality_plot <- ggplot(
     axis.text.x = element_text(angle = 45, hjust = 1),
     legend.position = "bottom"
   )
-quality_plot
+quality_line_plot
 
-ggplotly(quality_plot)
-
+quality_bar_plot <-  ggplot(
+  schedule_stats_long |> 
+    #filter(grepl("^prob_p", stat)),  #alle probabilities 
+    filter(stat == "prob_p_00sec"),  #nur die Wahrscheinlichkeit für Delay == 0 Sec
+  aes(x = as.factor(n_trains), 
+      y = value_pt, #value_tt -> total (summed) arrival delay. value_pt -> arrival delay PER TRAIN
+      fill = value_pt)) +
+  geom_col(color = "white", linewidth = 0.2) +
+  geom_text(
+    aes(label = scales::percent(value_pt, accuracy = 0.1)),
+    vjust = -0.5,     # Schiebt den Text nach oben
+    size = 3,
+    fontface = "bold"
+  ) +
+  scale_fill_gradientn(
+    colors = c("red", "orange", "yellow", "green", "darkgreen"),
+    values = scales::rescale(c(0, 0.025, 0.05, 0.1, 1)),
+    limits = c(0, 1),
+    oob = scales::squish,
+    na.value = "grey"
+  ) +
+  geom_hline(
+    yintercept = 0.02,
+    linetype = "dashed",
+    color = "grey80",
+    linewidth = .7,
+    alpha = .7
+  ) + 
+  annotate(
+    "text",
+    x = -Inf,
+    y = 0.02,
+    label = "2%",
+    hjust = -.5,
+    vjust = -0.3,
+    color = "grey50",
+    size = 3
+  ) +
+  facet_grid(operating_mode ~ building_block, scales = "free_x") +
+  
+  # Y-Achse als Prozent formatieren und Platz für Labels oben schaffen
+  scale_y_continuous(labels = scales::percent, expand = expansion(mult = c(0, 0.15))) +
+  
+  theme_minimal(base_size = 12) +
+  labs(
+    x = "Schedule",
+    y = "Probabilty for Punctuality",
+    title = "Probability of Punctuality (0 sec delay)",
+    fill = "Wahrscheinlichkeit"
+  ) +
+  theme(
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    legend.position = "right",
+    panel.grid.major.x = element_blank() # Optionale Verschönerung für Bar-Plots
+  )
+quality_bar_plot
 
 
 quality_table_plot <- ggplot(
@@ -667,123 +810,4 @@ quality_table_plot
 
 
 
-
-################################
-#  ALTE ANALYSEN
-################################
-
-
-
-
-# Boxplot (aus deinem ersten Plot)
-bb <- "uc1_bb3"
-ss <- sample_sums |> filter(building_block==bb)
-schst_long <- schedule_stats_long |> filter(building_block==bb)
-
-p_box <- ggplot(ss, aes(x = schedule, y = total_delay_at_destination)) +
-  geom_boxplot(outlier.shape = NA) +
-  geom_jitter(width = 0.2, height = 0, alpha = 0.6, size = 0.5, color = "steelblue") +
-  facet_wrap(~ building_block, scales = "free_x", ncol = 1) +
-  theme_minimal() +
-  labs(x = NULL, y = "Arrival Delays", title = "Boxplots pro Schedule") +
-  theme(axis.text.x = element_blank())
-  
-
-# Minima-Lineplot
-p_min <- schst_long |> 
-  filter(statistic == "Min") |> 
-  ggplot(aes(x = schedule, y = delay_value, group = 1)) +
-  geom_line(color = "#1b9e77", linewidth = 1.2) +
-  geom_point(color = "#1b9e77", size = 2) +
-  geom_text(aes(label = round(delay_value, 1)), vjust = -0.3, size = 3, check_overlap = TRUE) +
-  facet_wrap(~ building_block, scales = "free_x", ncol = 1) +
-  theme_minimal() +
-  labs(x = "Schedule", y = "Min Delay", title = "Minimale Arrival-Delays") +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-# Kombinierter Plot (oberer Teil = Linie, unterer Teil = Boxplot)
-combined_plot <- p_box / p_min + plot_layout(heights = c(2, 1))
-
-print(combined_plot)
-
-
-p_grouped_boxplots <- ggplot(sample_sums, 
-                             aes(x = schedule, 
-                                 y = total_delay_at_destination, 
-                                 fill = building_block)) +
-  geom_boxplot(position = position_dodge(width = 0.8), outlier.shape = NA) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.1, dodge.width = 0.8),
-              alpha = 0.5, size = 0.5, color = "gray40") +
-  theme_minimal(base_size = 12) +
-  labs(
-    x = "Schedule",
-    y = "Summe der Arrival-Delays pro Sample",
-    title = "Verteilung der Arrival Delays nach Schedule und Building Block",
-    fill = "Building Block"
-  ) +
-  theme(
-    axis.text.x = element_text(angle = 45, hjust = 1)
-  )
-print(p_grouped_boxplots)
-
-
-
-
-
-
-
-library(grid)
-library(gridExtra)
-
-# Farbpalette wie zuvor
-my_colors <- RColorBrewer::brewer.pal(length(unique(sample_sums$building_block)), "Set2")
-
-# 1️⃣ Gruppierte Boxplots
-p_box_grouped <- ggplot(sample_sums, 
-                        aes(x = schedule, 
-                            y = total_delay_at_destination, 
-                            fill = building_block)) +
-  geom_boxplot(position = position_dodge(width = 0.8), outlier.shape = NA) +
-  geom_jitter(position = position_jitterdodge(jitter.width = 0.2, dodge.width = 0.8),
-              alpha = 0.4, size = 0.5, color = "gray40") +
-  scale_fill_manual(values = my_colors) +
-  theme_minimal(base_size = 12) +
-  labs(
-    x = "Schedule",
-    y = "Summe der Arrival-Delays pro Sample",
-    title = "Verteilung der Arrival Delays nach Schedule und Building Block",
-    fill = "Building Block"
-  ) +
-  theme(axis.text.x = element_text(angle = 45, hjust = 1)) +
-  theme(legend.position = "bottom", legend.key.size = unit(0.8, "lines"))
-
-# falls du die Schedule-Reihenfolge wie im Plot behalten willst (optional)
-schedule_levels <- unique(sample_sums$schedule)
-
-# Wide-Format: rows = building_block, cols = schedules
-table_data_wide <- schedule_stats %>%
-  mutate(schedule = factor(schedule, levels = schedule_levels)) %>%
-  select(building_block, schedule, delay_min) %>%
-  pivot_wider(names_from = schedule, values_from = delay_min) %>%
-  arrange(building_block) %>%
-  mutate(across(-building_block, ~ round(., 1)))
-
-# Erstelle TableGrob und kombiniere wie zuvor
-# Tabelle mit Titel & besserer Breite
-table_grob <- tableGrob(table_data_wide, rows = NULL)
-
-# Titel-Zeile hinzufügen
-title_grob <- textGrob("Minimale Arrival-Delays pro Schedule", 
-                       gp = gpar(fontsize = 12, fontface = "bold"))
-
-# Breite der Tabelle an Plot anpassen (gleiche Gesamtbreite)
-table_grob$widths <- unit(rep(1, ncol(table_data_wide)), "null")
-
-# Kombinieren: Plot oben, Titel + Tabelle unten
-grid.arrange(
-  p_box_grouped,
-  title_grob,
-  table_grob,
-  heights = c(3, 0.3, 1)
-)
 
