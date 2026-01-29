@@ -35,6 +35,8 @@ public class RunRailsimScenario implements Callable<Integer> {
     private boolean overwriteOutput;
 
     static void main(String[] args) {
+        System.setProperty("matsim.preferLocalDtds", "true");
+
         int exitCode = new CommandLine(new RunRailsimScenario()).execute(args);
         System.exit(exitCode);
     }
