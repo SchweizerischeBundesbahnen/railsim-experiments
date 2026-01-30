@@ -45,17 +45,6 @@
     }
   },
   "patterns": {
-    "STANDARD": {
-      "description": "RV hält; GV direkt",
-      "shares": {
-        "RV": {
-          "LMR": 1.0
-        },
-        "GV": {
-          "LR": 1.0
-        }
-      }
-    },
     "FV_PASS": {
       "description": "FV direkt; RV hält; GV direkt",
       "shares": {
@@ -83,26 +72,40 @@
           "LR": 1.0
         }
       }
+    },
+    "RV_STOP": {
+      "description": "RV hält",
+      "shares": {
+        "RV": {
+          "LMR": 1.0
+        }
+      }
     }
   },
   "mixes": {
-    "KM": {
-      "description": "Kernnetz-Mischbetrieb (Ref: Lausanne–Genf, Heitersberg)",
+    "MAINLINE": {
+      "description": "Kernnetz-Mischverkehr (Ref: Lausanne–Genf, Heitersberg)",
       "shares": {
         "FV": 0.4,
         "RV": 0.4,
         "GV": 0.2
       }
     },
-    "R": {
-      "description": "Restnetz-Mischverkehr (Ref: Lugano)",
+    "TRANSIT": {
+      "description": "Transit-Korridor Güter/Fernverkehr (Ref: Lugano)",
       "shares": {
         "FV": 0.5,
         "GV": 0.5
       }
     },
-    "M": {
-      "description": "Metrobetrieb isoliert (Ref: S-Bahn Zürich)",
+    "EXPRESS": {
+      "description": "Homogener Fernverkehr (Ref: Genf Tiefbahnhof)",
+      "shares": {
+        "FV": 1.0
+      }
+    },
+    "METRO": {
+      "description": "Isolierter S-Bahn-Betrieb (Ref: S-Bahn Zürich)",
       "shares": {
         "RV": 1.0
       }
@@ -110,22 +113,28 @@
   },
   "modes": [
     {
-      "mix": "KM",
+      "mix": "MAINLINE",
       "patterns": [
         "FV_PASS",
         "FV_STOP"
       ]
     },
     {
-      "mix": "R",
+      "mix": "TRANSIT",
       "patterns": [
         "FV_STOP"
       ]
     },
     {
-      "mix": "M",
+      "mix": "EXPRESS",
       "patterns": [
-        "STANDARD"
+        "FV_STOP"
+      ]
+    },
+    {
+      "mix": "METRO",
+      "patterns": [
+        "RV_STOP"
       ]
     }
   ]

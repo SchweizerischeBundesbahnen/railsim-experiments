@@ -92,15 +92,15 @@
     }
   },
   "mixes": {
-    "R": {
-      "description": "Restnetz-Mischverkehr (Ref: Lugano)",
+    "TRANSIT": {
+      "description": "Transit-Korridor Güter/Fernverkehr (Ref: Lugano)",
       "shares": {
         "FV": 0.5,
         "GV": 0.5
       }
     },
-    "M": {
-      "description": "Metrobetrieb isoliert (Ref: S-Bahn Zürich)",
+    "METRO": {
+      "description": "Isolierter S-Bahn-Betrieb (Ref: S-Bahn Zürich)",
       "shares": {
         "RV": 1.0
       }
@@ -108,14 +108,14 @@
   },
   "modes": [
     {
-      "mix": "R",
+      "mix": "TRANSIT",
       "patterns": [
         "BALANCED",
         "TRUNK"
       ]
     },
     {
-      "mix": "M",
+      "mix": "METRO",
       "patterns": [
         "BALANCED",
         "TRUNK"
