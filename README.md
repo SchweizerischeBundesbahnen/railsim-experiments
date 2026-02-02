@@ -97,8 +97,7 @@ The Operational Plan is built using the following concepts:
 * **Operating Mode**: The top-level configuration. It pairs a **Product Mix** with one or more **Flow Patterns**. The
   simulation generates a sub-variant for every valid combination of mix and pattern defined here.
 * **Volumes**: Defines the global scaling of traffic for each defined operating mode. The simulation iterates from `min`
-  to `max` total trains per
-  `period`.
+  to `max` total trains per `period`.
 
 JSON structure:
 
