@@ -93,16 +93,18 @@ The Operational Plan is built using the following concepts:
   schedule.
 * **Flow Pattern**: Defines the distribution of a product on flows. For example, a `BALANCED` pattern might distribute
   traffic 50/50 between two branches, while a `TRUNK_ONLY` pattern routes everything onto the main line.
-* **Operational Mode**: Defines the product mix (e.g., "40% Intercity, 50% Regional, 10% Cargo") and the associated flow
-  patterns. For each combination of product mix and flow pattern, a **operatingMode** will be generated and simulated.
-* **Train Volumes**: The simulation automatically scales the total traffic volume from a minimum to a maximum trains per
-  period.
+* **Product Mix**: Defines the ratio of different train types (e.g., "40% Intercity, 40% Regional, 20% Cargo").
+* **Operating Mode**: The top-level configuration. It pairs a **Product Mix** with one or more **Flow Patterns**. The
+  simulation generates a sub-variant for every valid combination of mix and pattern defined here.
+* **Volumes**: Defines the global scaling of traffic for each defined operating mode. The simulation iterates from `min`
+  to `max` total trains per
+  `period`.
 
 JSON structure:
 
 ```json
 {
-  "trainVolumes": {
+  "volumes": {
     "period": 1800,
     "min": 4,
     "max": 12,
@@ -125,7 +127,7 @@ JSON structure:
   },
   "flows": {
     "LMR": {
-      "description": "Verkehrsstrom mit Halt in bei M (L-M-R)",
+      "description": "Verkehrsstrom mit Halt bei M (L-M-R)",
       "routes": {
         "FV": {
           "forward": "FV_LMR"
@@ -148,34 +150,67 @@ JSON structure:
     }
   },
   "patterns": {
-    "STANDARD": {
-      "description": "Regelbetrieb: RV hält (LMR); GV/FV direkt (LR)",
+    "FV_PASS": {
+      "description": "FV direkt; RV hält; GV direkt",
       "shares": {
+        "FV": {
+          "LR": 1.0
+        },
         "RV": {
           "LMR": 1.0
         },
         "GV": {
           "LR": 1.0
-        },
+        }
+      }
+    },
+    "FV_STOP": {
+      "description": "FV hält; RV hält; GV direkt",
+      "shares": {
         "FV": {
+          "LMR": 1.0
+        },
+        "RV": {
+          "LMR": 1.0
+        },
+        "GV": {
           "LR": 1.0
         }
       }
     }
   },
-  "modes": {
-    "KM1": {
-      "description": "Kernnetz-Mischbetrieb Standard (40/50/10)",
-      "patterns": [
-        "STANDARD"
-      ],
+  "mixes": {
+    "MAINLINE": {
+      "description": "Kernnetz-Mischverkehr (Ref: Lausanne–Genf)",
       "shares": {
         "FV": 0.4,
-        "RV": 0.5,
-        "GV": 0.1
+        "RV": 0.4,
+        "GV": 0.2
+      }
+    },
+    "TRANSIT": {
+      "description": "Transit-Korridor Güter/Fernverkehr (Ref: Lugano)",
+      "shares": {
+        "FV": 0.5,
+        "GV": 0.5
       }
     }
-  }
+  },
+  "modes": [
+    {
+      "mix": "MAINLINE",
+      "patterns": [
+        "FV_PASS",
+        "FV_STOP"
+      ]
+    },
+    {
+      "mix": "TRANSIT",
+      "patterns": [
+        "FV_STOP"
+      ]
+    }
+  ]
 }
 ```
 
