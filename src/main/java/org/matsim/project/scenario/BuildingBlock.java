@@ -9,6 +9,11 @@ import lombok.RequiredArgsConstructor;
 public enum BuildingBlock {
 
     UC0_BB1(UseCase.UC_0, "/scenarios/use_case_0/building_block_1"),
+    UC0_BB2(UseCase.UC_0, "/scenarios/use_case_0/building_block_2"),
+    UC0_BB3(UseCase.UC_0, "/scenarios/use_case_0/building_block_3"),
+    UC0_BB4(UseCase.UC_0, "/scenarios/use_case_0/building_block_4"),
+    UC0_BB5(UseCase.UC_0, "/scenarios/use_case_0/building_block_5"),
+    UC0_BB6(UseCase.UC_0, "/scenarios/use_case_0/building_block_6"),
     UC1_BB1(UseCase.UC_1, "/scenarios/use_case_1/building_block_1"),
     UC1_BB2(UseCase.UC_1, "/scenarios/use_case_1/building_block_2"),
     UC1_BB3(UseCase.UC_1, "/scenarios/use_case_1/building_block_3"),
