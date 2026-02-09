@@ -4,6 +4,7 @@ import lombok.Getter;
 
 @Getter
 public enum UseCase {
+    UC_0("/scenarios/use_case_0/uc0_operational_plan.json"),
     UC_1("/scenarios/use_case_1/uc1_operational_plan.json"),
     UC_2("/scenarios/use_case_2/uc2_operational_plan.json");
 
