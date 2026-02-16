@@ -27,21 +27,19 @@
         <node id="9" x="10230.0" y="0.0"/>
     </nodes>
 
-    <links capperiod="01:00:00" effectivecellsize="7.5" effectivelanewidth="3.75">
-        <link id="15" from="11" to="10" length="500.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+    <links>
+        <link id="15" from="11" to="10" length="500.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
+              modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">999</attribute>
             </attributes>
         </link>
-        <link id="17" from="9" to="12" length="500.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="17" from="9" to="12" length="500.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">999</attribute>
             </attributes>
         </link>
-        <link id="18" from="7" to="616" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="18" from="7" to="616" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_1</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -51,7 +49,7 @@
             </attributes>
         </link>
         <link id="19" from="616" to="614" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_3</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -60,8 +58,7 @@
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
-        <link id="20" from="614" to="3" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="20" from="614" to="3" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_3</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -70,8 +67,7 @@
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
-        <link id="22" from="5" to="615" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="22" from="5" to="615" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_4</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -80,8 +76,7 @@
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
-        <link id="23" from="615" to="6" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="23" from="615" to="6" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_4</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -91,7 +86,7 @@
             </attributes>
         </link>
         <link id="26" from="619" to="620" length="470.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">platform_2</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -99,7 +94,7 @@
             </attributes>
         </link>
         <link id="27" from="620" to="615" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_4</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -109,7 +104,7 @@
             </attributes>
         </link>
         <link id="28" from="614" to="619" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_3</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -118,8 +113,7 @@
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
-        <link id="30" from="618" to="7" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="30" from="618" to="7" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_1</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -129,8 +123,7 @@
                 <attribute name="railsimEntry" class="java.lang.Boolean">true</attribute>
             </attributes>
         </link>
-        <link id="31" from="7" to="621" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="31" from="7" to="621" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_1</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -139,8 +132,7 @@
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
-        <link id="32" from="622" to="8" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="32" from="622" to="8" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_2</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -150,13 +142,13 @@
             </attributes>
         </link>
         <link id="33" from="10" to="6180" length="9570.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">999</attribute>
             </attributes>
         </link>
         <link id="3300" from="6180" to="618" length="500.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">block_1</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -164,8 +156,7 @@
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
-        <link id="34" from="8" to="617" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="34" from="8" to="617" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_2</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -176,7 +167,7 @@
             </attributes>
         </link>
         <link id="3500" from="617" to="6170" length="500.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">block_2</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -185,21 +176,19 @@
             </attributes>
         </link>
         <link id="35" from="6170" to="9" length="9570.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">999</attribute>
             </attributes>
         </link>
-        <link id="4" from="3" to="5" length="470.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="4" from="3" to="5" length="470.0" freespeed="44.444" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">platform_3</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
-        <link id="621" from="6" to="8" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" modes="rail"
-              oneway="1">
+        <link id="621" from="6" to="8" length="40.0" freespeed="30.556" capacity="9999.0" permlanes="1.0" modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">switch_2</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -209,14 +198,15 @@
             </attributes>
         </link>
         <link id="622" from="621" to="623" length="80.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
+                <attribute name="railsimNonBlockingArea" class="java.lang.Boolean">true</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
         <link id="623" from="623" to="624" length="470.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceId" class="java.lang.String">platform_1</attribute>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
@@ -224,20 +214,21 @@
             </attributes>
         </link>
         <link id="624" from="624" to="622" length="80.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
+                <attribute name="railsimNonBlockingArea" class="java.lang.Boolean">true</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
             </attributes>
         </link>
         <link id="stop_loop_10" from="10" to="10" length="1.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">999</attribute>
             </attributes>
         </link>
         <link id="stop_loop_12" from="12" to="12" length="1.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
-              modes="rail" oneway="1">
+              modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">999</attribute>
             </attributes>
