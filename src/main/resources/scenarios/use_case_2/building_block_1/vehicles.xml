@@ -7,7 +7,7 @@
             <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="railsimAcceleration" class="java.lang.Double">0.6</attribute>
-            <attribute name="railsimDeceleration" class="java.lang.Double">0.7</attribute>
+            <attribute name="railsimDeceleration" class="java.lang.Double">0.56</attribute>
         </attributes>
         <capacity seats="9999" standingRoomInPersons="9999"/>
         <length meter="400.0"/>
@@ -21,7 +21,7 @@
             <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="railsimAcceleration" class="java.lang.Double">0.2</attribute>
-            <attribute name="railsimDeceleration" class="java.lang.Double">0.4</attribute>
+            <attribute name="railsimDeceleration" class="java.lang.Double">0.33</attribute>
         </attributes>
         <capacity seats="9999" standingRoomInPersons="9999"/>
         <length meter="400.0"/>
@@ -35,7 +35,7 @@
             <attribute name="accessTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="egressTimeInSecondsPerPerson" class="java.lang.Double">0.0</attribute>
             <attribute name="railsimAcceleration" class="java.lang.Double">1.0</attribute>
-            <attribute name="railsimDeceleration" class="java.lang.Double">0.7</attribute>
+            <attribute name="railsimDeceleration" class="java.lang.Double">0.56</attribute>
         </attributes>
         <capacity seats="9999" standingRoomInPersons="9999"/>
         <length meter="200.0"/>
