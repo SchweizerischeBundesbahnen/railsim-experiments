@@ -97,7 +97,7 @@
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
                 <!-- re-enable when train re-routing is fixed -->
                 <attribute name="railsimExit" class="java.lang.Boolean">false</attribute>
-            </attributes>∆
+            </attributes>
         </link>
         <link id="15" from="19" to="20" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
               modes="rail">
