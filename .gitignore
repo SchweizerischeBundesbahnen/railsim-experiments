@@ -28,3 +28,7 @@ hs_err_pid*
 # ignore railsim-expiriments results
 /results*/
 /output*/
+
+# Python cache
+__pycache__/
+*.py[cod]
