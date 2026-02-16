@@ -95,8 +95,9 @@
               modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
-                <attribute name="railsimExit" class="java.lang.Boolean">true</attribute>
-            </attributes>
+                <!-- re-enable when train re-routing is fixed -->
+                <attribute name="railsimExit" class="java.lang.Boolean">false</attribute>
+            </attributes>∆
         </link>
         <link id="15" from="19" to="20" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
               modes="rail">
@@ -122,6 +123,9 @@
                 <attribute name="railsimNonBlockingArea" class="java.lang.Boolean">true</attribute>
                 <attribute name="railsimMinimumTime" class="java.lang.Double">20.0</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
+                <attribute name="disallowedNextLinks"
+                           class="org.matsim.core.network.turnRestrictions.DisallowedNextLinks">{"rail":[["650"]]}
+                </attribute>
             </attributes>
         </link>
         <link id="18" from="5" to="17" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
@@ -167,7 +171,8 @@
               modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
-                <attribute name="railsimExit" class="java.lang.Boolean">true</attribute>
+                <!-- re-enable when train re-routing is fixed -->
+                <attribute name="railsimExit" class="java.lang.Boolean">false</attribute>
             </attributes>
         </link>
         <link id="3" from="1" to="2" length="120.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
@@ -244,6 +249,9 @@
                 <attribute name="railsimNonBlockingArea" class="java.lang.Boolean">true</attribute>
                 <attribute name="railsimMinimumTime" class="java.lang.Double">20.0</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
+                <attribute name="disallowedNextLinks"
+                           class="org.matsim.core.network.turnRestrictions.DisallowedNextLinks">{"rail":[["19"]]}
+                </attribute>
             </attributes>
         </link>
         <link id="649" from="6" to="7" length="32.0" freespeed="30.556" capacity="9999.0" permlanes="1.0"
@@ -277,7 +285,8 @@
               modes="rail">
             <attributes>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
-                <attribute name="railsimExit" class="java.lang.Boolean">true</attribute>
+                <!-- re-enable when train re-routing is fixed -->
+                <attribute name="railsimExit" class="java.lang.Boolean">false</attribute>
             </attributes>
         </link>
         <link id="654" from="10" to="11" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
