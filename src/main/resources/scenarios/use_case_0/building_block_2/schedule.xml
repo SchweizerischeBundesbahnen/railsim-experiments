@@ -4,8 +4,8 @@
 <transitSchedule>
 
     <transitStops>
-        <stopFacility id="L" x="-10000.0" y="0.0" linkRefId="stop_loop_L" name="L"/>
-        <stopFacility id="R" x="10000.0" y="0.0" linkRefId="stop_loop_R" name="R"/>
+        <stopFacility id="L" x="-10500.0" y="0.0" linkRefId="stop_loop_L" name="L"/>
+        <stopFacility id="R" x="11130.0" y="0.0" linkRefId="stop_loop_R" name="R"/>
     </transitStops>
 
     <transitLine id="FV">
@@ -20,6 +20,10 @@
                 <link refId="1"/>
                 <link refId="2"/>
                 <link refId="3"/>
+                <link refId="4"/>
+                <link refId="5"/>
+                <link refId="6"/>
+                <link refId="7"/>
                 <link refId="stop_loop_R"/>
             </route>
             <departures>
@@ -27,45 +31,4 @@
             </departures>
         </transitRoute>
     </transitLine>
-
-    <transitLine id="GV">
-        <transitRoute id="GV_LR">
-            <transportMode>rail</transportMode>
-            <routeProfile>
-                <stop refId="L" arrivalOffset="00:00:00" departureOffset="00:00:00" awaitDeparture="true"/>
-                <stop refId="R" arrivalOffset="00:10:00" departureOffset="00:10:00" awaitDeparture="true"/>
-            </routeProfile>
-            <route>
-                <link refId="stop_loop_L"/>
-                <link refId="1"/>
-                <link refId="2"/>
-                <link refId="3"/>
-                <link refId="stop_loop_R"/>
-            </route>
-            <departures>
-                <departure id="GV_LR_dep_0" departureTime="00:00:00" vehicleRefId="GV_LR_veh_0"/>
-            </departures>
-        </transitRoute>
-    </transitLine>
-
-    <transitLine id="RV">
-        <transitRoute id="RV_LR">
-            <transportMode>rail</transportMode>
-            <routeProfile>
-                <stop refId="L" arrivalOffset="00:00:00" departureOffset="00:00:00" awaitDeparture="true"/>
-                <stop refId="R" arrivalOffset="00:10:00" departureOffset="00:10:00" awaitDeparture="true"/>
-            </routeProfile>
-            <route>
-                <link refId="stop_loop_L"/>
-                <link refId="1"/>
-                <link refId="2"/>
-                <link refId="3"/>
-                <link refId="stop_loop_R"/>
-            </route>
-            <departures>
-                <departure id="RV_LR_dep_0" departureTime="00:00:00" vehicleRefId="RV_LR_veh_0"/>
-            </departures>
-        </transitRoute>
-    </transitLine>
-
 </transitSchedule>
