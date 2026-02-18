@@ -9,6 +9,7 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Log4j2
 public class RailsimSimulationExecutor {
@@ -29,8 +30,10 @@ public class RailsimSimulationExecutor {
         this.taskFactories = taskFactories;
     }
 
-    public List<RailsimSimulationResult> runAll(List<RailsimSimulationJob> jobs) {
-        int totalJobs = jobs.size();
+    /**
+     * Executes jobs lazily as they are provided by the stream.
+     */
+    public List<RailsimSimulationResult> runAll(Stream<RailsimSimulationJob> jobs, int totalJobs) {
         log.info("Starting simulator for {} jobs (worker threads: {}).", totalJobs, workerThreads);
 
         // progress tracking init
@@ -58,12 +61,13 @@ public class RailsimSimulationExecutor {
             }
         }, LOG_HEARTBEAT_INTERVAL_MS, LOG_HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
 
-        List<CompletableFuture<RailsimSimulationResult>> futures = jobs.stream().map(job -> {
-            CompletableFuture<RailsimSimulationResult> pipelineFuture = runJobPipelineAsync(job, simulationExecutor,
-                    postProcessingExecutor);
+        // consume the stream lazily; each 'map' call triggers the job generation (sampling + file writing)
+        List<CompletableFuture<RailsimSimulationResult>> futures = jobs.map(job -> {
+            CompletableFuture<RailsimSimulationResult> pipelineFuture =
+                    runJobPipelineAsync(job, simulationExecutor, postProcessingExecutor);
 
             // attach a non-blocking action to log progress upon completion of each job
-            pipelineFuture.whenComplete((result, throwable) -> {
+            pipelineFuture.whenComplete((_, _) -> {
                 int currentCompleted = completedJobs.incrementAndGet();
                 if (currentCompleted == 1 || currentCompleted == totalJobs || currentCompleted % logFrequency == 0) {
                     logProgress(currentCompleted, totalJobs, startTime);
@@ -77,9 +81,8 @@ public class RailsimSimulationExecutor {
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
         // all results are ready; collect without blocking
-        List<RailsimSimulationResult> results = futures.stream()
-                .map(CompletableFuture::join)
-                .collect(Collectors.toList());
+        List<RailsimSimulationResult> results =
+                futures.stream().map(CompletableFuture::join).collect(Collectors.toList());
 
         // shutdown all executors
         shutdownExecutor(progressHeartbeatExecutor);
@@ -191,9 +194,8 @@ public class RailsimSimulationExecutor {
     }
 
     private void printSummary(List<RailsimSimulationResult> results) {
-        long successCount = results.stream()
-                .filter(r -> r.getStatus() == RailsimSimulationResult.Status.SUCCESS)
-                .count();
+        long successCount =
+                results.stream().filter(r -> r.getStatus() == RailsimSimulationResult.Status.SUCCESS).count();
 
         log.info("------------------------------------------------------------");
         log.info("SIMULATION RUNNER SUMMARY");

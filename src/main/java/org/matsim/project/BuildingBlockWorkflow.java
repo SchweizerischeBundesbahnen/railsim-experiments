@@ -6,13 +6,12 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.project.analysis.delay.TrainDelayAnalysisFactory;
 import org.matsim.project.analysis.headway.MinimumHeadwayAnalysisFactory;
 import org.matsim.project.analysis.utilization.UtilizationAnalysisFactory;
-import org.matsim.project.sampling.SimulationJobSampler;
+import org.matsim.project.sampling.SimulationJobGenerator;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.UseCase;
 import org.matsim.project.scenario.plan.OperationalPlan;
 import org.matsim.project.scenario.plan.OperationalPlanReader;
 import org.matsim.project.simulation.PostProcessingTaskFactory;
-import org.matsim.project.simulation.RailsimSimulationJob;
 import org.matsim.project.trainrun.TrainRunCalculator;
 import org.matsim.project.utils.ResourceLoader;
 
@@ -45,7 +44,7 @@ public class BuildingBlockWorkflow {
      * Prepares all simulation jobs for this building block.
      * This method is thread-safe and is designed to be called in parallel.
      */
-    public List<RailsimSimulationJob> prepareJobs() throws IOException {
+    public SimulationJobGenerator prepareJobGenerator() throws IOException {
         log.info("Starting job preparation for: {}", buildingBlock.name());
 
         // prepare the file system
@@ -64,12 +63,9 @@ public class BuildingBlockWorkflow {
         Path operationalPlanPath = ResourceLoader.getPath(buildingBlock.getUseCase().getOperationalPlanPath());
         Path templateConfigFilePath = ResourceLoader.getPath(buildingBlock.getConfigFilePath());
         OperationalPlan operationalPlan = new OperationalPlanReader().read(operationalPlanPath);
-        SimulationJobSampler sampler =
-                new SimulationJobSampler(config.getSeed(), templateConfigFilePath, templateScenario, buildingBlock,
-                        operationalPlan);
 
-        return sampler.sample(config.getSamplesPerSubvariant(), config.getSimulationTime(),
-                config.getDepartureSamplingStrategy(), scheduleSamplingPath, jobConfigPath, simulationRunOutputPath);
+        return new SimulationJobGenerator(config, templateConfigFilePath, scheduleSamplingPath, jobConfigPath,
+                simulationRunOutputPath, templateScenario, buildingBlock, operationalPlan);
     }
 
     /**
