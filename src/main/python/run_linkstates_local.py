@@ -8,7 +8,7 @@ from linkstates.analyse import collect_linkstate_utilisation_from_output_folder
 # ============================================================
 
 filer = Path(r"/Users/nicolasdulex/devsbb/GZB_analysis")
-run_id = "it5_uc0_n10"
+run_id = "output_20260217_it5_n5"
 
 OUTPUT_ROOT = filer / run_id
 
