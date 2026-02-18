@@ -35,14 +35,15 @@ public class RailsimSimulationExecutor {
     }
 
     /**
-     * Executes jobs lazily as they are provided by the stream.
-     * Sampling, file generation, and simulation are all performed in parallel on worker threads.
+     * Executes jobs lazily as they are provided by the generators.
      *
-     * @param jobs      A stream of job metadata (not yet sampled or written to disk).
-     * @param totalJobs The total count of jobs in the stream for progress tracking.
-     * @return A list of results in the order they were provided by the stream.
+     * @param generators simulation job generators for each building block, providing a lazy stream of jobs to execute
+     * @return A list of results in the order they were provided by the generators.
      */
-    public List<RailsimSimulationResult> runAll(Stream<RailsimSimulationJob> jobs, int totalJobs) {
+    public List<RailsimSimulationResult> runAll(List<RailsimSimulationJobGenerator> generators) {
+        // create the unified lazy Stream
+        int totalJobs = (int) generators.stream().mapToLong(RailsimSimulationJobGenerator::count).sum();
+        Stream<RailsimSimulationJob> jobs = generators.stream().flatMap(RailsimSimulationJobGenerator::stream);
         log.info("Starting simulator for {} jobs (worker threads: {}).", totalJobs, workerThreads);
 
         // progress tracking init
@@ -115,7 +116,13 @@ public class RailsimSimulationExecutor {
                 }, simulationExecutor)
                 // chain post-processing tasks
                 .thenComposeAsync(result -> runPostProcessingAsync(result, postProcessingExecutor),
-                        postProcessingExecutor)
+                        postProcessingExecutor).thenApply(result -> {
+                    if (job.getProjectConfig()
+                            .isCleanupRuns() && result.getStatus() == RailsimSimulationResult.Status.SUCCESS) {
+                        cleanup(job);
+                    }
+                    return result;
+                })
                 // handle any exceptions from the entire pipeline
                 .exceptionally(ex -> {
                     // unwrap completion exception to get the root cause
@@ -125,6 +132,15 @@ public class RailsimSimulationExecutor {
 
                     return RailsimSimulationResult.failure(job, rootCause);
                 });
+    }
+
+    private void cleanup(RailsimSimulationJob job) {
+        log.debug("Cleaning up output directory for successful job: {}", job.getRunId());
+        try {
+            // TODO: Implement deletion of run outputs
+        } catch (Exception e) {
+            log.error("Failed to clean up output directory for job: {}", job.getRunId(), e);
+        }
     }
 
     private CompletableFuture<RailsimSimulationResult> runPostProcessingAsync(RailsimSimulationResult successfulResult,

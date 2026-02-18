@@ -29,7 +29,6 @@ import java.nio.file.Path;
 @RequiredArgsConstructor
 public class RailsimSimulationJob implements Runnable {
 
-    // context
     private final ProjectConfig projectConfig;
     private final Scenario templateScenario;
     private final Path templateConfigPath;
@@ -41,28 +40,25 @@ public class RailsimSimulationJob implements Runnable {
     private final int trainVolumePeriod;
     private final boolean bidirectional;
 
-    // paths for output setup
     private final Path scheduleSamplingRoot;
     private final Path jobConfigRoot;
     private final Path simulationRunRoot;
-    private final String volumeFormat;
-    private final String sampleFormat;
 
-    // state
-    private String runId;
-    private Path outputDirectory;
+    private final String runId;
+    private final String scenarioId;
+    private final String paddedVolume;
+    private final String paddedSample;
+    private final Path outputDirectory;
+
     private Path configFilePath;
     private Config config;
 
-    /**
-     * Executes the setup (sampling and file writing) and then the simulation.
-     * This method runs on the worker thread.
-     */
     @Override
     public void run() {
         try {
             this.configFilePath = prepare();
             this.config = ConfigUtils.loadConfig(configFilePath.toString());
+
             Scenario scenario = ScenarioUtils.loadScenario(config);
             Controller controller = ControllerUtils.createController(scenario);
             controller.addOverridingModule(new RailsimModule());
@@ -76,36 +72,25 @@ public class RailsimSimulationJob implements Runnable {
     }
 
     private Path prepare() throws IOException {
-        final String paddedSample = String.format(sampleFormat, sampleIndex);
-        final String paddedVolume = String.format(volumeFormat, trainVolume);
-        final String scenarioId =
-                String.format("%s_%s_volume_%s", buildingBlock.name().toLowerCase(), operatingMode.getId(),
-                        paddedVolume);
-        this.runId = String.format("%s_sample_%s", scenarioId, paddedSample);
-
-        // sampling
-        StatefulScheduleSampler sampler =
+        // sample schedule
+        StatefulScheduleSampler.Sample sample =
                 new StatefulScheduleSampler(seed, templateScenario, operatingMode, trainVolumePeriod, trainVolume,
-                        projectConfig.getSimulationTime(), bidirectional);
+                        projectConfig.getSimulationTime(), bidirectional).sample(
+                        projectConfig.getDepartureSamplingStrategy());
 
-        StatefulScheduleSampler.Sample sample = sampler.sample(projectConfig.getDepartureSamplingStrategy());
-
-        // write files
+        // write sampled schedule
         Path samplePath = scheduleSamplingRoot.resolve(operatingMode.getId())
                 .resolve("volume_" + paddedVolume)
                 .resolve("sample_" + paddedSample);
         Files.createDirectories(samplePath);
         Path scheduleFile = samplePath.resolve("schedule.xml.gz");
+        Path vehicleFile = samplePath.resolve("vehicles.xml.gz");
         new TransitScheduleWriter(sample.schedule()).writeFile(scheduleFile.toString());
-        new MatsimVehicleWriter(sample.vehicles()).writeFile(samplePath.resolve("vehicles.xml.gz").toString());
+        new MatsimVehicleWriter(sample.vehicles()).writeFile(vehicleFile.toString());
 
-        this.outputDirectory =
-                simulationRunRoot.resolve(operatingMode.getId()).resolve("volume_" + paddedVolume).resolve(runId);
-
+        // create config
         Path generatedConfigPath = jobConfigRoot.resolve(scenarioId).resolve(runId + ".config.xml");
         Files.createDirectories(generatedConfigPath.getParent());
-
-        // create Config
         Config jobConfig = ConfigUtils.loadConfig(templateConfigPath.toString());
         jobConfig.controller().setRunId(runId);
         jobConfig.controller().setOutputDirectory(outputDirectory.toString());
@@ -113,7 +98,7 @@ public class RailsimSimulationJob implements Runnable {
 
         Path configParent = generatedConfigPath.getParent();
         jobConfig.transit().setTransitScheduleFile(configParent.relativize(scheduleFile).toString());
-        jobConfig.transit().setVehiclesFile(configParent.relativize(samplePath.resolve("vehicles.xml.gz")).toString());
+        jobConfig.transit().setVehiclesFile(configParent.relativize(vehicleFile).toString());
 
         RailsimConfigHelper.configure(jobConfig);
         ConfigUtils.writeConfig(jobConfig, generatedConfigPath.toString());
@@ -121,29 +106,8 @@ public class RailsimSimulationJob implements Runnable {
         return generatedConfigPath;
     }
 
-    public Path getOutputMirrorPath(Path path) {
-        Path suffix = getOutputSuffixRelativeTo(path);
-        return path.toAbsolutePath().normalize().resolve(suffix).normalize();
-    }
-
-    /**
-     * Returns the suffix of this job's output directory after the last common ancestor with the given base.
-     * The returned Path is relative (no root) and can be resolved against any target directory.
-     */
-    private Path getOutputSuffixRelativeTo(Path base) {
-        Path baseAbs = base.toAbsolutePath().normalize();
-        Path outAbs = this.outputDirectory.toAbsolutePath().normalize();
-
-        int baseCount = baseAbs.getNameCount();
-        int outCount = outAbs.getNameCount();
-
-        // find common prefix length
-        int common = 0;
-        int max = Math.min(baseCount, outCount);
-        while (common < max && baseAbs.getName(common).equals(outAbs.getName(common))) {
-            common++;
-        }
-
-        return outAbs.subpath(common + 1, outCount);
+    public Path getOutputMirrorPath(Path targetRoot) {
+        Path suffix = simulationRunRoot.relativize(this.outputDirectory);
+        return targetRoot.toAbsolutePath().normalize().resolve(suffix).normalize();
     }
 }

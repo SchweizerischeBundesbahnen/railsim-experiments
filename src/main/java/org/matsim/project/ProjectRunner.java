@@ -6,11 +6,10 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.project.analysis.RunSummaryWriter;
-import org.matsim.project.sampling.SimulationJobGenerator;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.simulation.PostProcessingTaskFactory;
 import org.matsim.project.simulation.RailsimSimulationExecutor;
-import org.matsim.project.simulation.RailsimSimulationJob;
+import org.matsim.project.simulation.RailsimSimulationJobGenerator;
 import org.matsim.project.simulation.RailsimSimulationResult;
 
 import java.io.IOException;
@@ -25,7 +24,6 @@ import java.util.Optional;
 import java.util.Properties;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * Orchestrates the entire simulation project from configuration to final results.
@@ -56,17 +54,13 @@ public class ProjectRunner {
         Map<BuildingBlock, BuildingBlockWorkflow> workflows = createWorkflows();
 
         log.info("Preparing simulation job generators for all building blocks...");
-        List<SimulationJobGenerator> generators = workflows.values().parallelStream().map(workflow -> {
+        List<RailsimSimulationJobGenerator> generators = workflows.values().parallelStream().map(workflow -> {
             try {
                 return workflow.prepareJobGenerator();
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
         }).toList();
-
-        // create the unified lazy Stream
-        int totalExpectedJobs = generators.stream().mapToInt(SimulationJobGenerator::countExpectedJobs).sum();
-        Stream<RailsimSimulationJob> allJobsStream = generators.stream().flatMap(SimulationJobGenerator::stream);
 
         // collect post-processing task factories
         Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories =
@@ -82,7 +76,7 @@ public class ProjectRunner {
         RailsimSimulationExecutor executor = config.getWorkerThreads() == -1 ?
                 new RailsimSimulationExecutor(taskFactories) :
                 new RailsimSimulationExecutor(config.getWorkerThreads(), taskFactories);
-        List<RailsimSimulationResult> allResults = executor.runAll(allJobsStream, totalExpectedJobs);
+        List<RailsimSimulationResult> allResults = executor.runAll(generators);
 
         // write global summary to the root output directory
         new RunSummaryWriter(allResults, config.getAnalysisStartTime(), config.getAnalysisEndTime()).write(

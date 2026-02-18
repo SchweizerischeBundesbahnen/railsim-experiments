@@ -6,7 +6,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.project.analysis.delay.TrainDelayAnalysisFactory;
 import org.matsim.project.analysis.headway.MinimumHeadwayAnalysisFactory;
 import org.matsim.project.analysis.utilization.UtilizationAnalysisFactory;
-import org.matsim.project.sampling.SimulationJobGenerator;
+import org.matsim.project.simulation.RailsimSimulationJobGenerator;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.UseCase;
 import org.matsim.project.scenario.plan.OperationalPlan;
@@ -44,7 +44,7 @@ public class BuildingBlockWorkflow {
      * Prepares all simulation jobs for this building block.
      * This method is thread-safe and is designed to be called in parallel.
      */
-    public SimulationJobGenerator prepareJobGenerator() throws IOException {
+    public RailsimSimulationJobGenerator prepareJobGenerator() throws IOException {
         log.info("Starting job preparation for: {}", buildingBlock.name());
 
         // prepare the file system
@@ -64,7 +64,7 @@ public class BuildingBlockWorkflow {
         Path templateConfigFilePath = ResourceLoader.getPath(buildingBlock.getConfigFilePath());
         OperationalPlan operationalPlan = new OperationalPlanReader().read(operationalPlanPath);
 
-        return new SimulationJobGenerator(config, templateConfigFilePath, scheduleSamplingPath, jobConfigPath,
+        return new RailsimSimulationJobGenerator(config, templateConfigFilePath, scheduleSamplingPath, jobConfigPath,
                 simulationRunOutputPath, templateScenario, buildingBlock, operationalPlan);
     }
 

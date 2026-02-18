@@ -13,7 +13,6 @@ import org.matsim.project.scenario.BuildingBlock;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 @Getter
 @Builder(toBuilder = true)
@@ -50,10 +49,16 @@ public class ProjectConfig {
     @Builder.Default
     private final List<BuildingBlock> buildingBlocks = List.of(BuildingBlock.values());
 
-    // private constructor with validation for the builder
+    @Builder.Default
+    private final boolean cleanupRuns = false;
+
+    @Builder.Default
+    private final Set<String> reconstructRuns = Set.of();
+
     private ProjectConfig(String outputDirectory, boolean overwriteOutput, long seed, int samplesPerSubvariant,
                           int simulationTime, int analysisStartTime, int analysisDuration, int workerThreads,
-                          DepartureSampling departureSampling, List<BuildingBlock> buildingBlocks) {
+                          DepartureSampling departureSampling, List<BuildingBlock> buildingBlocks, boolean cleanupRuns,
+                          Set<String> reconstructRuns) {
 
         if (outputDirectory == null || outputDirectory.isBlank()) {
             throw new IllegalArgumentException("Output directory must be specified.");
@@ -69,6 +74,8 @@ public class ProjectConfig {
         this.departureSampling = departureSampling;
         this.buildingBlocks = buildingBlocks;
         this.overwriteOutput = overwriteOutput;
+        this.cleanupRuns = cleanupRuns;
+        this.reconstructRuns = reconstructRuns != null ? reconstructRuns : Set.of();
 
         validateNoDuplicateBuildingBlocks();
     }
@@ -83,6 +90,11 @@ public class ProjectConfig {
         return analysisStartTime + analysisDuration;
     }
 
+    @JsonIgnore
+    public boolean isReconstructionMode() {
+        return !reconstructRuns.isEmpty();
+    }
+
     private void validateNoDuplicateBuildingBlocks() {
         if (this.buildingBlocks == null || this.buildingBlocks.isEmpty()) {
             return;
@@ -90,15 +102,7 @@ public class ProjectConfig {
 
         Set<BuildingBlock> uniqueBuildingBlocks = new HashSet<>(this.buildingBlocks);
         if (uniqueBuildingBlocks.size() < this.buildingBlocks.size()) {
-            List<String> duplicates = this.buildingBlocks.stream()
-                    .collect(Collectors.groupingBy(bb -> bb, Collectors.counting()))
-                    .entrySet()
-                    .stream()
-                    .filter(entry -> entry.getValue() > 1)
-                    .map(entry -> entry.getKey().name())
-                    .toList();
-            throw new IllegalArgumentException(
-                    "Configuration error: Duplicate building blocks found. Duplicates: " + duplicates);
+            throw new IllegalArgumentException("Configuration error: Duplicate building blocks found.");
         }
     }
 
