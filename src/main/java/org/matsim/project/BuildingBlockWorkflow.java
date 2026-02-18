@@ -82,7 +82,8 @@ public class BuildingBlockWorkflow {
 
         return List.of(new TrainDelayAnalysisFactory(analysisOutputPath),
                 new MinimumHeadwayAnalysisFactory(analysisOutputPath),
-                new UtilizationAnalysisFactory(analysisOutputPath));
+                new UtilizationAnalysisFactory(analysisOutputPath, config.getAnalysisStartTime(),
+                        config.getAnalysisEndTime()));
     }
 
     /**
@@ -92,7 +93,8 @@ public class BuildingBlockWorkflow {
         Path analysisOutputPath = paths.getAndEnsure(ProjectPaths.Folder.ANALYSIS);
         log.info("Writing summary for {} with {} results.", buildingBlock.name(), results.size());
 
-        new RunSummaryWriter(results).write(analysisOutputPath);
+        new RunSummaryWriter(results, config.getAnalysisStartTime(), config.getAnalysisEndTime()).write(
+                analysisOutputPath);
     }
 
     /**

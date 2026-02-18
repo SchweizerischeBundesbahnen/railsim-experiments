@@ -25,6 +25,12 @@ public class RunRailsimScenario implements Callable<Integer> {
     @CommandLine.Option(names = {"-t", "--simulation-time"}, description = "Total simulation time in seconds.", defaultValue = "10800")
     private int simulationTime;
 
+    @CommandLine.Option(names = {"-a", "--analysis-start"}, description = "Start time of the analysis window in seconds (excludes warm-up).", defaultValue = "3600")
+    private int analysisStartTime;
+
+    @CommandLine.Option(names = {"-A", "--analysis-duration"}, description = "Duration of the analysis window in seconds.", defaultValue = "3600")
+    private int analysisDuration;
+
     @CommandLine.Option(names = {"-w", "--worker-threads"}, description = "The number of worker threads in the simulation executor (default is number of cores).", defaultValue = "-1")
     private int workerThreads;
 
@@ -60,6 +66,8 @@ public class RunRailsimScenario implements Callable<Integer> {
                 .buildingBlocks(buildingBlocks)
                 .samplesPerSubvariant(samplesPerSubvariant)
                 .simulationTime(simulationTime)
+                .analysisStartTime(analysisStartTime)
+                .analysisDuration(analysisDuration)
                 .workerThreads(workerThreads)
                 .departureSampling(departureSampling)
                 .build();
@@ -82,6 +90,10 @@ public class RunRailsimScenario implements Callable<Integer> {
                 .append(config.getSamplesPerSubvariant())
                 .append(" -t ")
                 .append(config.getSimulationTime())
+                .append(" -a ")
+                .append(config.getAnalysisStartTime())
+                .append(" -A ")
+                .append(config.getAnalysisDuration())
                 .append(" -w ")
                 .append(config.getWorkerThreads())
                 .append(" -d ")

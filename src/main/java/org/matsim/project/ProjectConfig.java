@@ -36,6 +36,12 @@ public class ProjectConfig {
     private final int simulationTime = 3 * 3600;
 
     @Builder.Default
+    private final int analysisStartTime = 3600;
+
+    @Builder.Default
+    private final int analysisDuration = 3600;
+
+    @Builder.Default
     private final int workerThreads = -1; // -1 means use all available cores
 
     @Builder.Default
@@ -46,8 +52,8 @@ public class ProjectConfig {
 
     // private constructor with validation for the builder
     private ProjectConfig(String outputDirectory, boolean overwriteOutput, long seed, int samplesPerSubvariant,
-                          int simulationTime, int workerThreads, DepartureSampling departureSampling,
-                          List<BuildingBlock> buildingBlocks) {
+                          int simulationTime, int analysisStartTime, int analysisDuration, int workerThreads,
+                          DepartureSampling departureSampling, List<BuildingBlock> buildingBlocks) {
 
         if (outputDirectory == null || outputDirectory.isBlank()) {
             throw new IllegalArgumentException("Output directory must be specified.");
@@ -57,6 +63,8 @@ public class ProjectConfig {
         this.seed = seed;
         this.samplesPerSubvariant = samplesPerSubvariant;
         this.simulationTime = simulationTime;
+        this.analysisStartTime = analysisStartTime;
+        this.analysisDuration = analysisDuration;
         this.workerThreads = workerThreads;
         this.departureSampling = departureSampling;
         this.buildingBlocks = buildingBlocks;
@@ -68,6 +76,11 @@ public class ProjectConfig {
     @JsonIgnore
     public DepartureSamplingStrategy getDepartureSamplingStrategy() {
         return departureSampling.create();
+    }
+
+    @JsonIgnore
+    public int getAnalysisEndTime() {
+        return analysisStartTime + analysisDuration;
     }
 
     private void validateNoDuplicateBuildingBlocks() {
@@ -90,8 +103,7 @@ public class ProjectConfig {
     }
 
     public enum DepartureSampling {
-        RANDOM,
-        HEADWAY;
+        RANDOM, HEADWAY;
 
         public DepartureSamplingStrategy create() {
             return switch (this) {

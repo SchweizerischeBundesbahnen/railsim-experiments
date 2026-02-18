@@ -9,9 +9,11 @@ import java.nio.file.Path;
 @RequiredArgsConstructor
 public class UtilizationAnalysisFactory implements PostProcessingTaskFactory {
     private final Path analysisOutputPath;
+    private final int analysisStartTime;
+    private final int analysisEndTime;
 
     @Override
     public PostProcessingTask<?> create() {
-        return new UtilizationAnalysis(analysisOutputPath);
+        return new UtilizationAnalysis(analysisOutputPath, analysisStartTime, analysisEndTime);
     }
 }

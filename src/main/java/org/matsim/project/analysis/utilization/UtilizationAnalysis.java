@@ -26,6 +26,8 @@ import java.util.List;
 public class UtilizationAnalysis implements PostProcessingTask<UtilizationAnalysis.UtilizationReport> {
 
     private final Path analysisOutputPath;
+    private final int analysisStartTime;
+    private final int analysisEndTime;
 
     @Override
     public Class<UtilizationReport> getResultType() {
@@ -50,13 +52,10 @@ public class UtilizationAnalysis implements PostProcessingTask<UtilizationAnalys
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         new MatsimNetworkReader(scenario.getNetwork()).readFile(networkPath.toString());
 
-        // Define analysis window (Middle hour: 3600s to 7200s)
-        // Note: This matches the "mid_hour" logic in RunSummaryWriter
-        double startTime = 3600;
-        double endTime = 7200;
-
-        log.debug("Processing utilization events for run {}.", config.controller().getRunId());
-        UtilizationEventHandler handler = new UtilizationEventHandler(scenario.getNetwork(), startTime, endTime);
+        log.debug("Processing utilization events for run {} window [{}-{}]", config.controller().getRunId(),
+                analysisStartTime, analysisEndTime);
+        UtilizationEventHandler handler =
+                new UtilizationEventHandler(scenario.getNetwork(), analysisStartTime, analysisEndTime);
 
         EventsManager eventsManager = EventsUtils.createEventsManager();
         eventsManager.addHandler(handler);

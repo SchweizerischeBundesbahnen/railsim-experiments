@@ -13,14 +13,14 @@ import java.util.*;
 public class UtilizationEventHandler implements BasicEventHandler {
 
     private final Set<Id<Link>> monitoredLinks;
-    private final double startTime;
-    private final double endTime;
+    private final int startTime;
+    private final int endTime;
 
     private final Map<Id<Link>, ResourceState> linkStates = new HashMap<>();
     private final Map<Id<Link>, Double> lastStateChangeTime = new HashMap<>();
     private final Map<Id<Link>, Double> exhaustedDurations = new HashMap<>();
 
-    public UtilizationEventHandler(Network network, double startTime, double endTime) {
+    public UtilizationEventHandler(Network network, int startTime, int endTime) {
         this.startTime = startTime;
         this.endTime = endTime;
         this.monitoredLinks = new HashSet<>();
