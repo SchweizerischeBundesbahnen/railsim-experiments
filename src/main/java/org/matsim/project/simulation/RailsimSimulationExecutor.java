@@ -11,6 +11,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/**
+ * Orchestrates the parallel execution of Railsim simulation jobs.
+ * This executor handles the full pipeline: sampling/setup, simulation, and post-processing.
+ */
 @Log4j2
 public class RailsimSimulationExecutor {
 
@@ -32,6 +36,11 @@ public class RailsimSimulationExecutor {
 
     /**
      * Executes jobs lazily as they are provided by the stream.
+     * Sampling, file generation, and simulation are all performed in parallel on worker threads.
+     *
+     * @param jobs      A stream of job metadata (not yet sampled or written to disk).
+     * @param totalJobs The total count of jobs in the stream for progress tracking.
+     * @return A list of results in the order they were provided by the stream.
      */
     public List<RailsimSimulationResult> runAll(Stream<RailsimSimulationJob> jobs, int totalJobs) {
         log.info("Starting simulator for {} jobs (worker threads: {}).", totalJobs, workerThreads);
@@ -61,7 +70,7 @@ public class RailsimSimulationExecutor {
             }
         }, LOG_HEARTBEAT_INTERVAL_MS, LOG_HEARTBEAT_INTERVAL_MS, TimeUnit.MILLISECONDS);
 
-        // consume the stream lazily; each 'map' call triggers the job generation (sampling + file writing)
+        // consume the stream lazily
         List<CompletableFuture<RailsimSimulationResult>> futures = jobs.map(job -> {
             CompletableFuture<RailsimSimulationResult> pipelineFuture =
                     runJobPipelineAsync(job, simulationExecutor, postProcessingExecutor);
@@ -92,47 +101,6 @@ public class RailsimSimulationExecutor {
         printSummary(results);
 
         return results;
-    }
-
-    private void logProgress(int completed, int total, long startTime) {
-        if (completed == 0) {
-            log.info("Progress: 0/{} (0.0%) | No jobs completed yet. Elapsed: {}...", total,
-                    formatDuration(System.currentTimeMillis() - startTime));
-            return;
-        }
-
-        long elapsedTimeMs = System.currentTimeMillis() - startTime;
-        String percentageStr = String.format("%.1f%%", (double) completed / total * 100.0);
-
-        long avgTimePerJobMs = completed > 0 ? elapsedTimeMs / completed : 0;
-        String elapsedTimeStr = formatDuration(elapsedTimeMs);
-        String avgTimeStr = String.format("%.2fs/job", avgTimePerJobMs / 1000.0);
-
-        String etaStr;
-        if (completed < total) {
-            long remainingJobs = total - completed;
-            long estimatedRemainingMs = remainingJobs * avgTimePerJobMs;
-            etaStr = "ETA: " + formatDuration(estimatedRemainingMs);
-        } else {
-            etaStr = "Total time: " + elapsedTimeStr;
-        }
-
-        log.info("Progress: {}/{} ({}) | Elapsed: {} | {} | {}", completed, total, percentageStr, elapsedTimeStr,
-                avgTimeStr, etaStr);
-    }
-
-    private String formatDuration(long millis) {
-        long hours = TimeUnit.MILLISECONDS.toHours(millis);
-        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis) % 60;
-        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60;
-
-        if (hours > 0) {
-            return String.format("%d:%02d:%02dh", hours, minutes, seconds);
-        } else if (minutes > 0) {
-            return String.format("%d:%02dmin", minutes, seconds);
-        } else {
-            return String.format("%ds", seconds);
-        }
     }
 
     private CompletableFuture<RailsimSimulationResult> runJobPipelineAsync(RailsimSimulationJob job,
@@ -168,8 +136,8 @@ public class RailsimSimulationExecutor {
             future = future.thenApplyAsync(result -> {
                 PostProcessingTask<?> task = factory.create();
                 try {
-                    log.debug("Applying post-processing task for result type [{}] to run {}",
-                            task.getResultType().getSimpleName(), result.getRunId());
+                    log.debug("Applying post-processing task [{}] to run {}", task.getResultType().getSimpleName(),
+                            result.getRunId());
                     PostProcessingResult taskResult = task.run(result);
                     addResultUntyped(result, task, taskResult);
 
@@ -191,6 +159,47 @@ public class RailsimSimulationExecutor {
                                                                    PostProcessingTask<T> task,
                                                                    PostProcessingResult taskResult) {
         result.addPostProcessingResult(task.getResultType(), (T) taskResult);
+    }
+
+    private void logProgress(int completed, int total, long startTime) {
+        if (completed == 0) {
+            log.info("Progress: 0/{} (0.0%) | Setup/Simulations in progress. Elapsed: {}...", total,
+                    formatDuration(System.currentTimeMillis() - startTime));
+            return;
+        }
+
+        long elapsedTimeMs = System.currentTimeMillis() - startTime;
+        String percentageStr = String.format("%.1f%%", (double) completed / total * 100.0);
+
+        long avgTimePerJobMs = elapsedTimeMs / completed;
+        String elapsedTimeStr = formatDuration(elapsedTimeMs);
+        String avgTimeStr = String.format("%.2fs/job", avgTimePerJobMs / 1000.0);
+
+        String etaStr;
+        if (completed < total) {
+            long remainingJobs = total - completed;
+            long estimatedRemainingMs = remainingJobs * avgTimePerJobMs;
+            etaStr = "ETA: " + formatDuration(estimatedRemainingMs);
+        } else {
+            etaStr = "Total time: " + elapsedTimeStr;
+        }
+
+        log.info("Progress: {}/{} ({}) | Elapsed: {} | {} | {}", completed, total, percentageStr, elapsedTimeStr,
+                avgTimeStr, etaStr);
+    }
+
+    private String formatDuration(long millis) {
+        long hours = TimeUnit.MILLISECONDS.toHours(millis);
+        long minutes = TimeUnit.MILLISECONDS.toMinutes(millis) % 60;
+        long seconds = TimeUnit.MILLISECONDS.toSeconds(millis) % 60;
+
+        if (hours > 0) {
+            return String.format("%d:%02d:%02dh", hours, minutes, seconds);
+        } else if (minutes > 0) {
+            return String.format("%d:%02dmin", minutes, seconds);
+        } else {
+            return String.format("%ds", seconds);
+        }
     }
 
     private void printSummary(List<RailsimSimulationResult> results) {

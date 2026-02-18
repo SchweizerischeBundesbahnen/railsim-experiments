@@ -56,7 +56,7 @@ public class ProjectRunner {
         Map<BuildingBlock, BuildingBlockWorkflow> workflows = createWorkflows();
 
         log.info("Preparing simulation job generators for all building blocks...");
-        List<SimulationJobGenerator> generators = workflows.values().stream().map(workflow -> {
+        List<SimulationJobGenerator> generators = workflows.values().parallelStream().map(workflow -> {
             try {
                 return workflow.prepareJobGenerator();
             } catch (IOException e) {
