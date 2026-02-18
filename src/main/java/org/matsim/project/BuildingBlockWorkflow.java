@@ -3,7 +3,6 @@ package org.matsim.project;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.project.analysis.RunSummaryWriter;
 import org.matsim.project.analysis.delay.TrainDelayAnalysisFactory;
 import org.matsim.project.analysis.headway.MinimumHeadwayAnalysisFactory;
 import org.matsim.project.analysis.utilization.UtilizationAnalysisFactory;
@@ -14,7 +13,6 @@ import org.matsim.project.scenario.plan.OperationalPlan;
 import org.matsim.project.scenario.plan.OperationalPlanReader;
 import org.matsim.project.simulation.PostProcessingTaskFactory;
 import org.matsim.project.simulation.RailsimSimulationJob;
-import org.matsim.project.simulation.RailsimSimulationResult;
 import org.matsim.project.trainrun.TrainRunCalculator;
 import org.matsim.project.utils.ResourceLoader;
 
@@ -84,17 +82,6 @@ public class BuildingBlockWorkflow {
                 new MinimumHeadwayAnalysisFactory(analysisOutputPath),
                 new UtilizationAnalysisFactory(analysisOutputPath, config.getAnalysisStartTime(),
                         config.getAnalysisEndTime()));
-    }
-
-    /**
-     * Writes the final, aggregated summary report for this block.
-     */
-    public void writeSummary(List<RailsimSimulationResult> results) throws IOException {
-        Path analysisOutputPath = paths.getAndEnsure(ProjectPaths.Folder.ANALYSIS);
-        log.info("Writing summary for {} with {} results.", buildingBlock.name(), results.size());
-
-        new RunSummaryWriter(results, config.getAnalysisStartTime(), config.getAnalysisEndTime()).write(
-                analysisOutputPath);
     }
 
     /**

@@ -5,6 +5,7 @@ import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.project.analysis.RunSummaryWriter;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.simulation.PostProcessingTaskFactory;
 import org.matsim.project.simulation.RailsimSimulationExecutor;
@@ -32,7 +33,7 @@ import java.util.stream.Collectors;
  *     <li>Initializing the environment and workflows.</li>
  *     <li>Delegating parallel job preparation to the appropriate workflows.</li>
  *     <li>Executing all generated simulation jobs in parallel.</li>
- *     <li>Delegating the final parallel summarization of results.</li>
+ *     <li>Writing the final summarization of results.</li>
  * </ol>
  */
 @Log4j2
@@ -67,10 +68,9 @@ public class ProjectRunner {
             return;
         }
 
-        // collect post-processing task factories from all workflows
-        Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories = workflows.entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+        // collect post-processing task factories
+        Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories =
+                workflows.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     try {
                         return entry.getValue().createPostProcessingTaskFactories();
                     } catch (IOException e) {
@@ -79,22 +79,14 @@ public class ProjectRunner {
                 }));
 
         // parallel simulation execution (default is number if cores)
-        RailsimSimulationExecutor executor = config.getWorkerThreads() == -1 ? new RailsimSimulationExecutor(
-                taskFactories) : new RailsimSimulationExecutor(config.getWorkerThreads(), taskFactories);
+        RailsimSimulationExecutor executor = config.getWorkerThreads() == -1 ?
+                new RailsimSimulationExecutor(taskFactories) :
+                new RailsimSimulationExecutor(config.getWorkerThreads(), taskFactories);
         List<RailsimSimulationResult> allResults = executor.runAll(allJobs);
 
-        // write summary per building block
-        log.info("Writing summary reports for all building blocks in parallel...");
-        Map<BuildingBlock, List<RailsimSimulationResult>> resultsByBlock = allResults.stream()
-                .collect(Collectors.groupingBy(result -> result.getJob().getBuildingBlock()));
-
-        resultsByBlock.entrySet().parallelStream().forEach(entry -> {
-            try {
-                workflows.get(entry.getKey()).writeSummary(entry.getValue());
-            } catch (IOException e) {
-                log.error("Failed to write summary for building block {}", entry.getKey(), e);
-            }
-        });
+        // write global summary to the root output directory
+        new RunSummaryWriter(allResults, config.getAnalysisStartTime(), config.getAnalysisEndTime()).write(
+                Path.of(config.getOutputDirectory()));
 
         long duration = (System.currentTimeMillis() - startTime) / 1000;
         log.info("==========================================================================");
@@ -138,8 +130,8 @@ public class ProjectRunner {
             }
         }
 
-        String implementationVersion = Optional.ofNullable(ProjectRunner.class.getPackage().getImplementationVersion())
-                .orElse("dev-snapshot");
+        String implementationVersion =
+                Optional.ofNullable(ProjectRunner.class.getPackage().getImplementationVersion()).orElse("dev-snapshot");
         RunInfo runInfo = RunInfo.builder()
                 .executionTimestamp(Instant.now().toString())
                 .executedBy(System.getProperty("user.name"))

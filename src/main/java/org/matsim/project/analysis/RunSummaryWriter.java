@@ -25,7 +25,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RunSummaryWriter {
 
-    private static final String SUMMARY_CSV = "summary_runs.csv";
+    private static final String SUMMARY_CSV = "output_run_summary.csv";
     private static final List<Column> COLUMNS = List.of(Column.values());
     private static final String HEADER_ROW = COLUMNS.stream().map(c -> c.header).collect(Collectors.joining(","));
 
@@ -35,7 +35,7 @@ public class RunSummaryWriter {
 
     public void write(Path outputDirectory) throws IOException {
         Path summaryPath = outputDirectory.resolve(SUMMARY_CSV);
-        log.debug("Aggregating {} results into summary at {}", results.size(), summaryPath);
+        log.info("Aggregating {} results into global summary at {}", results.size(), summaryPath);
 
         // calculate all metrics and sort
         List<AnalyzedRun> analyzedRuns = results.stream()
@@ -97,17 +97,18 @@ public class RunSummaryWriter {
 
     private Comparator<AnalyzedRun> comparator() {
         return Comparator
+                // use case
+                .comparing((AnalyzedRun ar) -> ar.result.getJob().getBuildingBlock().getUseCase().name())
+                // building block
+                .thenComparing((AnalyzedRun ar) -> ar.result.getJob().getBuildingBlock().name())
                 // operating mode
-                .comparing((AnalyzedRun ar) -> ar.result.getJob().getOperatingMode().getId())
+                .thenComparing((AnalyzedRun ar) -> ar.result.getJob().getOperatingMode().getId())
                 // train volume
                 .thenComparingInt(ar -> ar.result.getJob().getTrainVolume())
                 // trains stuck
                 .thenComparingInt(ar -> ar.metrics.trainsStuck)
                 // window delay
-                .thenComparingDouble(ar -> ar.metrics.windowDelay)
-                // violations
-                .thenComparingDouble(ar -> ar.metrics.totalTailViolations)
-                .thenComparingDouble(ar -> ar.metrics.totalHeadViolations);
+                .thenComparingDouble(ar -> ar.metrics.windowDelay);
     }
 
     private double sumDestinationDelays(TrainDelayAnalysis.DelayReport report, int from, int to) {
@@ -165,6 +166,8 @@ public class RunSummaryWriter {
 
     @RequiredArgsConstructor
     private enum Column {
+        USE_CASE("use_case", ar -> ar.result().getJob().getBuildingBlock().getUseCase().name()),
+        BUILDING_BLOCK("building_block", ar -> ar.result().getJob().getBuildingBlock().name()),
         RUN_ID("run_id", ar -> ar.result().getJob().getRunId()),
         OPERATING_MODE_ID("operating_mode", ar -> ar.result().getJob().getOperatingMode().getId()),
         PRODUCT_MIX("product_mix", ar -> ar.result().getJob().getOperatingMode().getProductMix().getId()),
