@@ -5,6 +5,8 @@ import lombok.extern.log4j.Log4j2;
 import org.matsim.project.analysis.delay.TrainDelayAnalysis;
 import org.matsim.project.analysis.headway.HeadwayInfo;
 import org.matsim.project.analysis.headway.MinimumHeadwayAnalysis;
+import org.matsim.project.analysis.utilization.UtilizationAnalysis;
+import org.matsim.project.analysis.utilization.UtilizationInfo;
 import org.matsim.project.simulation.RailsimSimulationResult;
 
 import java.io.BufferedWriter;
@@ -58,6 +60,26 @@ public class RunSummaryWriter {
         return report.detailedData().stream().mapToDouble(HeadwayInfo::getViolationHeadToHead).sum();
     }
 
+    private static double calculateAggregateUtilization(UtilizationAnalysis.UtilizationReport report) {
+        if (report == null || report.detailedData().isEmpty()) {
+            return 0.0;
+        }
+
+        double totalExhausted = 0.0;
+        double totalObservation = 0.0;
+
+        for (UtilizationInfo info : report.detailedData()) {
+            totalExhausted += info.getExhaustedTime();
+            totalObservation += info.getObservationTime();
+        }
+
+        if (totalObservation == 0.0) {
+            return 0.0;
+        }
+
+        return totalExhausted / totalObservation;
+    }
+
     public void write(Path outputDirectory) throws IOException {
         Path summaryPath = outputDirectory.resolve(SUMMARY_CSV);
         log.debug("Aggregating {} results into summary at {}", results.size(), summaryPath);
@@ -71,7 +93,11 @@ public class RunSummaryWriter {
                             result.getPostProcessingResult(TrainDelayAnalysis.DelayReport.class);
                     Optional<MinimumHeadwayAnalysis.HeadwayReport> headwayOpt =
                             result.getPostProcessingResult(MinimumHeadwayAnalysis.HeadwayReport.class);
-                    return new ReportableResult(result, delayOpt.orElse(null), headwayOpt.orElse(null));
+                    Optional<UtilizationAnalysis.UtilizationReport> utilizationOpt =
+                            result.getPostProcessingResult(UtilizationAnalysis.UtilizationReport.class);
+
+                    return new ReportableResult(result, delayOpt.orElse(null), headwayOpt.orElse(null),
+                            utilizationOpt.orElse(null));
                 })
                 // filter out any results where essential reports might be missing
                 .filter(res -> res.delayReport() != null)
@@ -118,12 +144,12 @@ public class RunSummaryWriter {
                 res -> String.format("%.2f", sumDestinationDelays(res.delayReport(), 0, Integer.MAX_VALUE))),
         MID_HOUR_DELAY_AT_DESTINATION("mid_hour_delay_at_destination",
                 res -> String.format("%.2f", sumDestinationDelays(res.delayReport(), 3600, 7200))),
-
+        MID_HOUR_UTILIZATION("mid_hour_utilization",
+                res -> String.format("%.4f", calculateAggregateUtilization(res.utilizationReport()))),
         TOTAL_HEADWAY_VIOLATION_TAIL_TO_HEAD("total_headway_violation_tail_to_head",
                 res -> String.format("%.2f", sumTailToHeadViolations(res.headwayReport()))),
         TOTAL_HEADWAY_VIOLATION_HEAD_TO_HEAD("total_headway_violation_head_to_head",
                 res -> String.format("%.2f", sumHeadToHeadViolations(res.headwayReport()))),
-
         TRAINS_DEPARTED("trains_departed", res -> String.valueOf(res.delayReport().getTrainsDeparted())),
         TRAINS_ARRIVED("trains_arrived", res -> String.valueOf(res.delayReport().getTrainsArrived())),
         TRAINS_STUCK("trains_stuck", res -> String.valueOf(res.delayReport().getTrainsStuck()));
@@ -134,6 +160,7 @@ public class RunSummaryWriter {
 
     // hold all necessary reports for sorting and writing
     private record ReportableResult(RailsimSimulationResult result, TrainDelayAnalysis.DelayReport delayReport,
-                                    MinimumHeadwayAnalysis.HeadwayReport headwayReport) {
+                                    MinimumHeadwayAnalysis.HeadwayReport headwayReport,
+                                    UtilizationAnalysis.UtilizationReport utilizationReport) {
     }
 }

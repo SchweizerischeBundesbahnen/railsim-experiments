@@ -115,6 +115,7 @@
             <attributes>
                 <attribute name="railsimEntry" class="java.lang.Boolean">true</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
+                <attribute name="railsimUtilizationMonitor" class="java.lang.Boolean">true</attribute>
             </attributes>
         </link>
         <link id="f05" from="n07_3" to="n08_3" length="40.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"
@@ -368,6 +369,7 @@
             <attributes>
                 <attribute name="railsimExit" class="java.lang.Boolean">false</attribute>
                 <attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
+                <attribute name="railsimUtilizationMonitor" class="java.lang.Boolean">true</attribute>
             </attributes>
         </link>
         <link id="r17" from="n04_1" to="n03_1" length="500.0" freespeed="44.444" capacity="9999.0" permlanes="1.0"

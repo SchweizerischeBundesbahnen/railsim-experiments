@@ -6,6 +6,7 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.project.analysis.RunSummaryWriter;
 import org.matsim.project.analysis.delay.TrainDelayAnalysisFactory;
 import org.matsim.project.analysis.headway.MinimumHeadwayAnalysisFactory;
+import org.matsim.project.analysis.utilization.UtilizationAnalysisFactory;
 import org.matsim.project.sampling.SimulationJobSampler;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.UseCase;
@@ -65,8 +66,9 @@ public class BuildingBlockWorkflow {
         Path operationalPlanPath = ResourceLoader.getPath(buildingBlock.getUseCase().getOperationalPlanPath());
         Path templateConfigFilePath = ResourceLoader.getPath(buildingBlock.getConfigFilePath());
         OperationalPlan operationalPlan = new OperationalPlanReader().read(operationalPlanPath);
-        SimulationJobSampler sampler = new SimulationJobSampler(config.getSeed(), templateConfigFilePath,
-                templateScenario, buildingBlock, operationalPlan);
+        SimulationJobSampler sampler =
+                new SimulationJobSampler(config.getSeed(), templateConfigFilePath, templateScenario, buildingBlock,
+                        operationalPlan);
 
         return sampler.sample(config.getSamplesPerSubvariant(), config.getSimulationTime(),
                 config.getDepartureSamplingStrategy(), scheduleSamplingPath, jobConfigPath, simulationRunOutputPath);
@@ -79,7 +81,8 @@ public class BuildingBlockWorkflow {
         Path analysisOutputPath = paths.getAndEnsure(ProjectPaths.Folder.ANALYSIS);
 
         return List.of(new TrainDelayAnalysisFactory(analysisOutputPath),
-                new MinimumHeadwayAnalysisFactory(analysisOutputPath));
+                new MinimumHeadwayAnalysisFactory(analysisOutputPath),
+                new UtilizationAnalysisFactory(analysisOutputPath));
     }
 
     /**
