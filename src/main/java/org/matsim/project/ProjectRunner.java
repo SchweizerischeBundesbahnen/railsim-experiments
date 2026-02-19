@@ -82,8 +82,10 @@ public class ProjectRunner {
 
         // write global summary to the root output directory
         new RunSummaryWriter(allResults, config.getAnalysisStartTime(), config.getAnalysisEndTime()).write(
+                config.isReconstructionMode() ? RunSummaryWriter.Type.RECONSTRUCT : RunSummaryWriter.Type.RUN,
                 Path.of(config.getOutputDirectory()));
 
+        // clean empty directories
         if (config.isCleanupRuns()) {
             cleanEmptyDirectories(Path.of(config.getOutputDirectory()));
         }

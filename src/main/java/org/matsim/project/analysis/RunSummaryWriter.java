@@ -25,7 +25,11 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RunSummaryWriter {
 
-    private static final String SUMMARY_CSV = "output_run_summary.csv";
+    public enum Type {
+        RUN, RECONSTRUCT
+    }
+
+    private static final String SUMMARY_CSV = "output_%s_summary.csv";
     private static final List<Column> COLUMNS = List.of(Column.values());
     private static final String HEADER_ROW = COLUMNS.stream().map(c -> c.header).collect(Collectors.joining(","));
 
@@ -33,8 +37,8 @@ public class RunSummaryWriter {
     private final int analysisStartTime;
     private final int analysisEndTime;
 
-    public void write(Path outputDirectory) throws IOException {
-        Path summaryPath = outputDirectory.resolve(SUMMARY_CSV);
+    public void write(Type type, Path outputDirectory) throws IOException {
+        Path summaryPath = outputDirectory.resolve(String.format(SUMMARY_CSV, type.name().toLowerCase()));
         log.info("Aggregating {} results into global summary at {}", results.size(), summaryPath);
 
         // calculate all metrics and sort

@@ -65,7 +65,8 @@ public class RailsimSimulationJob implements Runnable {
         this.scenarioId = scenarioId;
         this.runId = runId;
 
-        this.seed = projectConfig.getSeed() + operatingMode.getId().hashCode() + trainVolume + sampleIndex;
+        this.seed = projectConfig.getSeed() + buildingBlock.hashCode() + operatingMode.getId()
+                .hashCode() + trainVolume + sampleIndex;
         this.configFilePath = projectPaths.getAndEnsure(ProjectPaths.Folder.SIMULATION_JOB_CONFIG)
                 .resolve(operatingMode.getId())
                 .resolve("volume_" + paddedVolume)
