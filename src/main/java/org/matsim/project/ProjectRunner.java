@@ -50,7 +50,9 @@ public class ProjectRunner {
         log.info("Starting project runner with {} building blocks.", config.getBuildingBlocks().size());
 
         // initialization and file system setup
-        prepareOutputDirectory();
+        if (!config.isReconstructionMode()) {
+            prepareOutputDirectory();
+        }
         Map<BuildingBlock, BuildingBlockWorkflow> workflows = createWorkflows();
 
         log.info("Preparing simulation job generators for all building blocks...");

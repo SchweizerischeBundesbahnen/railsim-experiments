@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="reconstruct" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.matsim.project.RunRailsimScenario" />
+    <module name="railsim-experiments" />
+    <option name="PROGRAM_PARAMETERS" value="reconstruct --path results --runs uc0_bb1_express_pass_volume_11_sample_2" />
+    <option name="VM_PARAMETERS" value="-Dmatsim.log.level=ERROR" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
