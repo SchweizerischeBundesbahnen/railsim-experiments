@@ -49,7 +49,6 @@ public class RailsimSimulationJob implements Runnable {
     private Path runOutputFolderPath;
     private Path analysisOutputFolderPath;
 
-
     public RailsimSimulationJob(ProjectConfig projectConfig, ProjectPaths projectPaths, OperationalPlan operationalPlan,
                                 BuildingBlock buildingBlock, Scenario templateScenario, OperatingMode operatingMode,
                                 int trainVolume, String paddedVolume, int sampleIndex, String paddedSampleIndex,
@@ -65,8 +64,8 @@ public class RailsimSimulationJob implements Runnable {
         this.scenarioId = scenarioId;
         this.runId = runId;
 
-        this.seed = projectConfig.getSeed() + buildingBlock.hashCode() + operatingMode.getId()
-                .hashCode() + trainVolume + sampleIndex;
+        this.seed = getSeed(projectConfig, buildingBlock, operatingMode, trainVolume, sampleIndex);
+
         this.configFilePath = projectPaths.getAndEnsure(ProjectPaths.Folder.SIMULATION_JOB_CONFIG)
                 .resolve(operatingMode.getId())
                 .resolve("volume_" + paddedVolume)
@@ -83,6 +82,18 @@ public class RailsimSimulationJob implements Runnable {
                 .resolve(operatingMode.getId())
                 .resolve("volume_" + paddedVolume)
                 .resolve(runId);
+    }
+
+    // prime multiplier chain to avoid addition collisions (e.g. vol 10 + sample 1 != vol 1 + sample 10)
+    private long getSeed(ProjectConfig projectConfig, BuildingBlock buildingBlock, OperatingMode operatingMode,
+                         int trainVolume, int sampleIndex) {
+        long tempSeed = projectConfig.getSeed();
+        tempSeed = 31 * tempSeed + buildingBlock.name().hashCode();
+        tempSeed = 31 * tempSeed + operatingMode.getId().hashCode();
+        tempSeed = 31 * tempSeed + trainVolume;
+        tempSeed = 31 * tempSeed + sampleIndex;
+
+        return tempSeed;
     }
 
     @Override
