@@ -94,7 +94,10 @@ public class RailsimSimulationJob implements Runnable {
             controller.addOverridingModule(new RailsimModule());
             controller.configureQSimComponents(c -> new RailsimQSimModule().configure(c));
             controller.run();
-            RailsimConfigHelper.writeStaticOutputFiles(controller);
+
+            if (!projectConfig.isCleanupRuns()) {
+                RailsimConfigHelper.writeStaticOutputFiles(controller);
+            }
 
         } catch (IOException e) {
             throw new RuntimeException("Failed to prepare or run job: " + runId, e);

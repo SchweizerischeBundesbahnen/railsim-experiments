@@ -30,6 +30,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MinimumHeadwayAnalysis implements PostProcessingTask<MinimumHeadwayAnalysis.HeadwayReport> {
 
+    private final boolean writeCsv;
+
     @Override
     public Class<HeadwayReport> getResultType() {
         return HeadwayReport.class;
@@ -74,9 +76,11 @@ public class MinimumHeadwayAnalysis implements PostProcessingTask<MinimumHeadway
         reader.readFile(eventsFile.toString());
         log.debug("Finished processing headway events for run {}.", config.controller().getRunId());
 
-        // write analysis results to file
         HeadwayReport report = new HeadwayReport(handler.getHeadwayEvents());
-        new MinimumHeadwayWriter(job, report).write(job.getAnalysisOutputFolderPath());
+
+        if (writeCsv) {
+            new MinimumHeadwayWriter(job, report).write(job.getAnalysisOutputFolderPath());
+        }
 
         return report;
     }

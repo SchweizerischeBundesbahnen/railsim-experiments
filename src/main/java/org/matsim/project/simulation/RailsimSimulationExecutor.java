@@ -1,8 +1,11 @@
 package org.matsim.project.simulation;
 
 import lombok.extern.log4j.Log4j2;
+import org.matsim.core.utils.io.IOUtils;
 import org.matsim.project.scenario.BuildingBlock;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
@@ -137,7 +140,17 @@ public class RailsimSimulationExecutor {
     private void cleanup(RailsimSimulationJob job) {
         log.debug("Cleaning up output directory for successful job: {}", job.getRunId());
         try {
-            // TODO: Implement deletion of run outputs
+            List<Path> dirsToDelete = List.of(job.getSampleSchedulePath(), job.getRunOutputFolderPath(),
+                    job.getAnalysisOutputFolderPath());
+
+            for (Path dir : dirsToDelete) {
+                if (Files.exists(dir)) {
+                    IOUtils.deleteDirectoryRecursively(dir);
+                }
+            }
+
+            Files.deleteIfExists(job.getConfigFilePath());
+
         } catch (Exception e) {
             log.error("Failed to clean up output directory for job: {}", job.getRunId(), e);
         }

@@ -6,9 +6,10 @@ import org.matsim.project.simulation.PostProcessingTaskFactory;
 
 @RequiredArgsConstructor
 public class MinimumHeadwayAnalysisFactory implements PostProcessingTaskFactory {
+    private final boolean writeCsv;
 
     @Override
     public PostProcessingTask<?> create() {
-        return new MinimumHeadwayAnalysis();
+        return new MinimumHeadwayAnalysis(writeCsv);
     }
 }

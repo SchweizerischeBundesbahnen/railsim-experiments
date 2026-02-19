@@ -6,11 +6,12 @@ import org.matsim.project.simulation.PostProcessingTaskFactory;
 
 @RequiredArgsConstructor
 public class UtilizationAnalysisFactory implements PostProcessingTaskFactory {
+    private final boolean writeCsv;
     private final int analysisStartTime;
     private final int analysisEndTime;
 
     @Override
     public PostProcessingTask<?> create() {
-        return new UtilizationAnalysis(analysisStartTime, analysisEndTime);
+        return new UtilizationAnalysis(writeCsv, analysisStartTime, analysisEndTime);
     }
 }

@@ -32,6 +32,8 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis.DelayReport> {
 
+    private final boolean writeCsv;
+
     @Override
     public Class<DelayReport> getResultType() {
         return DelayReport.class;
@@ -69,10 +71,12 @@ public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis
         new MatsimEventsReader(eventsManager).readFile(eventsFile.toString());
         log.debug("Finished processing events for run {}.", config.controller().getRunId());
 
-        // write analysis results to file
         DelayReport report = new DelayReport(handler.getStopEvents(), handler.getDepartedTrains().size(),
                 handler.getArrivedTrains().size());
-        new TrainDelayWriter(job, report).write(job.getAnalysisOutputFolderPath());
+
+        if (writeCsv) {
+            new TrainDelayWriter(job, report).write(job.getAnalysisOutputFolderPath());
+        }
 
         return report;
     }

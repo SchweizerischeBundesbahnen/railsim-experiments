@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.NonNull;
 import org.matsim.core.utils.io.IOUtils;
 import org.matsim.project.analysis.RunSummaryWriter;
 import org.matsim.project.scenario.BuildingBlock;
@@ -15,8 +16,7 @@ import org.matsim.project.simulation.RailsimSimulationResult;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -82,6 +82,10 @@ public class ProjectRunner {
         new RunSummaryWriter(allResults, config.getAnalysisStartTime(), config.getAnalysisEndTime()).write(
                 Path.of(config.getOutputDirectory()));
 
+        if (config.isCleanupRuns()) {
+            cleanEmptyDirectories(Path.of(config.getOutputDirectory()));
+        }
+
         long duration = (System.currentTimeMillis() - startTime) / 1000;
         log.info("==========================================================================");
         log.info("PROJECT WORKFLOW FINISHED in {} seconds.", duration);
@@ -143,5 +147,27 @@ public class ProjectRunner {
         ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
         mapper.writeValue(path.toFile(), object);
         log.info("Project configuration saved for reproducibility: {}", path);
+    }
+
+    private void cleanEmptyDirectories(Path root) {
+        log.info("Scanning for and removing empty directories in {}", root);
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult postVisitDirectory(@NonNull Path dir, IOException exc) throws IOException {
+                    if (exc == null && !dir.equals(root)) {
+                        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+                            if (!stream.iterator().hasNext()) {
+                                Files.delete(dir);
+                            }
+                        }
+                    }
+
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            log.warn("Failed to clean up empty directories in {}", root, e);
+        }
     }
 }

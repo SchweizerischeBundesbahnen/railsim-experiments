@@ -66,8 +66,10 @@ public class BuildingBlockWorkflow {
      * Creates the list of post-processing factories that define the analysis pipeline.
      */
     public List<PostProcessingTaskFactory> createPostProcessingTaskFactories() throws IOException {
-        return List.of(new TrainDelayAnalysisFactory(), new MinimumHeadwayAnalysisFactory(),
-                new UtilizationAnalysisFactory(config.getAnalysisStartTime(), config.getAnalysisEndTime()));
+        return List.of(new TrainDelayAnalysisFactory(!config.isCleanupRuns()),
+                new MinimumHeadwayAnalysisFactory(!config.isCleanupRuns()),
+                new UtilizationAnalysisFactory(!config.isCleanupRuns(), config.getAnalysisStartTime(),
+                        config.getAnalysisEndTime()));
     }
 
     /**
