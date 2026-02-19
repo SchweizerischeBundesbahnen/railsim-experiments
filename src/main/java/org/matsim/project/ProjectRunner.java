@@ -2,7 +2,7 @@ package org.matsim.project;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.jspecify.annotations.NonNull;
 import org.matsim.core.utils.io.IOUtils;
@@ -37,22 +37,41 @@ import java.util.stream.Collectors;
  * </ol>
  */
 @Log4j2
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class ProjectRunner {
 
-    private final ProjectConfig config;
+    public static final String OUTPUT_PROJECT_CONFIG_JSON = "output_project_config.json";
+    public static final String OUTPUT_RUN_INFO_JSON = "output_run_info.json";
+
+    private ProjectConfig config;
 
     /**
      * Executes the full project pipeline.
      */
     public void run() throws IOException {
         long startTime = System.currentTimeMillis();
-        log.info("Starting project runner with {} building blocks.", config.getBuildingBlocks().size());
 
-        // initialization and file system setup
-        if (!config.isReconstructionMode()) {
+        if (config.isReconstructionMode()) {
+            // reconstruction mode: read original config and set parameters for consistent reconstruction
+            log.info("Starting project runner for reconstruction of {} runs.", config.getReconstructRuns().size());
+            ProjectConfig originalConfig =
+                    readConfig(Path.of(config.getOutputDirectory()).resolve(OUTPUT_PROJECT_CONFIG_JSON));
+            config = config.toBuilder()
+                    .seed(originalConfig.getSeed())
+                    .samplesPerSubvariant(originalConfig.getSamplesPerSubvariant())
+                    .simulationTime(originalConfig.getSimulationTime())
+                    .analysisStartTime(originalConfig.getAnalysisStartTime())
+                    .analysisDuration(originalConfig.getAnalysisDuration())
+                    .departureSampling(originalConfig.getDepartureSampling())
+                    .buildingBlocks(originalConfig.getBuildingBlocks())
+                    .build();
+
+        } else {
+            // initialization and file system setup
+            log.info("Starting project runner for {} building blocks.", config.getBuildingBlocks().size());
             prepareOutputDirectory();
         }
+
         Map<BuildingBlock, BuildingBlockWorkflow> workflows = createWorkflows();
 
         log.info("Preparing simulation job generators for all building blocks...");
@@ -111,8 +130,8 @@ public class ProjectRunner {
         }
 
         Files.createDirectories(outputDir);
-        createAndSaveRunInfo(outputDir.resolve("output_run_info.json"));
-        saveJson(config, outputDir.resolve("output_project_config.json"));
+        createAndSaveRunInfo(outputDir.resolve(OUTPUT_RUN_INFO_JSON));
+        saveJson(config, outputDir.resolve(OUTPUT_PROJECT_CONFIG_JSON));
     }
 
     private Map<BuildingBlock, BuildingBlockWorkflow> createWorkflows() {
@@ -152,6 +171,14 @@ public class ProjectRunner {
         mapper.writeValue(path.toFile(), object);
         log.info("Project configuration saved for reproducibility: {}", path);
     }
+
+    private ProjectConfig readConfig(Path path) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        ProjectConfig config = mapper.readValue(path.toFile(), ProjectConfig.class);
+        log.info("Project configuration loaded from: {}", path);
+        return config;
+    }
+
 
     private void cleanEmptyDirectories(Path root) {
         log.info("Scanning for and removing empty directories in {}", root);
