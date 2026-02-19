@@ -1,10 +1,13 @@
 package org.matsim.project.analysis;
 
+import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.project.analysis.delay.TrainDelayAnalysis;
 import org.matsim.project.analysis.headway.HeadwayInfo;
 import org.matsim.project.analysis.headway.MinimumHeadwayAnalysis;
+import org.matsim.project.analysis.utilization.UtilizationAnalysis;
+import org.matsim.project.analysis.utilization.UtilizationInfo;
 import org.matsim.project.simulation.RailsimSimulationResult;
 
 import java.io.BufferedWriter;
@@ -15,7 +18,6 @@ import java.nio.file.Path;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -23,20 +25,101 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RunSummaryWriter {
 
-    private static final String SUMMARY_CSV = "summary_runs.csv";
+    public enum Type {
+        RUN, RECONSTRUCT
+    }
+
+    private static final String SUMMARY_CSV = "output_%s_summary.csv";
     private static final List<Column> COLUMNS = List.of(Column.values());
     private static final String HEADER_ROW = COLUMNS.stream().map(c -> c.header).collect(Collectors.joining(","));
 
     private final List<RailsimSimulationResult> results;
+    private final int analysisStartTime;
+    private final int analysisEndTime;
 
-    // calculate the sum of arrival delays for only the final stop of each train run
-    private static double sumDestinationDelays(TrainDelayAnalysis.DelayReport report, int from, int to) {
-        // group all stop events by their vehicle ID to trace individual train runs
+    public void write(Type type, Path outputDirectory) throws IOException {
+        Path summaryPath = outputDirectory.resolve(String.format(SUMMARY_CSV, type.name().toLowerCase()));
+        log.info("Aggregating {} results into global summary at {}", results.size(), summaryPath);
+
+        // calculate all metrics and sort
+        List<AnalyzedRun> analyzedRuns = results.stream()
+                .filter(result -> result.getStatus() == RailsimSimulationResult.Status.SUCCESS)
+                .map(this::analyze)
+                .filter(ar -> ar.metrics != null) // filter out runs where analysis failed
+                .sorted(comparator())
+                .toList();
+
+        // write the data
+        try (BufferedWriter writer = Files.newBufferedWriter(summaryPath)) {
+            writer.write(HEADER_ROW);
+            writer.newLine();
+
+            for (AnalyzedRun run : analyzedRuns) {
+                try {
+                    String row = COLUMNS.stream()
+                            .map(column -> column.valueExtractor.apply(run))
+                            .collect(Collectors.joining(","));
+                    writer.write(row);
+                    writer.newLine();
+                } catch (UncheckedIOException e) {
+                    throw new IOException("Error writing summary line for run " + run.result().getJob().getRunId(), e);
+                }
+            }
+        }
+    }
+
+    /**
+     * Transforms a raw simulation result into an AnalyzedRun containing metrics.
+     */
+    private AnalyzedRun analyze(RailsimSimulationResult result) {
+        TrainDelayAnalysis.DelayReport delayReport =
+                result.getPostProcessingResult(TrainDelayAnalysis.DelayReport.class).orElse(null);
+        MinimumHeadwayAnalysis.HeadwayReport headwayReport =
+                result.getPostProcessingResult(MinimumHeadwayAnalysis.HeadwayReport.class).orElse(null);
+        UtilizationAnalysis.UtilizationReport utilizationReport =
+                result.getPostProcessingResult(UtilizationAnalysis.UtilizationReport.class).orElse(null);
+
+        if (delayReport == null || headwayReport == null || utilizationReport == null) {
+            return new AnalyzedRun(result, null);
+        }
+
+        RunMetrics metrics = RunMetrics.builder()
+                .trainsDeparted(delayReport.getTrainsDeparted())
+                .trainsArrived(delayReport.getTrainsArrived())
+                .trainsStuck(delayReport.getTrainsStuck())
+                .windowUtilization(calculateAggregateUtilization(utilizationReport))
+                .windowDelay(sumDestinationDelays(delayReport, analysisStartTime, analysisEndTime))
+                .totalDelay(sumDestinationDelays(delayReport, 0, Integer.MAX_VALUE))
+                .windowTailViolations(sumTailToHeadViolations(headwayReport, analysisStartTime, analysisEndTime))
+                .windowHeadViolations(sumHeadToHeadViolations(headwayReport, analysisStartTime, analysisEndTime))
+                .totalTailViolations(sumTailToHeadViolations(headwayReport, 0, Integer.MAX_VALUE))
+                .totalHeadViolations(sumHeadToHeadViolations(headwayReport, 0, Integer.MAX_VALUE))
+                .build();
+
+        return new AnalyzedRun(result, metrics);
+    }
+
+    private Comparator<AnalyzedRun> comparator() {
+        return Comparator
+                // use case
+                .comparing((AnalyzedRun ar) -> ar.result.getJob().getBuildingBlock().getUseCase().name())
+                // building block
+                .thenComparing((AnalyzedRun ar) -> ar.result.getJob().getBuildingBlock().name())
+                // operating mode
+                .thenComparing((AnalyzedRun ar) -> ar.result.getJob().getOperatingMode().getId())
+                // train volume
+                .thenComparingInt(ar -> ar.result.getJob().getTrainVolume())
+                // trains stuck
+                .thenComparingInt(ar -> ar.metrics.trainsStuck)
+                // window delay
+                .thenComparingDouble(ar -> ar.metrics.windowDelay);
+    }
+
+    private double sumDestinationDelays(TrainDelayAnalysis.DelayReport report, int from, int to) {
         Map<Object, List<TrainDelayAnalysis.DetailedStopInfo>> trainRuns = report.getDetailedData()
                 .stream()
                 .collect(Collectors.groupingBy(TrainDelayAnalysis.DetailedStopInfo::vehicleId));
 
-        // for each train run, find the last stop and sum its arrival delay
         return trainRuns.values()
                 .stream()
                 .filter(journey -> journey.stream()
@@ -50,90 +133,90 @@ public class RunSummaryWriter {
                 .sum();
     }
 
-    private static double sumTailToHeadViolations(MinimumHeadwayAnalysis.HeadwayReport report) {
-        return report.detailedData().stream().mapToDouble(HeadwayInfo::getViolationTailToHead).sum();
-    }
-
-    private static double sumHeadToHeadViolations(MinimumHeadwayAnalysis.HeadwayReport report) {
-        return report.detailedData().stream().mapToDouble(HeadwayInfo::getViolationHeadToHead).sum();
-    }
-
-    public void write(Path outputDirectory) throws IOException {
-        Path summaryPath = outputDirectory.resolve(SUMMARY_CSV);
-        log.debug("Aggregating {} results into summary at {}", results.size(), summaryPath);
-
-        List<ReportableResult> reportableResults = results.stream()
-                // filter for successful runs
-                .filter(result -> result.getStatus() == RailsimSimulationResult.Status.SUCCESS)
-                // unpack all required reports into the new sortable record
-                .map(result -> {
-                    Optional<TrainDelayAnalysis.DelayReport> delayOpt =
-                            result.getPostProcessingResult(TrainDelayAnalysis.DelayReport.class);
-                    Optional<MinimumHeadwayAnalysis.HeadwayReport> headwayOpt =
-                            result.getPostProcessingResult(MinimumHeadwayAnalysis.HeadwayReport.class);
-                    return new ReportableResult(result, delayOpt.orElse(null), headwayOpt.orElse(null));
-                })
-                // filter out any results where essential reports might be missing
-                .filter(res -> res.delayReport() != null)
-                // multi-level comparator for sorting
-                .sorted(Comparator
-                        // 1. operating mode (alphabetical)
-                        .comparing((ReportableResult res) -> res.result().getJob().getOperatingMode().getId())
-                        // 2. the number of stuck trains (ascending)
-                        .thenComparingInt(res -> res.delayReport().getTrainsStuck())
-                        // 3. total destination delay (ascending)
-                        .thenComparingDouble(res -> sumDestinationDelays(res.delayReport(), 3600, 7200))
-                        .thenComparingDouble(res -> sumTailToHeadViolations(res.headwayReport()))
-                        .thenComparingDouble(res -> sumHeadToHeadViolations(res.headwayReport()))).toList();
-
-        try (BufferedWriter writer = Files.newBufferedWriter(summaryPath)) {
-            // write the header row
-            writer.write(HEADER_ROW);
-            writer.newLine();
-
-            // write the data to the file
-            for (ReportableResult res : reportableResults) {
-                try {
-                    String row = COLUMNS.stream()
-                            .map(column -> column.valueExtractor.apply(res))
-                            .collect(Collectors.joining(","));
-                    writer.write(row);
-                    writer.newLine();
-                } catch (IOException e) {
-                    throw new UncheckedIOException("Error writing summary line for run " + res.result().getRunId(), e);
-                }
-            }
+    private double sumTailToHeadViolations(MinimumHeadwayAnalysis.HeadwayReport report, int from, int to) {
+        if (report == null) {
+            return 0.0;
         }
+        return report.detailedData()
+                .stream()
+                .filter(h -> h.getFollowingVehicleEnterTime() >= from && h.getFollowingVehicleEnterTime() <= to)
+                .mapToDouble(HeadwayInfo::getViolationTailToHead)
+                .sum();
+    }
+
+    private double sumHeadToHeadViolations(MinimumHeadwayAnalysis.HeadwayReport report, int from, int to) {
+        if (report == null) {
+            return 0.0;
+        }
+        return report.detailedData()
+                .stream()
+                .filter(h -> h.getFollowingVehicleEnterTime() >= from && h.getFollowingVehicleEnterTime() <= to)
+                .mapToDouble(HeadwayInfo::getViolationHeadToHead)
+                .sum();
+    }
+
+    private double calculateAggregateUtilization(UtilizationAnalysis.UtilizationReport report) {
+        if (report == null || report.detailedData().isEmpty()) {
+            return 0.0;
+        }
+        double totalExhausted = 0.0;
+        double totalObservation = 0.0;
+        for (UtilizationInfo info : report.detailedData()) {
+            totalExhausted += info.getExhaustedTime();
+            totalObservation += info.getObservationTime();
+        }
+        return totalObservation == 0.0 ? 0.0 : totalExhausted / totalObservation;
     }
 
     @RequiredArgsConstructor
     private enum Column {
-        RUN_ID("run_id", res -> res.result().getJob().getRunId()),
-        OPERATING_MODE_ID("operating_mode", res -> res.result().getJob().getOperatingMode().getId()),
-        PRODUCT_MIX("product_mix", res -> res.result().getJob().getOperatingMode().getProductMix().getId()),
-        FLOW_PATTERN("flow_pattern", res -> res.result().getJob().getOperatingMode().getFlowPattern().getId()),
-        VOLUME("train_volume", res -> String.valueOf(res.result().getJob().getTrainVolume())),
-        SAMPLE("sample_index", res -> String.valueOf(res.result().getJob().getSampleIndex())),
+        USE_CASE("use_case", ar -> ar.result().getJob().getBuildingBlock().getUseCase().name()),
+        BUILDING_BLOCK("building_block", ar -> ar.result().getJob().getBuildingBlock().name()),
+        RUN_ID("run_id", ar -> ar.result().getJob().getRunId()),
+        OPERATING_MODE_ID("operating_mode", ar -> ar.result().getJob().getOperatingMode().getId()),
+        PRODUCT_MIX("product_mix", ar -> ar.result().getJob().getOperatingMode().getProductMix().getId()),
+        FLOW_PATTERN("flow_pattern", ar -> ar.result().getJob().getOperatingMode().getFlowPattern().getId()),
+        VOLUME("train_volume", ar -> String.valueOf(ar.result().getJob().getTrainVolume())),
+        SAMPLE("sample_index", ar -> String.valueOf(ar.result().getJob().getSampleIndex())),
+
+        // --- analysis window metrics ---
+        ANALYSIS_WINDOW_UTILIZATION("analysis_window_utilization",
+                ar -> String.format("%.4f", ar.metrics().windowUtilization())),
+        ANALYSIS_WINDOW_DELAY_AT_DESTINATION("analysis_window_delay_at_destination",
+                ar -> String.format("%.2f", ar.metrics().windowDelay())),
+        ANALYSIS_WINDOW_HEADWAY_VIOLATION_TAIL_TO_HEAD("analysis_window_headway_violation_tail_to_head",
+                ar -> String.format("%.2f", ar.metrics().windowTailViolations())),
+        ANALYSIS_WINDOW_HEADWAY_VIOLATION_HEAD_TO_HEAD("analysis_window_headway_violation_head_to_head",
+                ar -> String.format("%.2f", ar.metrics().windowHeadViolations())),
+
+        // --- total (simulation end) metrics ---
         TOTAL_DELAY_AT_DESTINATION("total_delay_at_destination",
-                res -> String.format("%.2f", sumDestinationDelays(res.delayReport(), 0, Integer.MAX_VALUE))),
-        MID_HOUR_DELAY_AT_DESTINATION("mid_hour_delay_at_destination",
-                res -> String.format("%.2f", sumDestinationDelays(res.delayReport(), 3600, 7200))),
-
+                ar -> String.format("%.2f", ar.metrics().totalDelay())),
         TOTAL_HEADWAY_VIOLATION_TAIL_TO_HEAD("total_headway_violation_tail_to_head",
-                res -> String.format("%.2f", sumTailToHeadViolations(res.headwayReport()))),
+                ar -> String.format("%.2f", ar.metrics().totalTailViolations())),
         TOTAL_HEADWAY_VIOLATION_HEAD_TO_HEAD("total_headway_violation_head_to_head",
-                res -> String.format("%.2f", sumHeadToHeadViolations(res.headwayReport()))),
+                ar -> String.format("%.2f", ar.metrics().totalHeadViolations())),
 
-        TRAINS_DEPARTED("trains_departed", res -> String.valueOf(res.delayReport().getTrainsDeparted())),
-        TRAINS_ARRIVED("trains_arrived", res -> String.valueOf(res.delayReport().getTrainsArrived())),
-        TRAINS_STUCK("trains_stuck", res -> String.valueOf(res.delayReport().getTrainsStuck()));
+        TRAINS_DEPARTED("trains_departed", ar -> String.valueOf(ar.metrics().trainsDeparted())),
+        TRAINS_ARRIVED("trains_arrived", ar -> String.valueOf(ar.metrics().trainsArrived())),
+        TRAINS_STUCK("trains_stuck", ar -> String.valueOf(ar.metrics().trainsStuck()));
 
         private final String header;
-        private final Function<ReportableResult, String> valueExtractor;
+        private final Function<AnalyzedRun, String> valueExtractor;
     }
 
-    // hold all necessary reports for sorting and writing
-    private record ReportableResult(RailsimSimulationResult result, TrainDelayAnalysis.DelayReport delayReport,
-                                    MinimumHeadwayAnalysis.HeadwayReport headwayReport) {
+    /**
+     * Holds the raw result and the computed metrics.
+     */
+    private record AnalyzedRun(RailsimSimulationResult result, RunMetrics metrics) {
+    }
+
+    /**
+     * Pure data holder for double/int values to avoid re-calculation.
+     */
+    @Builder
+    private record RunMetrics(int trainsDeparted, int trainsArrived, int trainsStuck, double windowUtilization,
+                              double windowDelay, double totalDelay, double windowTailViolations,
+                              double windowHeadViolations, double totalTailViolations, double totalHeadViolations) {
     }
 }

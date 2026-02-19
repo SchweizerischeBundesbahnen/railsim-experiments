@@ -8,16 +8,39 @@ import lombok.RequiredArgsConstructor;
 @Getter
 public enum BuildingBlock {
 
+    /**
+     * Use case 0 - Fixed block calibration: 500m fixed block before and after a pseudo-building block element.
+     */
     UC0_BB1(UseCase.UC_0, "/scenarios/use_case_0/building_block_1"),
+
+    /**
+     * Use case 0 - Moving block calibration: 500m moving block before and after a pseudo-building block element.
+     */
     UC0_BB2(UseCase.UC_0, "/scenarios/use_case_0/building_block_2"),
-    UC0_BB3(UseCase.UC_0, "/scenarios/use_case_0/building_block_3"),
-    UC0_BB4(UseCase.UC_0, "/scenarios/use_case_0/building_block_4"),
-    UC0_BB5(UseCase.UC_0, "/scenarios/use_case_0/building_block_5"),
-    UC0_BB6(UseCase.UC_0, "/scenarios/use_case_0/building_block_6"),
+
+    /**
+     * Use case 1 - Station with one platform track.
+     */
     UC1_BB1(UseCase.UC_1, "/scenarios/use_case_1/building_block_1"),
+
+    /**
+     * Use case 1 - Station with two platform tracks.
+     */
     UC1_BB2(UseCase.UC_1, "/scenarios/use_case_1/building_block_2"),
+
+    /**
+     * Use case 1 - Station with three platform tracks.
+     */
     UC1_BB3(UseCase.UC_1, "/scenarios/use_case_1/building_block_3"),
+
+    /**
+     * Use case 2 - Crossing with a flat layout.
+     */
     UC2_BB1(UseCase.UC_2, "/scenarios/use_case_2/building_block_1"),
+
+    /**
+     * Use case 2 - Crossing with a grade-separated layout.
+     */
     UC2_BB2(UseCase.UC_2, "/scenarios/use_case_2/building_block_2");
 
     private final UseCase useCase;

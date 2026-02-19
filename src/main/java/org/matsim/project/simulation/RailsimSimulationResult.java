@@ -2,7 +2,6 @@ package org.matsim.project.simulation;
 
 import lombok.Getter;
 
-import java.nio.file.Path;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -30,17 +29,9 @@ public class RailsimSimulationResult {
     }
 
     public static RailsimSimulationResult failure(RailsimSimulationJob job, Throwable error) {
-        String message = (error != null) ? error.getClass()
-                .getSimpleName() + ": " + error.getMessage() : "Unknown error";
+        String message =
+                (error != null) ? error.getClass().getSimpleName() + ": " + error.getMessage() : "Unknown error";
         return new RailsimSimulationResult(job, Status.FAILURE, message);
-    }
-
-    public String getRunId() {
-        return job.getRunId();
-    }
-
-    public Path getOutputDirectory() {
-        return job.getOutputDirectory();
     }
 
     public <T extends PostProcessingResult> void addPostProcessingResult(Class<T> key, T result) {
@@ -53,7 +44,6 @@ public class RailsimSimulationResult {
     }
 
     public enum Status {
-        SUCCESS,
-        FAILURE
+        SUCCESS, FAILURE
     }
 }

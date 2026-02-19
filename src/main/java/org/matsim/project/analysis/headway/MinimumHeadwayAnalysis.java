@@ -30,7 +30,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class MinimumHeadwayAnalysis implements PostProcessingTask<MinimumHeadwayAnalysis.HeadwayReport> {
 
-    private final Path analysisOutputPath;
+    private final boolean writeCsv;
 
     @Override
     public Class<HeadwayReport> getResultType() {
@@ -47,7 +47,7 @@ public class MinimumHeadwayAnalysis implements PostProcessingTask<MinimumHeadway
         Path schedulePath = configDir.resolve(config.transit().getTransitScheduleFile()).normalize();
         Path vehiclesPath = configDir.resolve(config.transit().getVehiclesFile()).normalize();
         Path networkPath = Path.of(config.network().getInputFile());
-        Path eventsFile = result.getOutputDirectory()
+        Path eventsFile = job.getRunOutputFolderPath()
                 .resolve("ITERS")
                 .resolve("it.0")
                 .resolve(config.controller().getRunId() + ".0.events.xml.gz");
@@ -76,11 +76,11 @@ public class MinimumHeadwayAnalysis implements PostProcessingTask<MinimumHeadway
         reader.readFile(eventsFile.toString());
         log.debug("Finished processing headway events for run {}.", config.controller().getRunId());
 
-        // write analysis results to file
         HeadwayReport report = new HeadwayReport(handler.getHeadwayEvents());
-        Path headwayOutputPath = job.getOutputMirrorPath(analysisOutputPath);
-        Files.createDirectories(headwayOutputPath);
-        new MinimumHeadwayWriter(job, report).write(headwayOutputPath);
+
+        if (writeCsv) {
+            new MinimumHeadwayWriter(job, report).write(job.getAnalysisOutputFolderPath());
+        }
 
         return report;
     }

@@ -1,8 +1,8 @@
 {
   "volumes": {
     "period": 1800,
-    "min": 4,
-    "max": 12,
+    "min": 11,
+    "max": 16,
     "step": 1,
     "bidirectional": false
   },
@@ -10,14 +10,6 @@
     "FV": {
       "description": "Fernverkehr",
       "minHeadway": 120
-    },
-    "RV": {
-      "description": "Regionalverkehr",
-      "minHeadway": 90
-    },
-    "GV": {
-      "description": "Güterverkehr",
-      "minHeadway": 180
     }
   },
   "flows": {
@@ -26,82 +18,31 @@
       "routes": {
         "FV": {
           "forward": "FV_LR"
-        },
-        "RV": {
-          "forward": "RV_LR"
-        },
-        "GV": {
-          "forward": "GV_LR"
         }
       }
     }
   },
   "patterns": {
     "PASS": {
-      "description": "FV direkt; RV hält; GV direkt",
+      "description": "FV direkt",
       "shares": {
         "FV": {
-          "LR": 1.0
-        },
-        "RV": {
-          "LR": 1.0
-        },
-        "GV": {
           "LR": 1.0
         }
       }
     }
   },
   "mixes": {
-    "MAINLINE": {
-      "description": "Kernnetz-Mischverkehr (Ref: Lausanne–Genf, Heitersberg)",
-      "shares": {
-        "FV": 0.4,
-        "RV": 0.4,
-        "GV": 0.2
-      }
-    },
-    "TRANSIT": {
-      "description": "Transit-Korridor Güter/Fernverkehr (Ref: Lugano)",
-      "shares": {
-        "FV": 0.5,
-        "GV": 0.5
-      }
-    },
     "EXPRESS": {
       "description": "Homogener Fernverkehr (Ref: Genf Tiefbahnhof)",
       "shares": {
         "FV": 1.0
       }
-    },
-    "METRO": {
-      "description": "Isolierter S-Bahn-Betrieb (Ref: S-Bahn Zürich)",
-      "shares": {
-        "RV": 1.0
-      }
     }
   },
   "modes": [
     {
-      "mix": "MAINLINE",
-      "patterns": [
-        "PASS"
-      ]
-    },
-    {
-      "mix": "TRANSIT",
-      "patterns": [
-        "PASS"
-      ]
-    },
-    {
       "mix": "EXPRESS",
-      "patterns": [
-        "PASS"
-      ]
-    },
-    {
-      "mix": "METRO",
       "patterns": [
         "PASS"
       ]

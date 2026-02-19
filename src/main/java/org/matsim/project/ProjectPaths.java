@@ -24,19 +24,15 @@ public class ProjectPaths {
         this.buildingBlockDirectory = this.useCaseDirectory.resolve(buildingBlock.name().toLowerCase());
     }
 
-    Path getAndEnsure(Folder folder) throws IOException {
+    public Path getAndEnsure(Folder folder) throws IOException {
         Path path = buildingBlockDirectory.resolve(folder.getDirectory());
         Files.createDirectories(path);
         return path;
     }
 
     @RequiredArgsConstructor
-    enum Folder {
-        TRAIN_RUN_CALCULATION,
-        SCHEDULE_SAMPLING,
-        SIMULATION_JOB_CONFIG,
-        SIMULATION_RUN_OUTPUT,
-        ANALYSIS;
+    public enum Folder {
+        TRAIN_RUN_CALCULATION, SCHEDULE_SAMPLING, SIMULATION_JOB_CONFIG, SIMULATION_RUN_OUTPUT, ANALYSIS;
 
         public String getDirectory() {
             return String.format("%02d", this.ordinal() + 1) + "_" + this.name().toLowerCase();

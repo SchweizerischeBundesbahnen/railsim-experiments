@@ -2,20 +2,21 @@ package org.matsim.project;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.SerializationFeature;
-import lombok.RequiredArgsConstructor;
+import lombok.AllArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.jspecify.annotations.NonNull;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.project.analysis.RunSummaryWriter;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.simulation.PostProcessingTaskFactory;
 import org.matsim.project.simulation.RailsimSimulationExecutor;
-import org.matsim.project.simulation.RailsimSimulationJob;
+import org.matsim.project.simulation.RailsimSimulationJobGenerator;
 import org.matsim.project.simulation.RailsimSimulationResult;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.nio.file.*;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
@@ -32,45 +33,59 @@ import java.util.stream.Collectors;
  *     <li>Initializing the environment and workflows.</li>
  *     <li>Delegating parallel job preparation to the appropriate workflows.</li>
  *     <li>Executing all generated simulation jobs in parallel.</li>
- *     <li>Delegating the final parallel summarization of results.</li>
+ *     <li>Writing the final summarization of results.</li>
  * </ol>
  */
 @Log4j2
-@RequiredArgsConstructor
+@AllArgsConstructor
 public class ProjectRunner {
 
-    private final ProjectConfig config;
+    public static final String OUTPUT_PROJECT_CONFIG_JSON = "output_project_config.json";
+    public static final String OUTPUT_RUN_INFO_JSON = "output_run_info.json";
+
+    private ProjectConfig config;
 
     /**
      * Executes the full project pipeline.
      */
     public void run() throws IOException {
         long startTime = System.currentTimeMillis();
-        log.info("Starting project runner with {} building blocks.", config.getBuildingBlocks().size());
 
-        // initialization and file system setup
-        prepareOutputDirectory();
+        if (config.isReconstructionMode()) {
+            // reconstruction mode: read original config and set parameters for consistent reconstruction
+            log.info("Starting project runner for reconstruction of {} runs.", config.getReconstructRuns().size());
+            ProjectConfig originalConfig =
+                    readConfig(Path.of(config.getOutputDirectory()).resolve(OUTPUT_PROJECT_CONFIG_JSON));
+            config = config.toBuilder()
+                    .seed(originalConfig.getSeed())
+                    .samplesPerSubvariant(originalConfig.getSamplesPerSubvariant())
+                    .simulationTime(originalConfig.getSimulationTime())
+                    .analysisStartTime(originalConfig.getAnalysisStartTime())
+                    .analysisDuration(originalConfig.getAnalysisDuration())
+                    .departureSampling(originalConfig.getDepartureSampling())
+                    .buildingBlocks(originalConfig.getBuildingBlocks())
+                    .build();
+
+        } else {
+            // initialization and file system setup
+            log.info("Starting project runner for {} building blocks.", config.getBuildingBlocks().size());
+            prepareOutputDirectory();
+        }
+
         Map<BuildingBlock, BuildingBlockWorkflow> workflows = createWorkflows();
 
-        // job preparation (the job sampling is already parallel, so do not parallelize here again)
-        log.info("Preparing simulation jobs for all building blocks...");
-        List<RailsimSimulationJob> allJobs = workflows.values().stream().flatMap(workflow -> {
+        log.info("Preparing simulation job generators for all building blocks...");
+        List<RailsimSimulationJobGenerator> generators = workflows.values().parallelStream().map(workflow -> {
             try {
-                return workflow.prepareJobs().stream();
+                return workflow.prepareJobGenerator();
             } catch (IOException e) {
-                throw new UncheckedIOException("Failed to prepare jobs for " + workflow.getBuildingBlock(), e);
+                throw new UncheckedIOException(e);
             }
         }).toList();
 
-        if (allJobs.isEmpty()) {
-            log.warn("No simulation jobs were generated. Skipping execution and finishing.");
-            return;
-        }
-
-        // collect post-processing task factories from all workflows
-        Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories = workflows.entrySet()
-                .stream()
-                .collect(Collectors.toMap(Map.Entry::getKey, entry -> {
+        // collect post-processing task factories
+        Map<BuildingBlock, List<PostProcessingTaskFactory>> taskFactories =
+                workflows.entrySet().stream().collect(Collectors.toMap(Map.Entry::getKey, entry -> {
                     try {
                         return entry.getValue().createPostProcessingTaskFactories();
                     } catch (IOException e) {
@@ -79,22 +94,20 @@ public class ProjectRunner {
                 }));
 
         // parallel simulation execution (default is number if cores)
-        RailsimSimulationExecutor executor = config.getWorkerThreads() == -1 ? new RailsimSimulationExecutor(
-                taskFactories) : new RailsimSimulationExecutor(config.getWorkerThreads(), taskFactories);
-        List<RailsimSimulationResult> allResults = executor.runAll(allJobs);
+        RailsimSimulationExecutor executor = config.getWorkerThreads() == -1 ?
+                new RailsimSimulationExecutor(taskFactories) :
+                new RailsimSimulationExecutor(config.getWorkerThreads(), taskFactories);
+        List<RailsimSimulationResult> allResults = executor.runAll(generators);
 
-        // write summary per building block
-        log.info("Writing summary reports for all building blocks in parallel...");
-        Map<BuildingBlock, List<RailsimSimulationResult>> resultsByBlock = allResults.stream()
-                .collect(Collectors.groupingBy(result -> result.getJob().getBuildingBlock()));
+        // write global summary to the root output directory
+        new RunSummaryWriter(allResults, config.getAnalysisStartTime(), config.getAnalysisEndTime()).write(
+                config.isReconstructionMode() ? RunSummaryWriter.Type.RECONSTRUCT : RunSummaryWriter.Type.RUN,
+                Path.of(config.getOutputDirectory()));
 
-        resultsByBlock.entrySet().parallelStream().forEach(entry -> {
-            try {
-                workflows.get(entry.getKey()).writeSummary(entry.getValue());
-            } catch (IOException e) {
-                log.error("Failed to write summary for building block {}", entry.getKey(), e);
-            }
-        });
+        // clean empty directories
+        if (config.isCleanupRuns()) {
+            cleanEmptyDirectories(Path.of(config.getOutputDirectory()));
+        }
 
         long duration = (System.currentTimeMillis() - startTime) / 1000;
         log.info("==========================================================================");
@@ -117,8 +130,8 @@ public class ProjectRunner {
         }
 
         Files.createDirectories(outputDir);
-        createAndSaveRunInfo(outputDir.resolve("output_run_info.json"));
-        saveJson(config, outputDir.resolve("output_project_config.json"));
+        createAndSaveRunInfo(outputDir.resolve(OUTPUT_RUN_INFO_JSON));
+        saveJson(config, outputDir.resolve(OUTPUT_PROJECT_CONFIG_JSON));
     }
 
     private Map<BuildingBlock, BuildingBlockWorkflow> createWorkflows() {
@@ -138,8 +151,8 @@ public class ProjectRunner {
             }
         }
 
-        String implementationVersion = Optional.ofNullable(ProjectRunner.class.getPackage().getImplementationVersion())
-                .orElse("dev-snapshot");
+        String implementationVersion =
+                Optional.ofNullable(ProjectRunner.class.getPackage().getImplementationVersion()).orElse("dev-snapshot");
         RunInfo runInfo = RunInfo.builder()
                 .executionTimestamp(Instant.now().toString())
                 .executedBy(System.getProperty("user.name"))
@@ -157,5 +170,35 @@ public class ProjectRunner {
         ObjectMapper mapper = new ObjectMapper().enable(SerializationFeature.INDENT_OUTPUT);
         mapper.writeValue(path.toFile(), object);
         log.info("Project configuration saved for reproducibility: {}", path);
+    }
+
+    private ProjectConfig readConfig(Path path) throws IOException {
+        ObjectMapper mapper = new ObjectMapper();
+        ProjectConfig config = mapper.readValue(path.toFile(), ProjectConfig.class);
+        log.info("Project configuration loaded from: {}", path);
+        return config;
+    }
+
+
+    private void cleanEmptyDirectories(Path root) {
+        log.info("Scanning for and removing empty directories in {}", root);
+        try {
+            Files.walkFileTree(root, new SimpleFileVisitor<>() {
+                @Override
+                public FileVisitResult postVisitDirectory(@NonNull Path dir, IOException exc) throws IOException {
+                    if (exc == null && !dir.equals(root)) {
+                        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
+                            if (!stream.iterator().hasNext()) {
+                                Files.delete(dir);
+                            }
+                        }
+                    }
+
+                    return FileVisitResult.CONTINUE;
+                }
+            });
+        } catch (IOException e) {
+            log.warn("Failed to clean up empty directories in {}", root, e);
+        }
     }
 }
