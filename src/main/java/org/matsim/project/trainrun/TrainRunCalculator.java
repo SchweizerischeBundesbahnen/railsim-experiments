@@ -41,6 +41,10 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public final class TrainRunCalculator {
 
+    public static final String RUN_ID = "train_run_calculation";
+    public static final String UPDATED_SCHEDULE_FILE = RUN_ID + ".output_transitSchedule_updated.xml.gz";
+    public static final String UPDATED_VEHICLES_FILE = RUN_ID + ".output_transitVehicles.xml.gz";
+
     private final BuildingBlock buildingBlock;
     private final Path outputPath;
 
@@ -91,10 +95,12 @@ public final class TrainRunCalculator {
                 for (int i = 0; i < stopCount; i++) {
                     TransitRouteStop originalStop = stops.get(i);
 
-                    double arrivalOffset = originalStop.getArrivalOffset().isDefined() ? originalStop.getArrivalOffset()
-                            .seconds() : 0.0;
-                    double departureOffset = originalStop.getDepartureOffset()
-                            .isDefined() ? originalStop.getDepartureOffset().seconds() : arrivalOffset;
+                    double arrivalOffset = originalStop.getArrivalOffset().isDefined() ?
+                            originalStop.getArrivalOffset().seconds() :
+                            0.0;
+                    double departureOffset = originalStop.getDepartureOffset().isDefined() ?
+                            originalStop.getDepartureOffset().seconds() :
+                            arrivalOffset;
                     double dwellTime = Math.max(0, departureOffset - arrivalOffset);
 
                     // check minimum stop duration consistency
@@ -145,8 +151,9 @@ public final class TrainRunCalculator {
                 }
 
                 // create new transit route for replacing original
-                TransitRoute updatedRoute = factory.createTransitRoute(originalRoute.getId(), originalRoute.getRoute(),
-                        newStops, originalRoute.getTransportMode());
+                TransitRoute updatedRoute =
+                        factory.createTransitRoute(originalRoute.getId(), originalRoute.getRoute(), newStops,
+                                originalRoute.getTransportMode());
 
                 // remove all vehicles from other departures
                 originalRoute.getDepartures()
@@ -192,10 +199,12 @@ public final class TrainRunCalculator {
                     Id<TransitStopFacility> stopFacilityId = originalStop.getStopFacility().getId();
 
                     // calculate original dwell time
-                    double originalArrivalOffset = originalStop.getArrivalOffset()
-                            .isDefined() ? originalStop.getArrivalOffset().seconds() : 0.0;
-                    double originalDepartureOffset = originalStop.getDepartureOffset()
-                            .isDefined() ? originalStop.getDepartureOffset().seconds() : originalArrivalOffset;
+                    double originalArrivalOffset = originalStop.getArrivalOffset().isDefined() ?
+                            originalStop.getArrivalOffset().seconds() :
+                            0.0;
+                    double originalDepartureOffset = originalStop.getDepartureOffset().isDefined() ?
+                            originalStop.getDepartureOffset().seconds() :
+                            originalArrivalOffset;
                     double dwellTime = originalDepartureOffset - originalArrivalOffset;
 
                     double newArrivalOffset;
@@ -226,8 +235,9 @@ public final class TrainRunCalculator {
                 }
 
                 // create an updated route with the new stops
-                TransitRoute updatedRoute = factory.createTransitRoute(originalRoute.getId(), originalRoute.getRoute(),
-                        newStops, originalRoute.getTransportMode());
+                TransitRoute updatedRoute =
+                        factory.createTransitRoute(originalRoute.getId(), originalRoute.getRoute(), newStops,
+                                originalRoute.getTransportMode());
 
                 // copy all departures from the original route to the updated one
                 for (Departure dep : originalRoute.getDepartures().values()) {
@@ -273,8 +283,7 @@ public final class TrainRunCalculator {
         log.info("Updating transit schedule with calculated travel times...");
         setCalculatedTravelTimes(scenario, arrivalTimes);
 
-        Path recalculatedScheduleFile = outputPath.resolve(
-                config.controller().getRunId() + ".output_transitSchedule_updated.xml.gz");
+        Path recalculatedScheduleFile = outputPath.resolve(UPDATED_SCHEDULE_FILE);
         log.info("Writing updated schedule to {}", recalculatedScheduleFile);
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(recalculatedScheduleFile.toString());
 
@@ -284,7 +293,7 @@ public final class TrainRunCalculator {
     private Config createTrainRunCalculationConfig() throws IOException {
         Config config = ConfigUtils.loadConfig(ResourceLoader.getPath(buildingBlock.getConfigFilePath()).toString());
         config.controller().setOutputDirectory(outputPath.toString());
-        config.controller().setRunId("train_run_calculation");
+        config.controller().setRunId(RUN_ID);
 
         // overwrite relative paths from the config file with absolute paths to the extracted resources
         config.network().setInputFile(ResourceLoader.getPath(buildingBlock.getNetworkFilePath()).toString());

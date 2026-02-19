@@ -3,6 +3,9 @@ package org.matsim.project;
 import lombok.Getter;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.project.analysis.delay.TrainDelayAnalysisFactory;
 import org.matsim.project.analysis.headway.MinimumHeadwayAnalysisFactory;
 import org.matsim.project.analysis.utilization.UtilizationAnalysisFactory;
@@ -23,8 +26,6 @@ import java.util.List;
 
 /**
  * Encapsulates the entire end-to-end process for a single {@link BuildingBlock}.
- * This class is responsible for the detailed steps of job preparation and result
- * finalization for its assigned block.
  */
 @Log4j2
 @Getter
@@ -41,19 +42,24 @@ public class BuildingBlockWorkflow {
     }
 
     /**
-     * Prepares all simulation jobs for this building block.
-     * This method is thread-safe and is designed to be called in parallel.
+     * Prepares all simulation job generators for this building block.
      */
     public RailsimSimulationJobGenerator prepareJobGenerator() throws IOException {
         log.info("Starting job preparation for: {}", buildingBlock.name());
 
-        // prepare the file system
-        ensureUseCaseResourcesAreCopied();
-        Files.createDirectories(paths.getBuildingBlockDirectory());
-
-        // calculate base train run times to get a template scenario
         Path trainRunCalcPath = paths.getAndEnsure(ProjectPaths.Folder.TRAIN_RUN_CALCULATION);
-        Scenario templateScenario = new TrainRunCalculator(buildingBlock, trainRunCalcPath).run();
+        Scenario templateScenario;
+        if (config.isReconstructionMode()) {
+            // load existing train run calculation results to reconstruct the scenario
+            templateScenario = loadExistingTemplateScenario(trainRunCalcPath);
+        } else {
+            // prepare the file system
+            ensureUseCaseResourcesAreCopied();
+            Files.createDirectories(paths.getBuildingBlockDirectory());
+
+            // calculate base train run times to get a template scenario
+            templateScenario = new TrainRunCalculator(buildingBlock, trainRunCalcPath).run();
+        }
 
         // load operational plan and sample schedules and generate simulation job generators
         Path operationalPlanPath = ResourceLoader.getPath(buildingBlock.getUseCase().getOperationalPlanPath());
@@ -62,9 +68,6 @@ public class BuildingBlockWorkflow {
         return new RailsimSimulationJobGenerator(config, paths, operationalPlan, buildingBlock, templateScenario);
     }
 
-    /**
-     * Creates the list of post-processing factories that define the analysis pipeline.
-     */
     public List<PostProcessingTaskFactory> createPostProcessingTaskFactories() throws IOException {
         return List.of(new TrainDelayAnalysisFactory(!config.isCleanupRuns()),
                 new MinimumHeadwayAnalysisFactory(!config.isCleanupRuns()),
@@ -92,5 +95,22 @@ public class BuildingBlockWorkflow {
                 log.info("Copied operational plan for {} to {}", useCase, destDir);
             }
         }
+    }
+
+    /**
+     * Loads the infrastructure (network/vehicles) from the building block resources
+     * and uses the schedule with the already calculated train run.
+     */
+    private Scenario loadExistingTemplateScenario(Path scheduleFolderPath) throws IOException {
+        Config matsimConfig = ConfigUtils.createConfig();
+
+        matsimConfig.network().setInputFile(ResourceLoader.getPath(buildingBlock.getNetworkFilePath()).toString());
+        matsimConfig.transit()
+                .setTransitScheduleFile(
+                        scheduleFolderPath.resolve(TrainRunCalculator.UPDATED_SCHEDULE_FILE).toString());
+        matsimConfig.transit()
+                .setVehiclesFile(scheduleFolderPath.resolve(TrainRunCalculator.UPDATED_VEHICLES_FILE).toString());
+
+        return ScenarioUtils.loadScenario(matsimConfig);
     }
 }
