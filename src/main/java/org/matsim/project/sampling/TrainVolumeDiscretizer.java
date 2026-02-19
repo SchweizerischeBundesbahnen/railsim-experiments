@@ -44,10 +44,14 @@ public class TrainVolumeDiscretizer {
         Map<Product, Double> mixShares = mode.getProductMix().getShares();
         Map<Product, Map<TrafficFlow, Double>> patternShares = mode.getFlowPattern().getShares();
 
+        // sort Products by ID to ensure deterministic iteration order
+        List<Product> sortedProducts = new ArrayList<>(mixShares.keySet());
+        sortedProducts.sort(Comparator.comparing(Product::getId));
+
         // calculate fractional targets
-        for (Map.Entry<Product, Double> productEntry : mixShares.entrySet()) {
-            Product product = productEntry.getKey();
-            double productVolumeBudget = totalTrains * productEntry.getValue();
+        for (Product product : sortedProducts) {
+            double share = mixShares.get(product);
+            double productVolumeBudget = totalTrains * share;
 
             Map<TrafficFlow, Double> flows = patternShares.get(product);
 
@@ -57,8 +61,12 @@ public class TrainVolumeDiscretizer {
                                 product.getId(), mode.getProductMix().getId(), mode.getFlowPattern().getId()));
             }
 
-            for (Map.Entry<TrafficFlow, Double> flowEntry : flows.entrySet()) {
-                TrafficFlow flow = flowEntry.getKey();
+            // sort flows by ID to ensure deterministic iteration order
+            List<TrafficFlow> sortedFlows = new ArrayList<>(flows.keySet());
+            sortedFlows.sort(Comparator.comparing(TrafficFlow::getId));
+
+            for (TrafficFlow flow : sortedFlows) {
+                double flowShare = flows.get(flow);
                 RouteMapping mapping = flow.getRoutes().get(product);
 
                 if (mapping == null) {
@@ -67,7 +75,7 @@ public class TrainVolumeDiscretizer {
                                     flow.getId(), product.getId()));
                 }
 
-                double fractionalTarget = productVolumeBudget * flowEntry.getValue();
+                double fractionalTarget = productVolumeBudget * flowShare;
                 candidates.add(new Candidate(product, mapping, fractionalTarget));
             }
         }
@@ -98,6 +106,7 @@ public class TrainVolumeDiscretizer {
             lotteryPool.remove(winner);
         }
 
+        // the candidates list was built in a sorted order, so the output list is also sorted
         return candidates.stream()
                 .filter(c -> c.allocated > 0)
                 .map(c -> new TrainVolume(c.product, c.routeMapping, c.allocated))
