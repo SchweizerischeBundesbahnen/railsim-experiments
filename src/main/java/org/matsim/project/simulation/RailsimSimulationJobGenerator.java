@@ -3,12 +3,14 @@ package org.matsim.project.simulation;
 import lombok.extern.log4j.Log4j2;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.project.ProjectConfig;
+import org.matsim.project.ProjectPaths;
 import org.matsim.project.scenario.BuildingBlock;
 import org.matsim.project.scenario.plan.OperatingMode;
 import org.matsim.project.scenario.plan.OperationalPlan;
 import org.matsim.project.scenario.plan.TrainVolumes;
 
-import java.nio.file.Path;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -19,36 +21,30 @@ import java.util.stream.Stream;
 public class RailsimSimulationJobGenerator {
 
     private final ProjectConfig projectConfig;
-    private final Path templateConfigFileInputPath;
-    private final Path scheduleSamplingOutputFolderPath;
-    private final Path jobConfigOutputFolderPath;
-    private final Path simulationRunOutputFolderPath;
-    private final Scenario templateScenario;
-    private final BuildingBlock buildingBlock;
+    private final ProjectPaths projectPaths;
     private final OperationalPlan operationalPlan;
+    private final BuildingBlock buildingBlock;
+    private final Scenario templateScenario;
 
     private final String volumeFormat;
     private final String sampleFormat;
-    private final int trainVolumePeriod;
 
-    public RailsimSimulationJobGenerator(ProjectConfig projectConfig, Path templateConfigFileInputPath,
-                                         Path scheduleSamplingOutputFolderPath, Path jobConfigOutputFolderPath,
-                                         Path simulationRunOutputFolderPath, Scenario templateScenario,
-                                         BuildingBlock buildingBlock, OperationalPlan operationalPlan) {
+    public RailsimSimulationJobGenerator(ProjectConfig projectConfig, ProjectPaths projectPaths,
+                                         OperationalPlan operationalPlan, BuildingBlock buildingBlock,
+                                         Scenario templateScenario) {
         this.projectConfig = projectConfig;
-        this.templateConfigFileInputPath = templateConfigFileInputPath;
-        this.scheduleSamplingOutputFolderPath = scheduleSamplingOutputFolderPath;
-        this.jobConfigOutputFolderPath = jobConfigOutputFolderPath;
-        this.simulationRunOutputFolderPath = simulationRunOutputFolderPath;
-        this.templateScenario = templateScenario;
-        this.buildingBlock = buildingBlock;
+        this.projectPaths = projectPaths;
         this.operationalPlan = operationalPlan;
+        this.buildingBlock = buildingBlock;
+        this.templateScenario = templateScenario;
 
-        TrainVolumes volumesConfig = operationalPlan.getTrainVolumes();
-        this.trainVolumePeriod = volumesConfig.getPeriod();
-        this.volumeFormat = "%0" + Integer.toString(Math.max(1, volumesConfig.getMax())).length() + "d";
-        this.sampleFormat =
-                "%0" + Integer.toString(Math.max(1, projectConfig.getSamplesPerSubvariant())).length() + "d";
+        this.volumeFormat = getZeroPaddedFormat(operationalPlan.getTrainVolumes().getMax());
+        this.sampleFormat = getZeroPaddedFormat(projectConfig.getSamplesPerSubvariant());
+    }
+
+    private String getZeroPaddedFormat(int maxValue) {
+        int digits = Integer.toString(Math.max(1, maxValue)).length();
+        return "%0" + digits + "d";
     }
 
     public long count() {
@@ -65,22 +61,26 @@ public class RailsimSimulationJobGenerator {
         return operationalPlan.getOperatingModes()
                 .stream()
                 .flatMap(mode -> streamVolumeRange(trainVolumes).flatMap(
-                        volume -> createJobsForModeAndVolume(mode, volume, sampleSize,
-                                trainVolumes.isBidirectional())));
+                        volume -> createJobsForModeAndVolume(mode, volume, sampleSize)));
     }
 
     private Stream<Integer> streamVolumeRange(TrainVolumes config) {
         return IntStream.iterate(config.getMin(), v -> v <= config.getMax(), v -> v + config.getStep()).boxed();
     }
 
-    private Stream<RailsimSimulationJob> createJobsForModeAndVolume(OperatingMode mode, int volume, int sampleSize,
-                                                                    boolean bidirectional) {
+    private Stream<RailsimSimulationJob> createJobsForModeAndVolume(OperatingMode mode, int volume, int sampleSize) {
         String paddedVolume = String.format(volumeFormat, volume);
         String scenarioId = formatScenarioId(mode.getId(), paddedVolume);
 
         return IntStream.rangeClosed(1, sampleSize)
                 .filter(sampleIdx -> isRunRequired(scenarioId, sampleIdx))
-                .mapToObj(sampleIdx -> buildJob(mode, volume, paddedVolume, scenarioId, sampleIdx, bidirectional));
+                .mapToObj(sampleIdx -> {
+                    try {
+                        return buildJob(mode, volume, paddedVolume, scenarioId, sampleIdx);
+                    } catch (IOException e) {
+                        throw new UncheckedIOException(e);
+                    }
+                });
     }
 
     private boolean isRunRequired(String scenarioId, int sampleIdx) {
@@ -93,19 +93,13 @@ public class RailsimSimulationJobGenerator {
     }
 
     private RailsimSimulationJob buildJob(OperatingMode mode, int volume, String paddedVolume, String scenarioId,
-                                          int sampleIdx, boolean bidirectional) {
+                                          int sampleIdx) throws IOException {
 
-        String paddedSample = String.format(sampleFormat, sampleIdx);
-        String runId = formatRunId(scenarioId, paddedSample);
-        long taskSeed = projectConfig.getSeed() + mode.getId().hashCode() + volume + sampleIdx;
+        String paddedSampleIdx = String.format(sampleFormat, sampleIdx);
+        String runId = formatRunId(scenarioId, paddedSampleIdx);
 
-        Path outputDir =
-                simulationRunOutputFolderPath.resolve(mode.getId()).resolve("volume_" + paddedVolume).resolve(runId);
-
-        return new RailsimSimulationJob(projectConfig, templateScenario, templateConfigFileInputPath, buildingBlock,
-                mode, volume, sampleIdx, taskSeed, trainVolumePeriod, bidirectional, scheduleSamplingOutputFolderPath,
-                jobConfigOutputFolderPath, simulationRunOutputFolderPath, runId, scenarioId, paddedVolume, paddedSample,
-                outputDir);
+        return new RailsimSimulationJob(projectConfig, projectPaths, operationalPlan, buildingBlock, templateScenario,
+                mode, volume, paddedVolume, sampleIdx, paddedSampleIdx, scenarioId, runId);
     }
 
     private String formatScenarioId(String modeId, String paddedVolume) {

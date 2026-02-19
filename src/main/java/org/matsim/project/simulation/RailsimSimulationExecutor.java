@@ -153,7 +153,7 @@ public class RailsimSimulationExecutor {
                 PostProcessingTask<?> task = factory.create();
                 try {
                     log.debug("Applying post-processing task [{}] to run {}", task.getResultType().getSimpleName(),
-                            result.getRunId());
+                            result.getJob().getRunId());
                     PostProcessingResult taskResult = task.run(result);
                     addResultUntyped(result, task, taskResult);
 
@@ -231,7 +231,7 @@ public class RailsimSimulationExecutor {
 
         results.stream()
                 .filter(r -> r.getStatus() == RailsimSimulationResult.Status.FAILURE)
-                .forEach(result -> log.error("[FAILURE] {}: {}", result.getRunId(), result.getErrorMessage()));
+                .forEach(result -> log.error("[FAILURE] {}: {}", result.getJob().getRunId(), result.getErrorMessage()));
 
         log.info("------------------------------------------------------------");
     }

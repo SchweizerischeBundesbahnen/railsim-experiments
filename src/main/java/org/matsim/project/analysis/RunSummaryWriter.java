@@ -58,7 +58,7 @@ public class RunSummaryWriter {
                     writer.write(row);
                     writer.newLine();
                 } catch (UncheckedIOException e) {
-                    throw new IOException("Error writing summary line for run " + run.result().getRunId(), e);
+                    throw new IOException("Error writing summary line for run " + run.result().getJob().getRunId(), e);
                 }
             }
         }

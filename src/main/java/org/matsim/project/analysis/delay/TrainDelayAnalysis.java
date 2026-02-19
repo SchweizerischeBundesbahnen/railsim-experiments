@@ -32,8 +32,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis.DelayReport> {
 
-    private final Path analysisOutputPath;
-
     @Override
     public Class<DelayReport> getResultType() {
         return DelayReport.class;
@@ -48,7 +46,7 @@ public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis
         Path configDir = job.getConfigFilePath().getParent();
         Path schedulePath = configDir.resolve(config.transit().getTransitScheduleFile()).normalize();
         Path vehiclesPath = configDir.resolve(config.transit().getVehiclesFile()).normalize();
-        Path eventsFile = result.getOutputDirectory()
+        Path eventsFile = job.getRunOutputFolderPath()
                 .resolve("ITERS")
                 .resolve("it.0")
                 .resolve(config.controller().getRunId() + ".0.events.xml.gz");
@@ -74,9 +72,7 @@ public class TrainDelayAnalysis implements PostProcessingTask<TrainDelayAnalysis
         // write analysis results to file
         DelayReport report = new DelayReport(handler.getStopEvents(), handler.getDepartedTrains().size(),
                 handler.getArrivedTrains().size());
-        Path trainDelayOutputPath = job.getOutputMirrorPath(analysisOutputPath);
-        Files.createDirectories(trainDelayOutputPath);
-        new TrainDelayWriter(job, report).write(trainDelayOutputPath);
+        new TrainDelayWriter(job, report).write(job.getAnalysisOutputFolderPath());
 
         return report;
     }

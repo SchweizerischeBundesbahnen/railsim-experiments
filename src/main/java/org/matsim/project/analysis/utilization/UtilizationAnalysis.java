@@ -25,7 +25,6 @@ import java.util.List;
 @RequiredArgsConstructor
 public class UtilizationAnalysis implements PostProcessingTask<UtilizationAnalysis.UtilizationReport> {
 
-    private final Path analysisOutputPath;
     private final int analysisStartTime;
     private final int analysisEndTime;
 
@@ -40,7 +39,7 @@ public class UtilizationAnalysis implements PostProcessingTask<UtilizationAnalys
         Config config = job.getConfig();
 
         Path networkPath = Path.of(config.network().getInputFile());
-        Path eventsFile = result.getOutputDirectory()
+        Path eventsFile = job.getRunOutputFolderPath()
                 .resolve("ITERS")
                 .resolve("it.0")
                 .resolve(config.controller().getRunId() + ".0.events.xml.gz");
@@ -64,9 +63,7 @@ public class UtilizationAnalysis implements PostProcessingTask<UtilizationAnalys
         reader.readFile(eventsFile.toString());
 
         UtilizationReport report = new UtilizationReport(handler.getResults());
-        Path outputPath = job.getOutputMirrorPath(analysisOutputPath);
-        Files.createDirectories(outputPath);
-        new UtilizationWriter(job, report).write(outputPath);
+        new UtilizationWriter(job, report).write(job.getAnalysisOutputFolderPath());
 
         return report;
     }
