@@ -32,7 +32,7 @@ public class RunRailsimScenario {
         @CommandLine.Option(names = {"-b", "--building-blocks"}, description = "Comma-separated building blocks (e.g., UC1_BB1,UC1_BB2), or '*' for all.", defaultValue = "*")
         private String buildingBlocksInput;
 
-        @CommandLine.Option(names = {"-s", "--samples"}, description = "Number of samples per sub-variant", defaultValue = "5")
+        @CommandLine.Option(names = {"-s", "--samples"}, description = "Number of samples per operating mode and building block", defaultValue = "5")
         private int samplesPerSubvariant;
 
         @CommandLine.Option(names = {"-t", "--simulation-time"}, description = "Total simulation time in seconds.", defaultValue = "10800")
