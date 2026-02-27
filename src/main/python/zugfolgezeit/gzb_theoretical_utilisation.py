@@ -27,7 +27,7 @@ def compute_theoretical_utilisation_df(
     The function reproduces the logic from
     ``GZB_ZugfolgeZeit_Auslastung_quick_20260206.ipynb`` and returns a dataframe
     at the granularity requested for pipeline use:
-    ``use_case, building_block, operational_mode, volume``.
+    ``use_case, building_block, operating_mode, volume``.
 
     Parameters
     ----------
@@ -45,7 +45,7 @@ def compute_theoretical_utilisation_df(
     -------
     pd.DataFrame
         Columns:
-        ``use_case, building_block, operational_mode, mix, pattern, volume,
+        ``use_case, building_block, operating_mode, mix, pattern, volume,
         period_s, departures, transit_time_min, stop_time_min, total_time_min,
         utilisation``.
     """
@@ -224,7 +224,7 @@ def compute_theoretical_utilisation_df(
 
                 for pat_name in pat_list:
                     pat_shares = patterns[pat_name]["shares"]
-                    operational_mode = f"{mix_name}:{pat_name}"
+                    operating_mode = f"{mix_name}:{pat_name}"
 
                     for volume in volumes_list:
                         dep_prod = _largest_remainder_allocate(volume, mix_shares)
@@ -251,7 +251,7 @@ def compute_theoretical_utilisation_df(
                             {
                                 "use_case": current_use_case,
                                 "building_block": bb_dir.name,
-                                "operational_mode": operational_mode,
+                                "operating_mode": operating_mode,
                                 "mix": mix_name,
                                 "pattern": pat_name,
                                 "period_s": period_s,
@@ -291,19 +291,18 @@ def compute_theoretical_utilisation_df(
         missing = result[result["_capacity"].isna()]["building_block"].unique().tolist()
         raise KeyError(f"Missing capacity for building blocks: {missing}")
 
-    result["utilisation"] = result["total_time_min"] / (result["_capacity"] * 60.0)
+    result["utilisation_theorical"] = result["total_time_min"] / (result["_capacity"] * 60.0)
     result.drop(columns=["_capacity"], inplace=True)
 
     # Explicit group-level dataframe for pipeline consumption.
-    grouped = (
-        result.groupby(["use_case", "building_block", "operational_mode", "volume"], as_index=False)
-        .agg(
-            departures=("departures", "sum"),
-            transit_time_min=("transit_time_min", "sum"),
-            stop_time_min=("stop_time_min", "sum"),
-            total_time_min=("total_time_min", "sum"),
-            utilisation=("utilisation", "sum"),
-        )
+    grouped = result.groupby(
+        ["use_case", "building_block", "operating_mode", "volume"], as_index=False
+    ).agg(
+        departures=("departures", "sum"),
+        transit_time_min=("transit_time_min", "sum"),
+        stop_time_min=("stop_time_min", "sum"),
+        total_time_min=("total_time_min", "sum"),
+        utilisation_theorical=("utilisation_theorical", "sum"),
     )
 
     return grouped
