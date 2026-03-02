@@ -19,6 +19,9 @@ def compute_theoretical_utilisation_df(
     use_case: str | None = None,
     *,
     capacity_by_building_block: Mapping[str, float],
+    headway_overrides: Mapping[str, Mapping[str, Mapping[str, float]]] | None = None,
+    # e.g. {"uc_2": {"FV": {"LMR": 110.0, "LR": 130.0}, "RV": {"LMR": 85.0}}}
+    # values in seconds
     print_every_s: int = 30,
 ) -> pd.DataFrame:
     """
@@ -185,10 +188,18 @@ def compute_theoretical_utilisation_df(
         vstep = int(volumes.get("step", 1))
 
         products = plan["products"]
-        min_headway_min = {
-            product: float(product_data["minHeadway"]) / 60.0
-            for product, product_data in products.items()
-        }
+        # Base headway per product from JSON (in minutes)
+        min_headway_min: dict[str, dict[str, float]] = {}
+        for product, product_data in products.items():
+            base = float(product_data["minHeadway"]) / 60.0
+            min_headway_min[product] = {"__default__": base}
+            # Apply overrides only for the current use case
+            uc_overrides = (
+                headway_overrides.get(current_use_case, {}) if headway_overrides else {}
+            )
+            if product in uc_overrides:
+                for route, hw_s in uc_overrides[product].items():
+                    min_headway_min[product][route] = float(hw_s) / 60.0
 
         mixes = plan["mixes"]
         patterns = plan["patterns"]
@@ -243,9 +254,19 @@ def compute_theoretical_utilisation_df(
 
                         for prod, ndep in dep_prod.items():
                             departures_total += int(ndep)
-                            transit_total += float(ndep) * float(min_headway_min.get(prod, 0.0))
                             for flow, nflow in dep_prod_flow.get(prod, {}).items():
+                                # Use route-specific headway if available, else fall back to default
+                                hw = min_headway_min.get(prod, {})
+                                headway = hw.get(flow, hw.get("__default__", 0.0))
+                                transit_total += float(nflow) * headway
                                 stop_total += float(nflow) * float(stop_min.get(prod, {}).get(flow, 0.0))
+
+                        # Add headway for products with no flow allocation (dep_prod_flow empty)
+                        for prod, ndep in dep_prod.items():
+                            if not dep_prod_flow.get(prod):
+                                hw = min_headway_min.get(prod, {})
+                                headway = hw.get("__default__", 0.0)
+                                transit_total += float(ndep) * headway
 
                         rows.append(
                             {
