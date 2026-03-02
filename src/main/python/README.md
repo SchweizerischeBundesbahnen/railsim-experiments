@@ -1,150 +1,145 @@
+# RailSim Analysis Pipeline
 
-# Python Analysis – READ ME
+Python analysis pipeline for RailSim simulation outputs.
+Reads a run's output CSV, computes theoretical utilisation and delay quantiles,
+and exports three interactive HTML reports.
 
-# 1. LinkStates Utilisation
+---
 
-This folder contains a lightweight Python analysis pipeline to post-process
-Railsim simulation outputs, with a focus on **LinkStates exhausted utilisation**
-and exploratory visualisation.
+## Quick start
+
+```bash
+cd src/main/python
+
+# 1. Edit the run ID and data paths
+#    → analysis/config.py
+
+# 2. Run the pipeline
+python run_analysis.py
+```
+
+Three HTML reports are written to the `OUTPUT_ROOT` folder:
+
+| Report | Content |
+|--------|---------|
+| `summary_tables.html` | KPI status (green / red) per use case, building block, operating mode and volume |
+| `confusion_matrix.html` | Theoretical utilisation vs delay-based KPIs |
+| `max_volume_tables_q5.html` | Maximum volume satisfying q5 ≤ 5 s per scenario |
 
 ---
 
 ## Folder structure
 
-```text
-python/
-  linkstates/
-    discover.py     # find LinkStates files + extract metadata from folder structure
-    analyse.py      # compute exhausted utilisation per link
-    visualise.py    # helper functions for Plotly visualisations
-  run_linkstates_local.py   # local runner (edit paths + hit Run)
-  notebooks/
-    run_visualisation.ipynb
-````
+```
+src/main/python/
+│
+├── run_analysis.py              ← Entry point: run this to launch the full pipeline
+│
+├── analysis/                    ← All analysis code lives here
+│   ├── config.py                ← Configuration (paths, capacities, thresholds)
+│   ├── pipeline.py              ← Orchestrates the 4 pipeline steps
+│   ├── reports/                 ← HTML report generators
+│   │   ├── summary_tables.py
+│   │   ├── confusion_matrix.py
+│   │   └── max_volume_tables.py
+│   ├── zugfolgezeit/            ← Theoretical utilisation from operational plans
+│   │   └── gzb_theoretical_utilisation.py
+│   └── delay_quantiles/         ← Delay quantile computation from summary CSV
+│       └── gzb_delay_quantiles.py
+│
+├── notebooks/
+│   ├── run_python_analysis_summary_runs.ipynb   ← Interactive pipeline trace
+│   └── archive/                                 ← Superseded / exploratory notebooks
+│
+└── archive/                     ← Archived standalone tools (linkstate analysis)
+```
 
 ---
 
-## What the analysis does
+## Configuration (`analysis/config.py`)
 
-For each `railsimLinkStates.csv(.gz)` file, the analysis:
+All parameters live in one file. The most common edits:
 
-1. Reads LinkStates events
-2. Computes **EXHAUSTED time per link** within a time window
-3. Computes utilisation as:
+```python
+# Which run to analyse
+RUN_ID = "output_20260223_it5_n100"
 
-```text
-utilisation = exhausted_time_s / window_length_s
+# Where the run output folders live (local vs filer)
+FILER = Path(r"/Users/nicolasdulex/devsbb/GZB_analysis")
+# FILER = Path(r"/Volumes/SAM.A13783/04_projects/42_gzb_railsim")
+
+# Normalised track capacity per building block (1 = single track, 2 = double, …)
+CAPACITY_BY_BUILDING_BLOCK = {"uc0_bb1": 1, "uc1_bb2": 2, ...}
+
+# Utilisation thresholds per operating mode (used to colour-code report cells)
+THRESHOLDS_BY_OPERATING_MODE = {"express_pass": 0.70, "metro_balanced": 0.70, ...}
 ```
-
-4. Adds metadata derived from the folder structure:
-
-   * `use_case`
-   * `building_block`
-   * `operating_mode`
-   * `volume`
-   * `sample`
-
-5. Derives an additional column:
-
-```text
-departures = volume * (3600 / period_s)
-```
-
-Where:
-
-* `volume` comes from folder names like `volume_08`
-* `period_s` is read from `operational_plan.json`
-* `departures` expresses trains per hour
 
 ---
 
-## Assumptions (important)
+## Pipeline steps (`analysis/pipeline.py`)
 
-* Folder structure follows:
+```
+[1] compute_theoretical()      Reads operational_plan.json files → df_theorical
+                                Columns: use_case, building_block, operating_mode,
+                                         volume, utilisation_theorical
 
-```text
-<run_root>/
+[2] compute_delay_quantiles()   Reads output_run_summary.csv → df_q
+                                Columns: …, q0, q2, q5, q10, q50, q90, q100,
+                                         utilization_mean, utilization_median
+
+[3] merge_all()                 Inner-joins both datasets on
+                                (use_case, building_block, operating_mode, volume)
+
+[4] export reports              summary_tables.html
+                                confusion_matrix.html
+                                max_volume_tables_q5.html
+```
+
+---
+
+## Notebook
+
+Open [notebooks/run_python_analysis_summary_runs.ipynb](notebooks/run_python_analysis_summary_runs.ipynb)
+to run the same pipeline interactively and explore scatter plots comparing
+theoretical vs actual utilisation.
+
+The notebook imports from the `analysis/` package, so it always stays in sync
+with the CLI.
+
+```python
+# Override the run from inside the notebook without editing config.py:
+run_id = "output_20260224_it5_n1000"
+OUTPUT_ROOT = config.FILER / run_id
+```
+
+---
+
+## Expected output folder structure
+
+```
+<OUTPUT_ROOT>/                          e.g. output_20260223_it5_n100/
+  output_run_summary.csv                ← required for delay quantiles
   <use_case>/
     <building_block>/
+      operational_plan.json             ← required for theoretical utilisation
       04_simulation_run_output/
         <operating_mode>/
           <volume>/
             <sample>/
-              ITERS/it.0/railsimLinkStates.csv.gz
+              ITERS/it.0/
+                railsimLinkStates.csv.gz
+                train_run_calculation.output_transitschedule.xml.gz
 ```
-
-* `volume` folders are named `volume_XX`
-* `period_s` is constant per use_case
-* LinkStates CSV contains at least these columns:
-
-  * `time`
-  * `link`
-  * `vehicle`
-  * `state` (expects `"EXHAUSTED"`)
-
-If any of these assumptions change, the analysis will fail **explicitly**
-instead of producing silent wrong results.
 
 ---
 
-## How to run the analysis (local)
+## Dependencies
 
-### 1. Activate / select the virtual environment
+Managed via the project-local `.venv/`:
 
-The project expects a project-local virtual environment, for example:
-
-```text
-python/.venv/
+```bash
+pip install pandas numpy plotly itables
 ```
 
-In VS Code:
-
-* Select interpreter:
-  `python/.venv/bin/python`
-
-Required packages:
-
-* `pandas`
-* `plotly` (for visualisation)
-
----
-
-### 2. Run the analysis
-
-Edit paths directly in:
-
-```text
-run_linkstates_local.py
-```
-
-Then:
-
-* Open the file
-* Click **Run ▶** in VS Code
-
-This will:
-
-* scan the output tree
-* compute utilisation
-* write a CSV with all results
-
----
-
-## Visualisation
-
-Interactive plots are generated in Jupyter:
-
-```text
-notebooks/linkstates_visualisation.ipynb
-```
-
-Current plots:
-
-* Utilisation vs departures
-* Box + points
-* Filters for:
-
-  * link
-  * building_block
-
-The visualisation reads the CSV produced by the analysis step.
+In VS Code, select the interpreter at `python/.venv/bin/python`.

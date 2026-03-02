@@ -4,7 +4,6 @@ import argparse
 from pathlib import Path
 
 from linkstates.analyse import collect_linkstate_utilisation_from_output_folder
-from linkstates.visualise import plot_utilisation_by_departures, save_plot_html
 
 
 
