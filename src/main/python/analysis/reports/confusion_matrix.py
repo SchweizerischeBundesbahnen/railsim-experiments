@@ -74,8 +74,33 @@ def _confusion_data(df: pd.DataFrame, kpi: dict, threshold: float = 0.7) -> dict
     }
 
 
-def _matrix_html(cm: dict, kpi_label: str, threshold: float = 0.7) -> str:
+def _aggregate_confusion_data(
+    df: pd.DataFrame,
+    kpi: dict,
+    get_threshold,
+) -> dict:
+    """Sum TP/FP/FN/TN across operating modes, each evaluated with its own threshold."""
+    tp = fp = fn = tn = 0
+    for om, grp in df.groupby("operating_mode"):
+        t = get_threshold(om)
+        cm = _confusion_data(grp, kpi, t)
+        tp += cm["tp"]
+        fp += cm["fp"]
+        fn += cm["fn"]
+        tn += cm["tn"]
+    total = tp + fp + fn + tn
+    pct = lambda n: f"{100 * n / total:.1f}%" if total > 0 else "—"
+    return {
+        "tp": tp, "fp": fp, "fn": fn, "tn": tn,
+        "tp_pct": pct(tp), "fp_pct": pct(fp),
+        "fn_pct": pct(fn), "tn_pct": pct(tn),
+        "total": total,
+    }
+
+
+def _matrix_html(cm: dict, kpi_label: str, threshold: float | str = 0.7) -> str:
     """Render one confusion matrix as an HTML snippet."""
+    threshold_label = f"{threshold:.0%}" if isinstance(threshold, float) else str(threshold)
 
     def cell(count, pct, bg, text_color, sublabel):
         return f"""
@@ -93,7 +118,7 @@ def _matrix_html(cm: dict, kpi_label: str, threshold: float = 0.7) -> str:
         <div style="font-size:13px;font-weight:700;color:#334155;">
           vs <span style="color:#6366f1">{kpi_label}</span>
           <span style="font-size:11px;color:#94a3b8;font-weight:400;margin-left:8px;">
-            threshold = {threshold:.0%}
+            threshold = {threshold_label}
           </span>
         </div>
         <button onclick="exportTable(this)"
@@ -178,9 +203,12 @@ def export_confusion_matrix_html(
 
     # Aggregated section per use case
     for uc, uc_df in df.groupby("use_case"):
-        threshold = default_utilisation_threshold
         matrices = "".join(
-            _matrix_html(_confusion_data(uc_df, kpi, threshold), kpi["label"], threshold)
+            _matrix_html(
+                _aggregate_confusion_data(uc_df, kpi, _get_threshold),
+                kpi["label"],
+                "varies",
+            )
             for kpi in KPI_CONFIG
         )
         sections_html.append(

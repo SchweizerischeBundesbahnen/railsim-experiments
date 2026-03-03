@@ -14,11 +14,12 @@ from pathlib import Path
 
 # Base folder that contains the run output directories.
 # Switch to the filer path when working from the network drive.
-FILER = Path(r"/Users/nicolasdulex/devsbb/GZB_analysis")
-# FILER = Path(r"/Volumes/SAM.A13783/04_projects/42_gzb_railsim")
+# FILER = Path(r"/Users/nicolasdulex/devsbb/GZB_analysis")
+FILER = Path(r"/Volumes/SAM.A13783/04_projects/42_gzb_railsim")
 
 # ID of the run to analyse (name of the output sub-folder).
-RUN_ID = "output_20260223_it5_n100"
+# RUN_ID = "output_20260223_it5_n100" # when local
+RUN_ID = "output_20260224_it5_n1000" # when on filer
 
 # Derived paths (no need to edit).
 OUTPUT_ROOT = FILER / RUN_ID
