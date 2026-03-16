@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1200 -400 2400 800" width="100%" height="100%">
+    <style>
+        .track-dark { stroke: #333333; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
+        .track-light { stroke: #AAAAAA; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
+        .platform { stroke: #99CCFF; stroke-width: 20; fill: none; stroke-linecap: butt; }
+    </style>
+
+    <line class="platform" x1="-470" y1="0" x2="0" y2="0"/>
+    <line class="platform" x1="-470" y1="-50" x2="0" y2="-50"/>
+
+    <!-- Outer 500m Fixed Blocks -->
+    <path class="track-light" d="M -1050 0 L -550 0"/>
+    <path class="track-light" d="M 80 0 L 580 0"/>
+
+    <!-- Inner Tracks -->
+    <path class="track-dark" d="M -550 0 L -510 0 L -470 0 L 0 0 L 40 0 L 80 0"/>
+    <path class="track-dark" d="M -510 0 L -470 -50 L 0 -50 L 40 0"/>
+
+    <!-- Directional Triangles (Left to Right / Blue) -->
+    <g transform="translate(-800, 0) rotate(0)">
+        <polygon points="-10,-10 10,0 -10,10" fill="#0000FF"/>
+    </g>
+    <g transform="translate(330, 0) rotate(0)">
+        <polygon points="-10,-10 10,0 -10,10" fill="#0000FF"/>
+    </g>
+</svg>

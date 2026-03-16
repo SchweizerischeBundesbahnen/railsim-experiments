@@ -1,0 +1,47 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1000 -850 2400 800" width="100%" height="100%">
+    <style>
+        .track-dark { stroke: #333333; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
+        .track-light { stroke: #AAAAAA; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
+    </style>
+
+    <!-- LTR Outer Fixed Blocks (Blue Direction) -->
+    <path class="track-light" d="M -860 -275 L -360 -275"/>
+    <path class="track-light" d="M 20 -275 L 520 -275"/>
+    <path class="track-light" d="M -120 -375 L 200 -775"/>
+
+    <!-- RTL Outer Fixed Blocks (Red Direction) -->
+    <path class="track-light" d="M 520 -225 L 20 -225"/>
+    <path class="track-light" d="M -360 -225 L -860 -225"/>
+    <path class="track-light" d="M 280 -775 L -40 -375"/>
+
+    <!-- Inner LTR Tracks (Dark) -->
+    <path class="track-dark"
+          d="M -360 -275 L -240 -275 L -200 -275 L -160 -275 L -120 -275 L -80 -275 L -40 -275 L 20 -275"/>
+    <path class="track-dark" d="M -200 -275 L -160 -325 L -120 -375"/>
+
+    <!-- Inner RTL Tracks (Dark) - Flyunder geometry -->
+    <path class="track-dark" d="M 20 -225 L -160 -225 L -200 -225 L -240 -225 L -280 -225 L -320 -225 L -360 -225"/>
+    <path class="track-dark" d="M -40 -375 L -80 -325 L -200 -175 L -240 -175 L -280 -225"/>
+
+    <!-- LTR Directional Triangles (Blue) -->
+    <g transform="translate(-610, -275) rotate(0)">
+        <polygon points="-10,-10 10,0 -10,10" fill="#0000FF"/>
+    </g>
+    <g transform="translate(270, -275) rotate(0)">
+        <polygon points="-10,-10 10,0 -10,10" fill="#0000FF"/>
+    </g>
+    <g transform="translate(40, -575) rotate(-51.34)">
+        <polygon points="-10,-10 10,0 -10,10" fill="#0000FF"/>
+    </g>
+
+    <!-- RTL Directional Triangles (Red) -->
+    <g transform="translate(270, -225) rotate(180)">
+        <polygon points="-10,-10 10,0 -10,10" fill="#CC0000"/>
+    </g>
+    <g transform="translate(-610, -225) rotate(180)">
+        <polygon points="-10,-10 10,0 -10,10" fill="#CC0000"/>
+    </g>
+    <g transform="translate(120, -575) rotate(128.66)">
+        <polygon points="-10,-10 10,0 -10,10" fill="#CC0000"/>
+    </g>
+</svg>
