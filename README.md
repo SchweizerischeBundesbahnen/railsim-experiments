@@ -28,13 +28,13 @@ This table provides an overview of the available infrastructure layouts.
 
 | Layout                                                                                                                                                             | Use Case         | Building Block                               |
 |:-------------------------------------------------------------------------------------------------------------------------------------------------------------------|:-----------------|:---------------------------------------------|
-| [<img src="src/main/resources/scenarios/use_case_0/building_block_1/model.svg" width="150" />](src/main/resources/scenarios/use_case_0/building_block_1/model.svg) | UC0: Calibration | **BB1**: Fixed Blocks                        |
-| [<img src="src/main/resources/scenarios/use_case_0/building_block_2/model.svg" width="150" />](src/main/resources/scenarios/use_case_0/building_block_2/model.svg) | UC0: Calibration | **BB2**: Moving Blocks                       |
-| [<img src="src/main/resources/scenarios/use_case_1/building_block_1/model.svg" width="150" />](src/main/resources/scenarios/use_case_1/building_block_1/model.svg) | UC1: Station     | **BB1**: 1 Through track + 1 Platform track  |
-| [<img src="src/main/resources/scenarios/use_case_1/building_block_2/model.svg" width="150" />](src/main/resources/scenarios/use_case_1/building_block_2/model.svg) | UC1: Station     | **BB2**: 1 Through track + 2 Platform tracks |
-| [<img src="src/main/resources/scenarios/use_case_1/building_block_3/model.svg" width="150" />](src/main/resources/scenarios/use_case_1/building_block_3/model.svg) | UC1: Station     | **BB3**: 1 Through track + 3 Platform tracks |
-| [<img src="src/main/resources/scenarios/use_case_2/building_block_1/model.svg" width="150" />](src/main/resources/scenarios/use_case_2/building_block_1/model.svg) | UC2: Crossing    | **BB1**: Flat Junction                       |
-| [<img src="src/main/resources/scenarios/use_case_2/building_block_2/model.svg" width="150" />](src/main/resources/scenarios/use_case_2/building_block_2/model.svg) | UC2: Crossing    | **BB2**: Grade Separation                    |
+| [<img src="src/main/resources/scenarios/use_case_0/building_block_1/model.svg" width="300" />](src/main/resources/scenarios/use_case_0/building_block_1/model.svg) | UC0: Calibration | **BB1**: Fixed Blocks                        |
+| [<img src="src/main/resources/scenarios/use_case_0/building_block_2/model.svg" width="300" />](src/main/resources/scenarios/use_case_0/building_block_2/model.svg) | UC0: Calibration | **BB2**: Moving Blocks                       |
+| [<img src="src/main/resources/scenarios/use_case_1/building_block_1/model.svg" width="300" />](src/main/resources/scenarios/use_case_1/building_block_1/model.svg) | UC1: Station     | **BB1**: 1 Through track + 1 Platform track  |
+| [<img src="src/main/resources/scenarios/use_case_1/building_block_2/model.svg" width="300" />](src/main/resources/scenarios/use_case_1/building_block_2/model.svg) | UC1: Station     | **BB2**: 1 Through track + 2 Platform tracks |
+| [<img src="src/main/resources/scenarios/use_case_1/building_block_3/model.svg" width="300" />](src/main/resources/scenarios/use_case_1/building_block_3/model.svg) | UC1: Station     | **BB3**: 1 Through track + 3 Platform tracks |
+| [<img src="src/main/resources/scenarios/use_case_2/building_block_1/model.svg" width="300" />](src/main/resources/scenarios/use_case_2/building_block_1/model.svg) | UC2: Crossing    | **BB1**: Flat Junction                       |
+| [<img src="src/main/resources/scenarios/use_case_2/building_block_2/model.svg" width="300" />](src/main/resources/scenarios/use_case_2/building_block_2/model.svg) | UC2: Crossing    | **BB2**: Grade Separation                    |
 
 ## Simulation Pipeline
 
