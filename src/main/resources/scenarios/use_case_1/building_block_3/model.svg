@@ -2,24 +2,33 @@
     <style>
         .track-dark { stroke: #000000; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
         .track-light { stroke: #888888; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
-        .platform { stroke: #99CCFF; stroke-width: 20; fill: none; stroke-linecap: butt; }
+        .platform { stroke: #99CCFF; stroke-width: 12; fill: none; stroke-linecap: butt; }
     </style>
 
-    <line class="platform" x1="-470" y1="0" x2="0" y2="0" />
-    <line class="platform" x1="-470" y1="-50" x2="0" y2="-50" />
-    <line class="platform" x1="-470" y1="-100" x2="0" y2="-100" />
+    <line class="platform" x1="-470" y1="0" x2="0" y2="0"/>
+    <line class="platform" x1="-470" y1="-50" x2="0" y2="-50"/>
+    <line class="platform" x1="-470" y1="-100" x2="0" y2="-100"/>
 
     <!-- Outer 500m Blocks (Grey) -->
-    <path class="track-light" d="M -1130 0 L -630 0" />
-    <path class="track-light" d="M 160 0 L 660 0" />
+    <path class="track-light" d="M -1130 0 L -630 0"/>
+    <path class="track-light" d="M 160 0 L 660 0"/>
 
     <!-- Inner Tracks (Black) -->
-    <path class="track-dark" d="M -630 0 L -590 0 L -550 0 L -470 0 L 0 0 L 80 0 L 120 0 L 160 0" />
-    <path class="track-dark" d="M -590 0 L -550 -50 L -510 -50 L -470 -50 L 0 -50 L 40 -50 L 80 -50 L 120 0" />
-    <path class="track-dark" d="M -510 -50 L -470 -100 L 0 -100 L 40 -50" />
+    <path class="track-dark" d="M -630 0 L -590 0 L -550 0 L -470 0 L 0 0 L 80 0 L 120 0 L 160 0"/>
+    <path class="track-dark" d="M -590 0 L -550 -50 L -510 -50 L -470 -50 L 0 -50 L 40 -50 L 80 -50 L 120 0"/>
+    <path class="track-dark" d="M -510 -50 L -470 -100 L 0 -100 L 40 -50"/>
 
     <!-- Directional Triangles in the middle of the platforms (Left to Right / Blue) -->
-    <g transform="translate(-235, 0) rotate(0)"><polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/></g>
-    <g transform="translate(-235, -50) rotate(0)"><polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/></g>
-    <g transform="translate(-235, -100) rotate(0)"><polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/></g>
+    <!-- Direct track (stop or drive through) -->
+    <g transform="translate(-235, 0) rotate(0)">
+        <polygon points="-33,-15 -3,0 -33,15" fill="#0000FF"/>
+        <polygon points="3,-15 33,0 3,15" fill="#0000FF"/>
+    </g>
+    <!-- Diverging tracks (stop only) -->
+    <g transform="translate(-235, -50) rotate(0)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
+    </g>
+    <g transform="translate(-235, -100) rotate(0)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
+    </g>
 </svg>

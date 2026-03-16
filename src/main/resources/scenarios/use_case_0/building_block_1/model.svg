@@ -11,8 +11,9 @@
     <!-- Inner Track (Black) -->
     <path class="track-dark" d="M 0 0 L 80 0 L 550 0 L 630 0"/>
 
-    <!-- Directional Triangle in the middle of the pseudo platform (Left to Right / Blue) -->
+    <!-- Directional Double Triangle in the middle of the pseudo platform (Left to Right / Blue) -->
     <g transform="translate(315, 0) rotate(0)">
-        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
+        <polygon points="-33,-15 -3,0 -33,15" fill="#0000FF"/>
+        <polygon points="3,-15 33,0 3,15" fill="#0000FF"/>
     </g>
 </svg>
