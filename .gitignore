@@ -32,3 +32,4 @@ hs_err_pid*
 # Python cache
 __pycache__/
 *.py[cod]
+*.vscode
