@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-860 -775 1380 600" width="1380" height="600">
+    <style>
+        .track-dark { stroke: #000000; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
+        .track-light { stroke: #888888; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
+    </style>
+
+    <!-- LTR Outer 500m Blocks (Grey) -->
+    <path class="track-light" d="M -860 -275 L -360 -275"/>
+    <path class="track-light" d="M 20 -275 L 520 -275"/>
+    <path class="track-light" d="M -120 -375 L 200 -775"/>
+
+    <!-- RTL Outer 500m Blocks (Grey) -->
+    <path class="track-light" d="M 520 -225 L 20 -225"/>
+    <path class="track-light" d="M -360 -225 L -860 -225"/>
+    <path class="track-light" d="M 280 -775 L -40 -375"/>
+
+    <!-- Grade Separation (Thick grey block indicating tunnel/bridge crossing) -->
+    <path d="M -104 -295 L -176 -205" stroke="#CCCCCC" stroke-width="16" stroke-linecap="round"/>
+
+    <!-- Inner LTR Tracks (Black) - Drawn OVER the bridge block -->
+    <path class="track-dark"
+          d="M -360 -275 L -240 -275 L -200 -275 L -160 -275 L -120 -275 L -80 -275 L -40 -275 L 20 -275"/>
+    <path class="track-dark" d="M -200 -275 L -160 -325 L -120 -375"/>
+
+    <!-- Inner RTL Tracks (Black) - Separated by the grey bridge block -->
+    <path class="track-dark" d="M 20 -225 L -160 -225 L -200 -225 L -240 -225 L -280 -225 L -320 -225 L -360 -225"/>
+    <!-- Upper flyunder segment leading to the block -->
+    <path class="track-dark" d="M -40 -375 L -80 -325 L -104 -295"/>
+    <!-- Lower flyunder segment exiting the block -->
+    <path class="track-dark" d="M -176 -205 L -200 -175 L -240 -175 L -280 -225"/>
+
+    <!-- LTR Directional Triangles at Transitions (Blue) -->
+    <g transform="translate(-360, -275) rotate(0)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
+    </g>
+    <g transform="translate(20, -275) rotate(0)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
+    </g>
+    <g transform="translate(-120, -375) rotate(-51.34)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
+    </g>
+
+    <!-- RTL Directional Triangles at Transitions (Red) -->
+    <g transform="translate(20, -225) rotate(180)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#CC0000"/>
+    </g>
+    <g transform="translate(-360, -225) rotate(180)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#CC0000"/>
+    </g>
+    <g transform="translate(-40, -375) rotate(128.66)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#CC0000"/>
+    </g>
+</svg>
