@@ -41,7 +41,12 @@ public enum BuildingBlock {
     /**
      * Use case 2 - Crossing with a grade-separated layout.
      */
-    UC2_BB2(UseCase.UC_2, "/scenarios/use_case_2/building_block_2");
+    UC2_BB2(UseCase.UC_2, "/scenarios/use_case_2/building_block_2"),
+
+    /**
+     * Use case 2 - Reversing with side track.
+     */
+    UC3_BB1(UseCase.UC_3, "/scenarios/use_case_3/building_block_1");
 
     private final UseCase useCase;
     private final String inputPath;
