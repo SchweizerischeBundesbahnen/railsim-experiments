@@ -38,10 +38,12 @@
       "description": "Verkehrsstrom mit Wenden M (L-M-L)",
       "routes": {
         "FV": {
-          "forward": "FV_LML"
+          "forward": "FV_LML",
+          "reverse": "FV_LML"
         },
         "RV": {
-          "forward": "RV_LML"
+          "forward": "RV_LML",
+          "reverse": "RV_LML"
         }
       }
     },
