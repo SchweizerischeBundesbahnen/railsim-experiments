@@ -1,0 +1,137 @@
+{
+  "volumes": {
+    "period": 1800,
+    "min": 4,
+    "max": 12,
+    "step": 1,
+    "bidirectional": true
+  },
+  "products": {
+    "FV": {
+      "description": "Fernverkehr",
+      "minHeadway": 120
+    },
+    "RV": {
+      "description": "Regionalverkehr",
+      "minHeadway": 90
+    },
+    "GV": {
+      "description": "Güterverkehr",
+      "minHeadway": 180
+    }
+  },
+  "flows": {
+    "LMR": {
+      "description": "Verkehrsstrom mit Halt bei M (L-M-R)",
+      "routes": {
+        "FV": {
+          "forward": "FV_LMR",
+          "reverse": "FV_RML"
+        },
+        "RV": {
+          "forward": "RV_LMR",
+          "reverse": "RV_RML"
+        }
+      }
+    },
+    "LML": {
+      "description": "Verkehrsstrom mit Wenden M (L-M-L)",
+      "routes": {
+        "FV": {
+          "forward": "FV_LML"
+        },
+        "RV": {
+          "forward": "RV_LML"
+        }
+      }
+    },
+    "LR": {
+      "description": "Verkehrsstrom ohne Halt bei M (L-R)",
+      "routes": {
+        "GV": {
+          "forward": "GV_LR",
+          "reverse": "GV_RL"
+        }
+      }
+    }
+  },
+  "patterns": {
+    "LOW_REVERSAL": {
+      "description": "Niedriger Anteil von Wendeverkehr (L-M-L); FV hält; RV hält",
+      "shares": {
+        "FV": {
+          "LMR": 0.8,
+          "LML": 0.2
+        },
+        "RV": {
+          "LMR": 0.8,
+          "LML": 0.2
+        },
+        "GV": {
+          "LR": 1.0
+        }
+      }
+    },
+    "HIGH_REVERSAL": {
+      "description": "Hoher Anteil von Wendeverkehr (L-M-L); FV hält; RV hält",
+      "shares": {
+        "FV": {
+          "LMR": 0.6,
+          "LML": 0.4
+        },
+        "RV": {
+          "LMR": 0.6,
+          "LML": 0.4
+        },
+        "GV": {
+          "LR": 1.0
+        }
+      }
+    }
+  },
+  "mixes": {
+    "MAINLINE": {
+      "description": "Kernnetz-Mischverkehr (Ref: Lausanne–Genf, Heitersberg)",
+      "shares": {
+        "FV": 0.4,
+        "RV": 0.4,
+        "GV": 0.2
+      }
+    },
+    "TRANSIT": {
+      "description": "Transit-Korridor Güter/Fernverkehr (Ref: Lugano)",
+      "shares": {
+        "FV": 0.5,
+        "GV": 0.5
+      }
+    },
+    "EXPRESS": {
+      "description": "Homogener Fernverkehr (Ref: Genf Tiefbahnhof)",
+      "shares": {
+        "FV": 1.0
+      }
+    },
+    "METRO": {
+      "description": "Isolierter S-Bahn-Betrieb (Ref: S-Bahn Zürich)",
+      "shares": {
+        "RV": 1.0
+      }
+    }
+  },
+  "modes": [
+    {
+      "mix": "METRO",
+      "patterns": [
+        "LOW_REVERSAL",
+        "HIGH_REVERSAL"
+      ]
+    },
+    {
+      "mix": "EXPRESS",
+      "patterns": [
+        "LOW_REVERSAL",
+        "HIGH_REVERSAL"
+      ]
+    }
+  ]
+}
