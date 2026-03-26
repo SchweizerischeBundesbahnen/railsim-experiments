@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-1130 -70 1710 140" width="1710" height="140">
+    <style>
+        .track-dark { stroke: #000000; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
+        .track-light { stroke: #888888; stroke-width: 4; fill: none; stroke-linecap: square; stroke-linejoin: round; }
+        .platform { stroke: #99CCFF; stroke-width: 12; fill: none; stroke-linecap: butt; }
+    </style>
+
+    <!-- Platform Indicators -->
+    <line class="platform" x1="-470" y1="0" x2="0" y2="0"/>
+    <line class="platform" x1="-470" y1="50" x2="0" y2="50"/>
+    <line class="platform" x1="-470" y1="-50" x2="0" y2="-50"/>
+
+    <!-- Outer 500m Blocks (Grey) -->
+    <path class="track-light" d="M -1130 0 L -630 0"/>
+    <path class="track-light" d="M 80 0 L 580 0"/>
+    <path class="track-light" d="M 580 50 L 80 50"/>
+    <path class="track-light" d="M -630 50 L -1130 50"/>
+
+    <!-- Inner Tracks (Black) -->
+    <!-- Forward & Reverse Mainlines -->
+    <path class="track-dark" d="M -630 0 L 80 0"/>
+    <path class="track-dark" d="M 80 50 L -630 50"/>
+
+    <!-- Lateral Reversing Track (Seitenlage) & Crossover -->
+    <path class="track-dark" d="M -510 0 L -470 -50 L 0 -50"/>
+    <path class="track-dark" d="M 0 -50 L -470 -50 L -510 0"/>
+    <path class="track-dark" d="M -550 0 L -590 50"/>
+
+    <!-- Directional Triangles -->
+    <!-- Forward Mainline Platform (Single Stop) -->
+    <g transform="translate(-235, 0) rotate(0)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
+    </g>
+    <!-- Reverse Mainline Platform (Single Stop) -->
+    <g transform="translate(-235, 50) rotate(180)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#CC0000"/>
+    </g>
+    <!-- Lateral Reversing Platform (In: Blue, Out: Red) -->
+    <g transform="translate(-255, -50)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
+    </g>
+    <g transform="translate(-215, -50) rotate(180)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#CC0000"/>
+    </g>
+</svg>
