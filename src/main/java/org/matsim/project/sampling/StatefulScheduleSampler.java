@@ -59,29 +59,55 @@ public class StatefulScheduleSampler {
         List<TrainVolumeDiscretizer.TrainVolume> distributedVolumes =
                 distributor.discretize(this.trainsPerPeriod, this.operatingMode);
 
-        // convert distributed volumes into actual transit routes
+        // convert volumes into transit routes
         for (TrainVolumeDiscretizer.TrainVolume volume : distributedVolumes) {
+            String fwdId = volume.routeMapping().getForwardRouteId();
+            String revId = volume.routeMapping().getReverseRouteId();
+            boolean hasReverse = revId != null && !revId.isBlank();
 
-            // forward direction
-            Match forwardMatch = findMatchingRoute(volume.product(), volume.routeMapping().getForwardRouteId());
-            addTransitRoute(newSchedule, newVehicles, forwardMatch, samplingStrategy, volume.amount(), "fwd");
-
-            // reverse direction if plan is bidirectional
-            if (isBidirectional) {
-                String reverseId = volume.routeMapping().getReverseRouteId();
-
-                if (reverseId == null || reverseId.isBlank()) {
-                    throw new IllegalStateException(
-                            "Bidirectional mode enabled but no reverse route defined for product " + volume.product()
-                                    .getId());
+            // unidirectional case: sample forward route with amount
+            if (!isBidirectional) {
+                if (hasReverse) {
+                    throw new IllegalArgumentException(String.format(
+                            "Product %s: Global mode is unidirectional, but a reverse route '%s' was provided.",
+                            volume.product().getId(), revId));
                 }
 
-                Match reverseMatch = findMatchingRoute(volume.product(), reverseId);
-                addTransitRoute(newSchedule, newVehicles, reverseMatch, samplingStrategy, volume.amount(), "rev");
+                Match forwardMatch = findMatchingRoute(volume.product(), fwdId);
+                addTransitRoute(newSchedule, newVehicles, forwardMatch, samplingStrategy, volume.amount());
+            }
+
+            // bidirectional case: sample both forward and reverse routes with amount each
+            else {
+                if (!hasReverse) {
+                    throw new IllegalStateException(String.format(
+                            "Product %s: Bidirectional mode enabled but no reverse route defined for forward route '%s'.",
+                            volume.product().getId(), fwdId));
+                }
+
+                // one-way route (special case): sample forward with double amount
+                if (fwdId.equals(revId)) {
+                    Match match = findMatchingRoute(volume.product(), fwdId);
+                    addTransitRoute(newSchedule, newVehicles, match, samplingStrategy, volume.amount() * 2, "one-way");
+
+                } else {  // bidirectional route (standard): sample both directions
+                    Match forwardMatch = findMatchingRoute(volume.product(), fwdId);
+                    addTransitRoute(newSchedule, newVehicles, forwardMatch, samplingStrategy, volume.amount(),
+                            "forward");
+
+                    Match reverseMatch = findMatchingRoute(volume.product(), revId);
+                    addTransitRoute(newSchedule, newVehicles, reverseMatch, samplingStrategy, volume.amount(),
+                            "reverse");
+                }
             }
         }
 
         return new Sample(newSchedule, newVehicles);
+    }
+
+    private void addTransitRoute(TransitSchedule schedule, Vehicles vehicles, Match match,
+                                 DepartureSamplingStrategy samplingStrategy, int amount) {
+        addTransitRoute(schedule, vehicles, match, samplingStrategy, amount, "");
     }
 
     private void addTransitRoute(TransitSchedule schedule, Vehicles vehicles, Match match,
@@ -97,32 +123,31 @@ public class StatefulScheduleSampler {
             schedule.addTransitLine(newLine);
         }
 
-        // create route (fwd/rev) and sample departures
-        Id<TransitRoute> scopedRouteId =
-                Id.create(match.transitRoute.getId().toString() + "_" + directionSuffix, TransitRoute.class);
-
         // ensure a route is never added twice
         if (newLine.getRoutes().containsKey(match.transitRoute.getId())) {
             throw new RuntimeException("Duplicate route id " + match.transitRoute.getId());
         }
 
+        // create route and sample departures
+        String suffix = (directionSuffix == null || directionSuffix.isBlank()) ? "" : "_" + directionSuffix;
+        Id<TransitRoute> scopedRouteId = Id.create(match.transitRoute.getId().toString() + suffix, TransitRoute.class);
         TransitRoute newRoute =
                 sf.createTransitRoute(scopedRouteId, match.transitRoute.getRoute(), match.transitRoute.getStops(),
                         match.transitRoute.getTransportMode());
 
-        // Sample departure times
+        // sample departure times
         List<Double> departureTimes =
                 samplingStrategy.sampleDepartures(amount, this.samplingPeriod, this.simulationTime, random);
 
         for (int i = 0; i < departureTimes.size(); i++) {
             double time = departureTimes.get(i);
 
-            // Create unique vehicle
+            // create unique vehicle
             Id<Vehicle> vehicleId = Id.create("veh_" + scopedRouteId + "_" + i, Vehicle.class);
             Vehicle vehicle = vf.createVehicle(vehicleId, match.vehicleType);
             vehicles.addVehicle(vehicle);
 
-            // Create departure
+            // create departure
             Id<Departure> depId = Id.create("dep_" + scopedRouteId + "_" + i, Departure.class);
             Departure departure = sf.createDeparture(depId, time);
             departure.setVehicleId(vehicleId);
