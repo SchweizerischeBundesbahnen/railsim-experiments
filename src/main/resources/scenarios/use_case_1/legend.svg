@@ -1,16 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 200" width="400" height="200">
-    <style>.text { font-family: sans-serif; font-size: 16px; fill: #333; } .track-dark { stroke: #000000; stroke-width:
-        4; } .platform { stroke: #99CCFF; stroke-width: 12; }
+    <style>
+        .text { font-family: sans-serif; font-size: 16px; fill: #333; }
+        .track-dark { stroke: #000000; stroke-width: 4; }
+        .platform { stroke: #99CCFF; stroke-width: 12; }
     </style>
-    <line class="track-dark" x1="20" y1="40" x2="60" y2="40"/>
-    <text x="80" y="45" class="text">Track</text>
-    <line class="platform" x1="20" y1="80" x2="60" y2="80"/>
-    <text x="80" y="85" class="text">Platform</text>
-    <polygon points="20,120 40,130 20,140" fill="#0000FF"/>
-    <text x="80" y="135" class="text">Stop</text>
-    <g transform="translate(20, 160)">
-        <polygon points="0,-10 20,0 0,10" fill="#0000FF"/>
-        <polygon points="25,-10 45,0 25,10" fill="#0000FF"/>
+
+    <line class="track-dark" x1="20" y1="30" x2="60" y2="30"/>
+    <text x="90" y="35" class="text">Track</text>
+
+    <line class="platform" x1="20" y1="70" x2="60" y2="70"/>
+    <text x="90" y="75" class="text">Platform</text>
+
+    <g transform="translate(40, 110)">
+        <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
     </g>
-    <text x="80" y="175" class="text">Stop / Pass</text>
+    <text x="90" y="115" class="text">Stop</text>
+
+    <g transform="translate(40, 150)">
+        <polygon points="-33,-15 -3,0 -33,15" fill="#0000FF"/>
+        <polygon points="3,-15 33,0 3,15" fill="#0000FF"/>
+    </g>
+    <text x="90" y="155" class="text">Stop / Pass</text>
 </svg>

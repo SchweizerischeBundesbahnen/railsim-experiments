@@ -5,31 +5,27 @@
         .platform { stroke: #99CCFF; stroke-width: 12; }
     </style>
 
-    <!-- Track & Platform -->
     <line class="track-dark" x1="20" y1="20" x2="60" y2="20"/>
     <text x="90" y="25" class="text">Track</text>
 
     <line class="platform" x1="20" y1="60" x2="60" y2="60"/>
     <text x="90" y="65" class="text">Platform</text>
 
-    <!-- Stop (Forward) -->
     <g transform="translate(40, 100)">
         <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
     </g>
     <text x="90" y="105" class="text">Stop (forward direction)</text>
 
-    <!-- Stop (Reverse) -->
     <g transform="translate(40, 140) rotate(180)">
         <polygon points="-15,-15 15,0 -15,15" fill="#CC0000"/>
     </g>
     <text x="90" y="145" class="text">Stop (reverse direction)</text>
 
-    <!-- Reversing -->
     <g transform="translate(25, 180)">
         <polygon points="-15,-15 15,0 -15,15" fill="#0000FF"/>
     </g>
     <g transform="translate(55, 180) rotate(180)">
         <polygon points="-15,-15 15,0 -15,15" fill="#CC0000"/>
     </g>
-    <text x="90" y="185" class="text">Reversing (Turnaround)</text>
+    <text x="90" y="185" class="text">Reversing (turnaround)</text>
 </svg>
