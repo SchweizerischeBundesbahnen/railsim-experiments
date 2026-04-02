@@ -28,6 +28,7 @@ public final class RailsimConfigHelper {
         config.controller()
                 .setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
         config.controller().setEventsFileFormats(EnumSet.of(ControllerConfigGroup.EventsFileFormat.xml));
+        config.controller().setCompressionType(ControllerConfigGroup.CompressionType.gzip);
         config.controller().setCreateGraphsInterval(0);
         config.controller().setDumpDataAtEnd(false);
         config.controller().setWriteEventsInterval(1);
