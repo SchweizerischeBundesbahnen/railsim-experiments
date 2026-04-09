@@ -1,8 +1,8 @@
 {
   "volumes": {
     "period": 1800,
-    "min": 4,
-    "max": 12,
+    "min": 1,
+    "max": 6,
     "step": 1,
     "bidirectional": true
   },
