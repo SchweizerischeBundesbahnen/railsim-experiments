@@ -127,13 +127,6 @@
         "LOW_REVERSAL",
         "HIGH_REVERSAL"
       ]
-    },
-    {
-      "mix": "EXPRESS",
-      "patterns": [
-        "LOW_REVERSAL",
-        "HIGH_REVERSAL"
-      ]
     }
   ]
 }
