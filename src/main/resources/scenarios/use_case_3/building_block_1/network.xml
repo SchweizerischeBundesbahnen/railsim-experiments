@@ -75,6 +75,7 @@
 			<attributes>
 				<attribute name="railsimMinimumTime" class="java.lang.Double">20.0</attribute>
 				<attribute name="railsimResourceId" class="java.lang.String">block_1_f</attribute>
+				<attribute name="railsimNonBlockingArea" class="java.lang.Boolean">true</attribute>
 				<attribute name="railsimResourceType" class="java.lang.String">fixedBlock</attribute>
 				<attribute name="railsimTrainCapacity" class="java.lang.Integer">1</attribute>
 			</attributes>

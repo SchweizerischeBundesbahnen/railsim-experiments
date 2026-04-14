@@ -1,8 +1,8 @@
 {
   "volumes": {
     "period": 1800,
-    "min": 4,
-    "max": 12,
+    "min": 1,
+    "max": 6,
     "step": 1,
     "bidirectional": true
   },
@@ -123,13 +123,6 @@
   "modes": [
     {
       "mix": "METRO",
-      "patterns": [
-        "LOW_REVERSAL",
-        "HIGH_REVERSAL"
-      ]
-    },
-    {
-      "mix": "EXPRESS",
       "patterns": [
         "LOW_REVERSAL",
         "HIGH_REVERSAL"
