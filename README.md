@@ -335,7 +335,7 @@ ARGS_ARRAY=(
 ## Licenses
 
 - **Source Code**: The Java source code in the `src` directory is licensed under
-  the [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html).
+  the [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html) or any later version.
 - **Data and Visualizations**: All input files, output files, and analysis data are licensed under
   the [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
 
