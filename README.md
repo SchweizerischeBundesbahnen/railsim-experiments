@@ -332,11 +332,13 @@ ARGS_ARRAY=(
 ./mvnw exec:java -Dmatsim.log.level=${MATSIM_LOG_LEVEL} -Dexec.args="${ARGS_ARRAY[*]}"
 ```
 
-## Licenses
+## Contributing
 
-- **Source Code**: The Java source code in the `src` directory is licensed under
-  the [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html) or any later version.
-- **Data and Visualizations**: All input files, output files, and analysis data are licensed under
-  the [Creative Commons Attribution 4.0 International License](http://creativecommons.org/licenses/by/4.0/).
+Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on how to contribute, and
+the [Code of Conduct](CODE_OF_CONDUCT.md) that governs participation. See also
+the [Coding Standards](CODING_STANDARDS.md) and [Release](RELEASE.md) process.
 
-[![Creative Commons License](https://i.creativecommons.org/l/by/4.0/88x31.png)](http://creativecommons.org/licenses/by/4.0/)
+## License
+
+This project is licensed under the [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+or any later version. See [LICENSE](LICENSE) for details.

@@ -1,0 +1,4 @@
+# Each line is a file pattern followed by the GitHub teams/users who own it.
+# See: https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
+* @SchweizerischeBundesbahnen/SBB-SAM
+
