@@ -24,7 +24,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Log4j2
-public class MinimumHeadwayEventHandler implements LinkEnterEventHandler, TransitDriverStartsEventHandler, BasicEventHandler {
+public class MinimumHeadwayEventHandler implements LinkEnterEventHandler, TransitDriverStartsEventHandler,
+        BasicEventHandler {
 
     private final Map<Id<Link>, LastVehicleInfo> lastVehicleOnLink = new HashMap<>();
     private final Set<Id<Link>> entryLinks;

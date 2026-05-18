@@ -24,7 +24,8 @@ import java.util.stream.Collectors;
  */
 @Log4j2
 @Getter
-public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHandler, VehicleDepartsAtFacilityEventHandler, TransitDriverStartsEventHandler, EventHandler {
+public class TrainDelayEventHandler implements VehicleArrivesAtFacilityEventHandler,
+        VehicleDepartsAtFacilityEventHandler, TransitDriverStartsEventHandler, EventHandler {
 
     private final Map<Id<Vehicle>, VehicleState> vehicleStates = new HashMap<>();
     private final Map<Id<Departure>, Map<Id<TransitStopFacility>, StopEventData>> departureStopEvents =
