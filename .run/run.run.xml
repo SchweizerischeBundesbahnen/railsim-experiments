@@ -1,11 +1,12 @@
 <component name="ProjectRunConfigurationManager">
-  <configuration default="false" name="run" type="Application" factoryName="Application">
-    <option name="MAIN_CLASS_NAME" value="org.matsim.project.RunRailsimScenario" />
-    <module name="railsim-experiments" />
-    <option name="PROGRAM_PARAMETERS" value="run --output results --samples 2 --simulation-time 10800 --departure-sampling RANDOM --cleanup --overwrite" />
-    <option name="VM_PARAMETERS" value="-Dmatsim.log.level=ERROR" />
-    <method v="2">
-      <option name="Make" enabled="true" />
-    </method>
-  </configuration>
+    <configuration default="false" name="run" type="Application" factoryName="Application">
+        <option name="MAIN_CLASS_NAME" value="org.matsim.project.RunRailsimScenario"/>
+        <module name="railsim-experiments"/>
+        <option name="PROGRAM_PARAMETERS"
+                value="run --output results --samples 2 --simulation-time 10800 --departure-sampling RANDOM --cleanup --overwrite"/>
+        <option name="VM_PARAMETERS" value="-Dmatsim.log.level=ERROR"/>
+        <method v="2">
+            <option name="Make" enabled="true"/>
+        </method>
+    </configuration>
 </component>

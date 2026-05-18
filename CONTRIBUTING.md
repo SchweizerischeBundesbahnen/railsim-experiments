@@ -22,11 +22,11 @@ Participation in this repository is governed by the [Code of Conduct](CODE_OF_CO
 
 When reporting a bug, include:
 
-- a concise summary of the problem
-- exact steps to reproduce it
-- expected behavior and actual behavior
-- environment details (OS, JDK version)
-- logs or a minimal reproduction when available
+- A concise summary of the problem.
+- Exact steps to reproduce it.
+- Expected behavior and actual behavior.
+- Environment details (OS, JDK version).
+- Logs or a minimal reproduction when available.
 
 ## Requesting Features
 

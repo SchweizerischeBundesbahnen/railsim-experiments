@@ -25,14 +25,9 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class RunSummaryWriter {
 
-    public enum Type {
-        RUN, RECONSTRUCT
-    }
-
     private static final String SUMMARY_CSV = "output_%s_summary.csv";
     private static final List<Column> COLUMNS = List.of(Column.values());
     private static final String HEADER_ROW = COLUMNS.stream().map(c -> c.header).collect(Collectors.joining(","));
-
     private final List<RailsimSimulationResult> results;
     private final int analysisStartTime;
     private final int analysisEndTime;
@@ -166,6 +161,10 @@ public class RunSummaryWriter {
             totalObservation += info.getObservationTime();
         }
         return totalObservation == 0.0 ? 0.0 : totalExhausted / totalObservation;
+    }
+
+    public enum Type {
+        RUN, RECONSTRUCT
     }
 
     @RequiredArgsConstructor

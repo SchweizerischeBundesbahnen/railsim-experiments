@@ -340,5 +340,6 @@ the [Coding Standards](CODING_STANDARDS.md) and [Release](RELEASE.md) process.
 
 ## License
 
-This project is licensed under the [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
+This project is licensed under
+the [GNU General Public License v2.0](https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html)
 or any later version. See [LICENSE](LICENSE) for details.
