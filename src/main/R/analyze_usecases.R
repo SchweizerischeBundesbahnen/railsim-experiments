@@ -28,8 +28,8 @@ library(scales)
 
 # --- Load utility functions ---
 utils_dir <- rstudioapi::getSourceEditorContext()$path |> dirname()
-source(file.path(utils_dir, "analysis_utils.R"))
-source(file.path(utils_dir, "weg_zeit_diagramme_utils.R"))
+source(file.path(utils_dir, "utils", "result_reader.R"))
+source(file.path(utils_dir, "utils", "time_distance_diagram.R"))
 
 
 # =============================================================================
