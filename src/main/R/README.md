@@ -6,7 +6,8 @@ R scripts for post-processing and visualizing simulation results.
 
 - **`analyze_usecases.R`** — Main analysis script with ECDF, boxplot, and quantile visualizations.
 - **`utils/result_reader.R`** — Reader functions for loading detailed and summary result CSV files.
-- **`utils/time_distance_diagram.R`** — Utility functions for generating interactive time-distance (graphical schedule) diagrams.
+- **`utils/time_distance_diagram.R`** — Utility functions for generating interactive time-distance (graphical schedule)
+  diagrams.
 
 ## Requirements
 
